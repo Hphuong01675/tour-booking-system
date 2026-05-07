@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quên mật khẩu</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96 text-center">
+            <h2 class="text-2xl font-bold mb-4">Xác thực OTP</h2>
+            <p class="text-sm mb-6 text-gray-500">
+                Mã xác thực đã được gửi đến email của bạn.
+            </p>
+
+            <form id="otpForm" class="space-y-4">
+                <div class="flex justify-center space-x-2">
+                    <input
+                        type="text"
+                        id="otp"
+                        maxlength="4"
+                        placeholder="0000"
+                        required
+                        class="text-center text-2xl tracking-widest w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
+                >
+                    Xác nhận
+                </button>
+            </form>
+            <div id="message" class="mt-4 text-sm"></div>
+        </div>
+
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get("email");
+
+            document.getElementById("otpForm").onsubmit = async (e) => {
+                e.preventDefault();
+                const otp = document.getElementById("otp").value;
+                const res = await fetch("/api/auth/verify-otp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, otp }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    // Lưu token vào localStorage để dùng cho bước sau
+                    localStorage.setItem("resetToken", data.resetToken);
+                    window.location.href = "/reset-password";
+                } else {
+                    document.getElementById("message").innerHTML =
+                        `<span class="text-red-600">${data.message}</span>`;
+                }
+            };
+        </script>
+    </body>
+</html>
