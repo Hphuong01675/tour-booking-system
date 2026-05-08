@@ -1,5 +1,5 @@
 const authRepository = require("../repositories/auth.repository");
-const { sendOTPEmail } = require("./mail.service");
+const { sendOTPEmail, sendActivationOTPEmail } = require("./mail.service");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -12,6 +12,47 @@ const requestForgotPassword = async (email) => {
 
     await authRepository.upsertOTP(email, otp, expiredAt);
     await sendOTPEmail(email, otp);
+};
+
+const registerUser = async (userData) => {
+    const { email, password, ...otherData } = userData;
+
+    // Check if user already exists
+    const existingUser = await authRepository.findUserByEmail(email);
+    if (existingUser) {
+        throw new Error("EMAIL_ALREADY_EXISTS");
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create user with isActive = false
+    const newUser = await authRepository.createUser({
+        email,
+        password: hashedPassword,
+        ...otherData,
+        isActive: false,
+    });
+
+    // Generate OTP for activation
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    await authRepository.upsertOTP(`activation:${email}`, otp);
+    await sendActivationOTPEmail(email, otp);
+
+    return newUser;
+};
+
+const verifyActivationOTP = async (email, otp) => {
+    const savedOtp = await authRepository.getOTP(`activation:${email}`);
+
+    if (!savedOtp || savedOtp !== otp) {
+        throw new Error("INVALID_OTP");
+    }
+
+    // Activate user
+    await authRepository.activateUser(email);
+    await authRepository.deleteOTP(`activation:${email}`);
 };
 
 const verifyOTPAndGenerateToken = async (email, otp) => {
@@ -39,6 +80,8 @@ const updateNewPassword = async (email, newPassword) => {
 
 module.exports = {
     requestForgotPassword,
+    registerUser,
+    verifyActivationOTP,
     verifyOTPAndGenerateToken,
     updateNewPassword,
 };

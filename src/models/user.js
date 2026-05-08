@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
             gender: DataTypes.BOOLEAN, // true: Nam, false: Nữ
             image: DataTypes.STRING,
             roleId: DataTypes.STRING,
+            isActive: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false,
+            },
         },
         {
             sequelize,

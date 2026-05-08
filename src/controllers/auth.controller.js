@@ -19,6 +19,42 @@ const forgotPassword = async (req, res) => {
     }
 };
 
+const register = async (req, res) => {
+    try {
+        const userData = req.body;
+        await authService.registerUser(userData);
+
+        res.status(201).json({
+            message: "Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt tài khoản.",
+        });
+    } catch (error) {
+        let status = 500;
+        let message = "Lỗi hệ thống.";
+        if (error.message === "EMAIL_ALREADY_EXISTS") {
+            status = 409;
+            message = "Email đã được sử dụng.";
+        }
+        res.status(status).json({ message });
+    }
+};
+
+const verifyActivationOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        await authService.verifyActivationOTP(email, otp);
+
+        res.status(200).json({
+            message: "Tài khoản đã được kích hoạt thành công.",
+        });
+    } catch (error) {
+        let message = "Lỗi hệ thống.";
+        if (error.message === "INVALID_OTP") {
+            message = "Mã OTP không chính xác hoặc đã hết hạn.";
+        }
+        res.status(400).json({ message });
+    }
+};
+
 const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -56,6 +92,8 @@ const resetPassword = async (req, res) => {
 
 module.exports = {
     forgotPassword,
+    register,
+    verifyActivationOTP,
     verifyOTP,
     resetPassword,
 };

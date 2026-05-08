@@ -12,6 +12,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 viewEngine(app);
 app.use("/api/auth", initWebRoutes);
+
+// Routes for pages
+app.get("/register", (req, res) => {
+    res.render("register");
+});
+
+app.get("/verify-activation-otp", (req, res) => {
+    res.render("verify-activation-otp");
+});
+
 connectDB();
 
 let port = process.env.PORT || 6969; //tạo tham số port lấy từ .env

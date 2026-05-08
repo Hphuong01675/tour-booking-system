@@ -1,28 +1,47 @@
 const { User } = require("../models");
-const redisClient = require("../config/redis");
+
+// Temporary in-memory store for OTP (replace with Redis in production)
+const otpStore = new Map();
 
 const findUserByEmail = async (email) => {
     return await User.findOne({ where: { email } });
 };
 
-// Lưu OTP vào Redis với thời gian sống (TTL) là 300 giây (5 phút)
+// Lưu OTP vào memory với thời gian sống (TTL) là 300 giây (5 phút)
 const upsertOTP = async (email, otp) => {
-    await redisClient.setEx(`otp:${email}`, 300, otp);
+    const expiredAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+    otpStore.set(email, { otp, expiredAt });
 };
 
-// Lấy OTP từ Redis để đối chiếu
+// Lấy OTP từ memory để đối chiếu
 const getOTP = async (email) => {
-    return await redisClient.get(`otp:${email}`);
+    const data = otpStore.get(email);
+    if (!data || Date.now() > data.expiredAt) {
+        otpStore.delete(email);
+        return null;
+    }
+    return data.otp;
 };
 
 // Xóa OTP ngay sau khi xác thực thành công
 const deleteOTP = async (email) => {
-    await redisClient.del(`otp:${email}`);
+    otpStore.delete(email);
 };
 
 const updatePassword = async (email, hashedPassword) => {
     return await User.update(
         { password: hashedPassword },
+        { where: { email } },
+    );
+};
+
+const createUser = async (userData) => {
+    return await User.create(userData);
+};
+
+const activateUser = async (email) => {
+    return await User.update(
+        { isActive: true },
         { where: { email } },
     );
 };
@@ -33,4 +52,6 @@ module.exports = {
     getOTP,
     deleteOTP,
     updatePassword,
+    createUser,
+    activateUser,
 };
