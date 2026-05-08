@@ -7,7 +7,10 @@ const {
     verifyOTPSchema,
     resetPasswordSchema,
 } = require("../validations/auth.validation");
-const { forgotPasswordLimiter } = require("../middlewares/rateLimiter");
+const {
+    forgotPasswordLimiter,
+    verifyOTPLimiter,
+} = require("../middlewares/rateLimiter");
 const { verifyResetToken } = require("../middlewares/auth.middleware");
 
 // 1. Quên mật khẩu: Rate limit -> Validate Schema -> Controller
@@ -19,7 +22,12 @@ router.post(
 );
 
 // 2. Xác thực OTP
-router.post("/verify-otp", validate(verifyOTPSchema), authController.verifyOTP);
+router.post(
+    "/verify-otp",
+    verifyOTPLimiter,
+    validate(verifyOTPSchema),
+    authController.verifyOTP,
+);
 
 // 3. Đặt mật khẩu mới: Verify JWT -> Validate Schema -> Controller
 router.post(

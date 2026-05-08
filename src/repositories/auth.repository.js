@@ -1,15 +1,23 @@
-const { User, PasswordReset } = require("../models");
+const { User } = require("../models");
+const redisClient = require("../config/redis");
 
 const findUserByEmail = async (email) => {
     return await User.findOne({ where: { email } });
 };
 
-const upsertOTP = async (email, otp, expiredAt) => {
-    return await PasswordReset.upsert({ email, otp, expiredAt });
+// Lưu OTP vào Redis với thời gian sống (TTL) là 300 giây (5 phút)
+const upsertOTP = async (email, otp) => {
+    await redisClient.setEx(`otp:${email}`, 300, otp);
 };
 
-const findOTPRecord = async (email, otp) => {
-    return await PasswordReset.findOne({ where: { email, otp } });
+// Lấy OTP từ Redis để đối chiếu
+const getOTP = async (email) => {
+    return await redisClient.get(`otp:${email}`);
+};
+
+// Xóa OTP ngay sau khi xác thực thành công
+const deleteOTP = async (email) => {
+    await redisClient.del(`otp:${email}`);
 };
 
 const updatePassword = async (email, hashedPassword) => {
@@ -19,14 +27,10 @@ const updatePassword = async (email, hashedPassword) => {
     );
 };
 
-const deleteOTP = async (record) => {
-    return await record.destroy();
-};
-
 module.exports = {
     findUserByEmail,
     upsertOTP,
-    findOTPRecord,
-    updatePassword,
+    getOTP,
     deleteOTP,
+    updatePassword,
 };

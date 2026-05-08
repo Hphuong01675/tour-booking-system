@@ -15,9 +15,11 @@ const requestForgotPassword = async (email) => {
 };
 
 const verifyOTPAndGenerateToken = async (email, otp) => {
-    const resetRecord = await authRepository.findOTPRecord(email, otp);
-    if (!resetRecord) throw new Error("INVALID_OTP");
-    if (new Date() > resetRecord.expiredAt) throw new Error("OTP_EXPIRED");
+    const savedOtp = await authRepository.getOTP(email);
+
+    if (!savedOtp || savedOtp !== otp) {
+        throw new Error("INVALID_OTP"); // Redis trả về null nếu hết hạn hoặc không tồn tại
+    }
 
     const resetToken = jwt.sign(
         { email, step: "verified" },
@@ -25,7 +27,7 @@ const verifyOTPAndGenerateToken = async (email, otp) => {
         { expiresIn: "5m" },
     );
 
-    await authRepository.deleteOTP(resetRecord);
+    await authRepository.deleteOTP(email);
     return resetToken;
 };
 
