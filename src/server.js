@@ -1,24 +1,33 @@
-import "dotenv/config"; // gọi hàm config của dotenv để chạy lệnh process.env.PORT
-import express from "express"; // nạp express
-import bodyParser from "body-parser"; // nạp body-parser lấy tham số từ client /user?id=7
-import viewEngine from "./config/viewEngine"; // nạp viewEngine
-import initWebRoutes from "./routes/auth.routes"; // nạp file web từ Route
+import "dotenv/config";
+import express from "express";
+import viewEngine from "./config/viewEngine";
+import authRoutes from "./routes/auth.routes";
+import userRoutes from "./routes/user.routes";
+import adminRoutes from "./routes/admin.routes";
 import connectDB from "./config/configdb";
 
 let app = express();
 
-//config app
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// middleware chuẩn
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 viewEngine(app);
-app.use("/api/auth", initWebRoutes);
+
+// routes
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.get("/login", (req, res) => {
+    return res.render("login");
+});
+
+// DB
 connectDB();
 
-let port = process.env.PORT || 6969; //tạo tham số port lấy từ .env
-//Port === undefined => port 6969
+let port = process.env.PORT || 6969;
 
-//chạy server
 app.listen(port, () => {
-    //callback
-    console.log("Backend Nodejs is runing on the port: " + port);
+    console.log("Backend Nodejs is running on port: " + port);
 });

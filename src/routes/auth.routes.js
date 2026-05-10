@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth.controller");
-const validate = require("../middlewares/validate.middleware");
+const { validate } = require("../middlewares/validate.middleware");
+const { validateExpress } = require("../middlewares/validate.middleware");
 const {
+    loginValidation,
     forgotPasswordSchema,
     verifyOTPSchema,
     resetPasswordSchema,
@@ -10,10 +12,10 @@ const {
 const {
     forgotPasswordLimiter,
     verifyOTPLimiter,
+    loginLimiter,
 } = require("../middlewares/rateLimiter");
 const { verifyResetToken } = require("../middlewares/auth.middleware");
 
-// 1. Quên mật khẩu: Rate limit -> Validate Schema -> Controller
 router.post(
     "/forgot-password",
     forgotPasswordLimiter,
@@ -29,7 +31,6 @@ router.post(
     authController.verifyOTP,
 );
 
-// 3. Đặt mật khẩu mới: Verify JWT -> Validate Schema -> Controller
 router.post(
     "/reset-password",
     verifyResetToken,
@@ -37,4 +38,11 @@ router.post(
     authController.resetPassword,
 );
 
+router.post(
+    "/login",
+    loginLimiter,
+    loginValidation,
+    validateExpress,
+    authController.login
+);
 module.exports = router;

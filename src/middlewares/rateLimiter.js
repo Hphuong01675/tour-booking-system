@@ -15,5 +15,16 @@ const verifyOTPLimiter = rateLimit({
         message: "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau 10 phút.",
     },
 });
+const loginLimiter = rateLimit({
 
-module.exports = { forgotPasswordLimiter, verifyOTPLimiter };
+    windowMs: 15 * 60 * 1000,
+
+    max: 5,
+
+    message: {
+        success: false,
+        message:
+            "Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.",
+    },
+});
+module.exports = { forgotPasswordLimiter, verifyOTPLimiter,loginLimiter };

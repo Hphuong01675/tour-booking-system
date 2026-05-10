@@ -37,7 +37,50 @@ const updateNewPassword = async (email, newPassword) => {
     return await authRepository.updatePassword(email, hashedPassword);
 };
 
+const loginService = async (email, password) => {
+
+    const user = await authRepository.findUserByEmail(email);
+
+    if (!user) {
+
+        throw new Error("Email không tồn tại");
+    }
+
+    // const isMatch = await bcrypt.compare(
+    //     password,
+    //     user.password
+    // );
+    const isMatch = password === user.password;
+
+    if (!isMatch) {
+
+        throw new Error("Sai mật khẩu");
+    }
+
+    const token = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            roleId: user.roleId,
+        },
+        process.env.JWT_ACCESS_SECRET,
+        {
+            expiresIn: "1h",
+        }
+    );
+
+    return {
+        token,
+        roleId: user.roleId,
+        redirectUrl:
+            user.roleId === "admin"
+                ? "/admin/profile"
+                : "/user/profile",
+    };
+};
+
 module.exports = {
+    loginService,
     requestForgotPassword,
     verifyOTPAndGenerateToken,
     updateNewPassword,

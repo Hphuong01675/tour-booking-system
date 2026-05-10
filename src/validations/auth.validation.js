@@ -1,4 +1,6 @@
 const Joi = require("joi");
+const { body } = require("express-validator");
+
 
 const forgotPasswordSchema = Joi.object({
     email: Joi.string().email().required().messages({
@@ -20,4 +22,14 @@ const resetPasswordSchema = Joi.object({
     }),
 });
 
-module.exports = { forgotPasswordSchema, verifyOTPSchema, resetPasswordSchema };
+const loginValidation = [
+
+    body("email")
+        .isEmail()
+        .withMessage("Email không hợp lệ"),
+
+    body("password")
+        .notEmpty()
+        .withMessage("Password không được để trống"),
+];
+module.exports = { forgotPasswordSchema, verifyOTPSchema, resetPasswordSchema,loginValidation };

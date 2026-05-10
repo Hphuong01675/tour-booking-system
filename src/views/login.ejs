@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login</title>
+
+    <style>
+
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body{
+
+            height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background: linear-gradient(
+                    135deg,
+                    #667eea,
+                    #764ba2
+            );
+        }
+
+        .login-box{
+
+            width: 400px;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .login-box h2{
+
+            text-align: center;
+
+            margin-bottom: 30px;
+
+            color: #333;
+        }
+
+        .input-group{
+
+            margin-bottom: 20px;
+        }
+
+        .input-group label{
+
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-weight: bold;
+
+            color: #555;
+        }
+
+        .input-group input{
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            transition: 0.3s;
+        }
+
+        .input-group input:focus{
+
+            border-color: #667eea;
+
+            box-shadow: 0 0 8px rgba(102,126,234,0.4);
+        }
+
+        .error{
+
+            color: red;
+
+            font-size: 14px;
+
+            margin-top: 5px;
+        }
+
+        .login-btn{
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: linear-gradient(
+                    135deg,
+                    #667eea,
+                    #764ba2
+            );
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.3s;
+        }
+
+        .login-btn:hover{
+
+            opacity: 0.9;
+
+            transform: translateY(-2px);
+        }
+
+        .bottom-text{
+
+            margin-top: 20px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+            color: #666;
+        }
+
+        .bottom-text a{
+
+            color: #667eea;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <h2>LOGIN</h2>
+
+    <form id="loginForm" action="/login" method="POST">
+
+        <div class="input-group">
+
+            <label>Email</label>
+
+            <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Nhập email..."
+            >
+
+            <div class="error" id="emailError"></div>
+
+        </div>
+
+        <div class="input-group">
+
+            <label>Password</label>
+
+            <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Nhập mật khẩu..."
+            >
+
+            <div class="error" id="passwordError"></div>
+
+        </div>
+
+        <button type="submit" class="login-btn">
+            Đăng nhập
+        </button>
+
+    </form>
+
+    <div class="bottom-text">
+        Chưa có tài khoản?
+        <a href="/register">
+            Đăng ký
+        </a>
+    </div>
+
+</div>
+
+<script>
+
+    const form = document.getElementById("loginForm");
+
+    form.addEventListener("submit", function(event){
+
+        let isValid = true;
+
+        const email = document.getElementById("email").value.trim();
+
+        const password = document.getElementById("password").value.trim();
+
+        const emailError = document.getElementById("emailError");
+
+        const passwordError = document.getElementById("passwordError");
+
+        emailError.innerText = "";
+        passwordError.innerText = "";
+
+        // Validation Email
+
+        if(email === ""){
+
+            emailError.innerText = "Email không được để trống";
+
+            isValid = false;
+        }
+        else{
+
+            const emailRegex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if(!emailRegex.test(email)){
+
+                emailError.innerText =
+                    "Email không đúng định dạng";
+
+                isValid = false;
+            }
+        }
+
+        // Validation Password
+
+        if(password === ""){
+
+            passwordError.innerText =
+                "Mật khẩu không được để trống";
+
+            isValid = false;
+        }
+        else if(password.length < 6){
+
+            passwordError.innerText =
+                "Mật khẩu phải >= 6 ký tự";
+
+            isValid = false;
+        }
+
+        // Nếu lỗi => chặn submit
+
+        if(!isValid){
+
+            event.preventDefault();
+        }
+
+    });
+
+</script>
+
+</body>
+
+</html>

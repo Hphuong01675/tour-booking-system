@@ -27,6 +27,7 @@ const updatePassword = async (email, hashedPassword) => {
     );
 };
 
+
 module.exports = {
     findUserByEmail,
     upsertOTP,
