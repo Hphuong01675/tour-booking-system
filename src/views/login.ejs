@@ -2,10 +2,23 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Login</title>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Travel Login</title>
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
     <style>
 
@@ -13,7 +26,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         body{
@@ -24,38 +37,73 @@
             justify-content: center;
             align-items: center;
 
-            background: linear-gradient(
-                    135deg,
-                    #667eea,
-                    #764ba2
-            );
+            overflow: hidden;
+
+            background:
+                    linear-gradient(
+                            rgba(0,0,0,0.35),
+                            rgba(0,0,0,0.35)
+                    ),
+                    url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2070");
+
+            background-size: cover;
+            background-position: center;
         }
 
         .login-box{
 
-            width: 400px;
+            width: 420px;
 
-            background: white;
+            padding: 45px;
 
-            padding: 40px;
+            border-radius: 30px;
 
-            border-radius: 20px;
+            backdrop-filter: blur(15px);
 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.12);
+
+            border: 1px solid rgba(255,255,255,0.2);
+
+            box-shadow:
+                    0 10px 40px rgba(0,0,0,0.3);
+
+            color: white;
+        }
+
+        .logo{
+
+            text-align: center;
+
+            margin-bottom: 10px;
+
+            font-size: 40px;
         }
 
         .login-box h2{
 
             text-align: center;
 
-            margin-bottom: 30px;
+            font-size: 32px;
 
-            color: #333;
+            margin-bottom: 10px;
+
+            font-weight: 700;
+        }
+
+        .sub-title{
+
+            text-align: center;
+
+            margin-bottom: 35px;
+
+            font-size: 14px;
+
+            color: rgba(255,255,255,0.8);
         }
 
         .input-group{
 
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .input-group label{
@@ -64,63 +112,99 @@
 
             margin-bottom: 8px;
 
-            font-weight: bold;
+            font-size: 14px;
 
-            color: #555;
+            font-weight: 500;
         }
 
         .input-group input{
 
             width: 100%;
 
-            padding: 12px;
+            padding: 14px 16px;
 
-            border: 1px solid #ccc;
+            border-radius: 15px;
 
-            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.25);
+
+            background: rgba(255,255,255,0.15);
+
+            color: white;
 
             outline: none;
 
             transition: 0.3s;
         }
 
+        .input-group input::placeholder{
+
+            color: rgba(255,255,255,0.7);
+        }
+
         .input-group input:focus{
 
-            border-color: #667eea;
+            border-color: #fff;
 
-            box-shadow: 0 0 8px rgba(102,126,234,0.4);
+            background: rgba(255,255,255,0.2);
+
+            box-shadow:
+                    0 0 15px rgba(255,255,255,0.3);
         }
 
         .error{
 
-            color: red;
+            color: #ffd4d4;
+
+            margin-top: 6px;
+
+            font-size: 13px;
+        }
+
+        .remember{
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 25px;
 
             font-size: 14px;
+        }
 
-            margin-top: 5px;
+        .remember a{
+
+            color: white;
+
+            text-decoration: none;
+        }
+
+        .remember a:hover{
+
+            text-decoration: underline;
         }
 
         .login-btn{
 
             width: 100%;
 
-            padding: 12px;
+            padding: 15px;
 
             border: none;
 
-            border-radius: 10px;
+            border-radius: 16px;
 
-            background: linear-gradient(
-                    135deg,
-                    #667eea,
-                    #764ba2
-            );
+            background:
+                    linear-gradient(
+                            135deg,
+                            #ff9966,
+                            #ff5e62
+                    );
 
             color: white;
 
             font-size: 16px;
 
-            font-weight: bold;
+            font-weight: 600;
 
             cursor: pointer;
 
@@ -129,29 +213,79 @@
 
         .login-btn:hover{
 
-            opacity: 0.9;
+            transform: translateY(-3px);
 
-            transform: translateY(-2px);
+            box-shadow:
+                    0 10px 20px rgba(255,94,98,0.4);
         }
 
         .bottom-text{
 
-            margin-top: 20px;
+            margin-top: 25px;
 
             text-align: center;
 
             font-size: 14px;
 
-            color: #666;
+            color: rgba(255,255,255,0.85);
         }
 
         .bottom-text a{
 
-            color: #667eea;
+            color: #fff;
 
             text-decoration: none;
 
-            font-weight: bold;
+            font-weight: 600;
+        }
+
+        .bottom-text a:hover{
+
+            text-decoration: underline;
+        }
+
+        .floating{
+
+            position: absolute;
+
+            border-radius: 50%;
+
+            background: rgba(255,255,255,0.08);
+
+            animation: float 8s infinite ease-in-out;
+        }
+
+        .floating:nth-child(1){
+
+            width: 180px;
+            height: 180px;
+
+            top: 10%;
+            left: 8%;
+        }
+
+        .floating:nth-child(2){
+
+            width: 250px;
+            height: 250px;
+
+            bottom: -50px;
+            right: -50px;
+        }
+
+        @keyframes float {
+
+            0%{
+                transform: translateY(0px);
+            }
+
+            50%{
+                transform: translateY(-20px);
+            }
+
+            100%{
+                transform: translateY(0px);
+            }
         }
 
     </style>
@@ -160,11 +294,25 @@
 
 <body>
 
+<div class="floating"></div>
+
+<div class="floating"></div>
+
 <div class="login-box">
 
-    <h2>LOGIN</h2>
+    <div class="logo">
+        ✈️
+    </div>
 
-    <form id="loginForm" action="/login" method="POST">
+    <h2>Travel Tour</h2>
+
+    <p class="sub-title">
+        Khám phá thế giới cùng chúng tôi
+    </p>
+
+    <form id="loginForm"
+          action="/login"
+          method="POST">
 
         <div class="input-group">
 
@@ -177,7 +325,8 @@
                     placeholder="Nhập email..."
             >
 
-            <div class="error" id="emailError"></div>
+            <div class="error"
+                 id="emailError"></div>
 
         </div>
 
@@ -192,49 +341,75 @@
                     placeholder="Nhập mật khẩu..."
             >
 
-            <div class="error" id="passwordError"></div>
+            <div class="error"
+                 id="passwordError"></div>
 
         </div>
 
-        <button type="submit" class="login-btn">
+        <div class="remember">
+
+            <label>
+                <input type="checkbox">
+                Ghi nhớ đăng nhập
+            </label>
+
+            <a href="#">
+                Quên mật khẩu?
+            </a>
+
+        </div>
+
+        <button type="submit"
+                class="login-btn">
+
             Đăng nhập
+
         </button>
 
     </form>
 
     <div class="bottom-text">
+
         Chưa có tài khoản?
+
         <a href="/register">
-            Đăng ký
+            Đăng ký ngay
         </a>
+
     </div>
 
 </div>
 
 <script>
 
-    const form = document.getElementById("loginForm");
+    const form =
+        document.getElementById("loginForm");
 
     form.addEventListener("submit", function(event){
 
         let isValid = true;
 
-        const email = document.getElementById("email").value.trim();
+        const email =
+            document.getElementById("email")
+                .value.trim();
 
-        const password = document.getElementById("password").value.trim();
+        const password =
+            document.getElementById("password")
+                .value.trim();
 
-        const emailError = document.getElementById("emailError");
+        const emailError =
+            document.getElementById("emailError");
 
-        const passwordError = document.getElementById("passwordError");
+        const passwordError =
+            document.getElementById("passwordError");
 
         emailError.innerText = "";
         passwordError.innerText = "";
 
-        // Validation Email
-
         if(email === ""){
 
-            emailError.innerText = "Email không được để trống";
+            emailError.innerText =
+                "Email không được để trống";
 
             isValid = false;
         }
@@ -252,8 +427,6 @@
             }
         }
 
-        // Validation Password
-
         if(password === ""){
 
             passwordError.innerText =
@@ -268,8 +441,6 @@
 
             isValid = false;
         }
-
-        // Nếu lỗi => chặn submit
 
         if(!isValid){
 

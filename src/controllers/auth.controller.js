@@ -53,28 +53,63 @@ const resetPassword = async (req, res) => {
         res.status(500).json({ message: "Lỗi khi cập nhật mật khẩu." });
     }
 };
+// const login = async (req, res) => {
+//
+//     try {
+//
+//         const { email, password } = req.body;
+//
+//         const data = await authService.loginService(
+//             email,
+//             password
+//         );
+//
+//         return res.status(200).json({
+//             success: true,
+//             message: "Đăng nhập thành công",
+//             data,
+//         });
+//
+//     } catch (error) {
+//
+//         return res.status(400).json({
+//             success: false,
+//             message: error.message,
+//         });
+//     }
+// };
 const login = async (req, res) => {
 
     try {
 
         const { email, password } = req.body;
 
-        const data = await authService.loginService(
-            email,
-            password
-        );
+        const data =
+            await authService.loginService(
+                email,
+                password
+            );
 
-        return res.status(200).json({
-            success: true,
-            message: "Đăng nhập thành công",
-            data,
+        // lưu token
+        res.cookie("token", data.token);
+
+        // ADMIN
+        if(data.roleId === "admin"){
+
+            return res.render("admin", {
+                user: data
+            });
+        }
+
+        // USER
+        return res.render("user", {
+            user: data
         });
 
     } catch (error) {
 
-        return res.status(400).json({
-            success: false,
-            message: error.message,
+        return res.status(400).render("login", {
+            error: error.message
         });
     }
 };

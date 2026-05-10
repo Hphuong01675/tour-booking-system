@@ -72,10 +72,7 @@ const loginService = async (email, password) => {
     return {
         token,
         roleId: user.roleId,
-        redirectUrl:
-            user.roleId === "admin"
-                ? "/admin/profile"
-                : "/user/profile",
+        email: user.email,
     };
 };
 

@@ -15,14 +15,16 @@ app.use(express.urlencoded({ extended: true }));
 viewEngine(app);
 
 // routes
-app.use("/api/auth", authRoutes);
+app.use("/", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.get("/", (req, res) => {
+    return res.redirect("/login");
+});
 
 app.get("/login", (req, res) => {
     return res.render("login");
 });
-
 // DB
 connectDB();
 
