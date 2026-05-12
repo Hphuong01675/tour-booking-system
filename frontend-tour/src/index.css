@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Nếu bạn muốn dùng @apply thì phải đặt dưới dòng import trên */
+body {
+  background-color: #f8fafc; /* Màu nền xám nhạt slate-50 */
+}

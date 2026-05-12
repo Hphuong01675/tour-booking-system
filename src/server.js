@@ -4,8 +4,12 @@ import bodyParser from "body-parser"; // nạp body-parser lấy tham số từ 
 import viewEngine from "./config/viewEngine"; // nạp viewEngine
 import initWebRoutes from "./routes/auth.routes"; // nạp file web từ Route
 import connectDB from "./config/configdb";
+import cors from "cors"; // [MỚI] Nạp thư viện cors
 
 let app = express();
+
+// [MỚI] Cấu hình CORS cho phép Frontend gọi API
+app.use(cors({ origin: true, credentials: true }));
 
 //config app
 app.use(bodyParser.json());
