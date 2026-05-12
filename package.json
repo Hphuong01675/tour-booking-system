@@ -8,7 +8,9 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "nodemon --exec babel-node src/server.js"
+        "start": "nodemon --exec babel-node src/server.js",
+        "start:backend": "nodemon --exec babel-node src/server.js",
+        "dev": "concurrently \"npm run start:backend\" \"npm --prefix react run dev\""
     },
     "dependencies": {
         "@types/express": "^5.0.6",
@@ -30,6 +32,7 @@
         "@babel/core": "^7.29.0",
         "@babel/node": "^7.29.0",
         "@babel/preset-env": "^7.29.5",
+        "concurrently": "^8.2.0",
         "nodemon": "^3.1.14",
         "sequelize-cli": "^6.6.5"
     }

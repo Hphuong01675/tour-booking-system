@@ -45,4 +45,12 @@ router.post(
     validateExpress,
     authController.login
 );
+
+router.post(
+    "/api/login",
+    loginLimiter,
+    loginValidation,
+    validateExpress,
+    authController.loginApi
+);
 module.exports = router;
