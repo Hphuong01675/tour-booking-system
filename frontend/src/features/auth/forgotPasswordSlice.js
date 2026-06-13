@@ -1,9 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import {
-    forgotPasswordApi,
-    verifyForgotPasswordOTPApi,
-    resetPasswordApi,
-} from "../../api/authApi";
+import authApi from "../../api/authApi";
 
 // ================================================
 // Async Thunks
@@ -16,7 +12,7 @@ export const requestForgotPassword = createAsyncThunk(
     "forgotPassword/requestOTP",
     async (email, { rejectWithValue }) => {
         try {
-            const response = await forgotPasswordApi(email);
+            const response = await authApi.forgotPassword(email);
             return response.data.message;
         } catch (error) {
             return rejectWithValue(error.message);
@@ -31,7 +27,7 @@ export const verifyForgotPasswordOTP = createAsyncThunk(
     "forgotPassword/verifyOTP",
     async ({ email, otp }, { rejectWithValue }) => {
         try {
-            const response = await verifyForgotPasswordOTPApi(email, otp);
+            const response = await authApi.verifyForgotPasswordOTP(email, otp);
             return response.data.resetToken;
         } catch (error) {
             return rejectWithValue(error.message);
@@ -46,7 +42,7 @@ export const resetPassword = createAsyncThunk(
     "forgotPassword/resetPassword",
     async ({ newPassword, resetToken }, { rejectWithValue }) => {
         try {
-            const response = await resetPasswordApi(newPassword, resetToken);
+            const response = await authApi.resetPassword(newPassword, resetToken);
             return response.data.message;
         } catch (error) {
             return rejectWithValue(error.message);

@@ -26,7 +26,7 @@ const ForgotPasswordPage = () => {
         const result = await dispatch(requestForgotPassword(emailInput));
 
         if (requestForgotPassword.fulfilled.match(result)) {
-            navigate("/verify-otp");
+            navigate("/forgot-password-verify-otp");
         }
     };
 

@@ -47,8 +47,17 @@ const ResetPasswordPage = () => {
         setLocalError("");
 
         // Client-side validation
+        const hasUpper = /[A-Z]/.test(newPassword);
+        const hasLower = /[a-z]/.test(newPassword);
+        const hasNumber = /\d/.test(newPassword);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+
         if (newPassword.length < 8) {
             setLocalError("Mật khẩu phải có ít nhất 8 ký tự.");
+            return;
+        }
+        if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+            setLocalError("Mật khẩu phải bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt.");
             return;
         }
         if (newPassword !== confirmPassword) {
@@ -411,7 +420,9 @@ const ResetPasswordPage = () => {
                         {[
                             { text: "Ít nhất 8 ký tự", check: newPassword.length >= 8 },
                             { text: "Chứa chữ hoa (A-Z)", check: /[A-Z]/.test(newPassword) },
+                            { text: "Chứa chữ thường (a-z)", check: /[a-z]/.test(newPassword) },
                             { text: "Chứa chữ số (0-9)", check: /\d/.test(newPassword) },
+                            { text: "Ký tự đặc biệt (!@#$%^&*)", check: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) },
                         ].map(({ text, check }) => (
                             <div key={text} className="flex items-center gap-1.5">
                                 <span

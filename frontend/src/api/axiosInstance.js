@@ -29,9 +29,21 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         const message =
+            error.response?.data?.error ||
             error.response?.data?.message ||
             "Lỗi kết nối. Vui lòng thử lại.";
-        return Promise.reject(new Error(message));
+        
+        const customError = new Error(message);
+        // Đính kèm các trường gốc của Axios vào Error object để các catch block có thể đọc được
+        if (error.response) {
+            customError.response = error.response;
+        }
+        if (error.request) {
+            customError.request = error.request;
+        }
+        customError.config = error.config;
+        
+        return Promise.reject(customError);
     }
 );
 

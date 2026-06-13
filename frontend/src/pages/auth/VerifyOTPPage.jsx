@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -6,21 +6,8 @@ import {
     requestForgotPassword,
     clearForgotPasswordError,
 } from "../../features/auth/forgotPasswordSlice";
-import AuthLayout from "../../components/auth/AuthLayout";
-import OtpInput from "../../components/auth/OtpInput";
-import CountdownTimer from "../../components/auth/CountdownTimer";
 
-/**
- * VerifyOTPPage – Bước 2
- * Người dùng nhập 4 chữ số OTP nhận qua email → xác minh → nhận resetToken
- */
 const VerifyOTPPage = () => {
-    const [otpDigits, setOtpDigits] = useState(["", "", "", ""]);
-    const [isExpired, setIsExpired] = useState(false);
-    const [timerResetKey, setTimerResetKey] = useState(0);
-    const [resendLoading, setResendLoading] = useState(false);
-    const [resendSuccess, setResendSuccess] = useState(false);
-
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -28,17 +15,84 @@ const VerifyOTPPage = () => {
         (state) => state.forgotPassword
     );
 
-    const otp = otpDigits.join("");
-    const isOtpComplete = otp.length === 4;
+    const [otp, setOtp] = useState(["", "", "", ""]);
+    const [timeInSeconds, setTimeInSeconds] = useState(300); // 5 minutes
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendSuccess, setResendSuccess] = useState(false);
 
-    const handleSubmit = async (e) => {
+    const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+    useEffect(() => {
+        if (!email) {
+            navigate("/forgot-password");
+        }
+    }, [email, navigate]);
+
+    // Countdown timer
+    useEffect(() => {
+        if (timeInSeconds <= 0) {
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setTimeInSeconds((prev) => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeInSeconds]);
+
+    const formatTime = () => {
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = timeInSeconds % 60;
+        return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    };
+
+    const handleInputChange = (index, value) => {
+        if (value !== "" && !/^\d+$/.test(value)) {
+            return;
+        }
+
+        if (value.length > 1) {
+            value = value.slice(-1);
+        }
+
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        // Auto focus next
+        if (value.length === 1 && index < 3) {
+            inputRefs[index + 1].current.focus();
+        }
+    };
+
+    const handleKeyDown = (index, e) => {
+        if (e.key === "Backspace" && !otp[index] && index > 0) {
+            inputRefs[index - 1].current.focus();
+        }
+    };
+
+    const handlePaste = (e) => {
         e.preventDefault();
-        if (!isOtpComplete) return;
+        const pasteData = e.clipboardData.getData("text").trim();
+        if (pasteData.length === 4 && /^\d+$/.test(pasteData)) {
+            const newOtp = pasteData.split("");
+            setOtp(newOtp);
+            inputRefs[3].current.focus();
+        }
+    };
+
+    const handleVerify = async (e) => {
+        if (e) e.preventDefault();
+        const fullOtp = otp.join("");
+        if (fullOtp.length !== 4) {
+            return;
+        }
 
         dispatch(clearForgotPasswordError());
 
         const result = await dispatch(
-            verifyForgotPasswordOTP({ email, otp })
+            verifyForgotPasswordOTP({ email, otp: fullOtp })
         );
 
         if (verifyForgotPasswordOTP.fulfilled.match(result)) {
@@ -46,259 +100,167 @@ const VerifyOTPPage = () => {
         }
     };
 
-    const handleResend = async () => {
+    const handleResend = async (e) => {
+        e.preventDefault();
         if (!email || resendLoading) return;
+        
+        dispatch(clearForgotPasswordError());
         setResendLoading(true);
         setResendSuccess(false);
+        setOtp(["", "", "", ""]);
+        if (inputRefs[0].current) inputRefs[0].current.focus();
 
         const result = await dispatch(requestForgotPassword(email));
 
         if (requestForgotPassword.fulfilled.match(result)) {
-            // Reset OTP và countdown
-            setOtpDigits(["", "", "", ""]);
-            setIsExpired(false);
-            setTimerResetKey((k) => k + 1);
             setResendSuccess(true);
+            setTimeInSeconds(300); // Reset timer
             setTimeout(() => setResendSuccess(false), 4000);
         }
         setResendLoading(false);
     };
 
-    const handleExpire = useCallback(() => {
-        setIsExpired(true);
-    }, []);
+    // Auto trigger verification when all digits are filled
+    useEffect(() => {
+        if (otp.join("").length === 4) {
+            handleVerify();
+        }
+    }, [otp]);
+
+    const isOtpComplete = otp.join("").length === 4;
 
     return (
-        <AuthLayout>
-            {/* Card chính */}
-            <div
-                className="rounded-xl shadow-lg p-6 md:p-8 flex flex-col gap-6"
-                style={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #c3c6d6",
-                }}
-            >
-                {/* Icon + Tiêu đề */}
-                <div className="flex flex-col items-center text-center gap-2">
-                    <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: "#dae2ff" }}
-                    >
-                        <span
-                            className="material-symbols-outlined"
-                            style={{
-                                color: "#003d9b",
-                                fontVariationSettings: "'FILL' 1",
-                                fontSize: "32px",
-                            }}
-                        >
-                            verified_user
-                        </span>
+        <div className="bg-[#f8f9fb] text-[#191c1e] font-sans min-h-screen flex flex-col">
+            {/* TopAppBar */}
+            <header className="bg-white border-b border-[#c3c6d6] fixed top-0 w-full z-50">
+                <div className="flex justify-between items-center px-4 md:px-16 h-16 w-full">
+                    <div className="text-xl md:text-2xl font-bold text-[#003d9b] tracking-tight">Chip3Chip</div>
+                    <div className="flex items-center gap-4">
+                        <button className="text-[#434654] font-medium hover:text-[#003d9b] transition-colors text-sm">Help</button>
                     </div>
-                    <h1
-                        className="text-2xl font-bold"
-                        style={{ color: "#191c1e" }}
-                    >
-                        Xác thực OTP
-                    </h1>
-                    <p className="text-base" style={{ color: "#434654" }}>
-                        Mã OTP đã được gửi đến{" "}
-                        <span className="font-semibold" style={{ color: "#003d9b" }}>
-                            {email || "email của bạn"}
-                        </span>
-                    </p>
                 </div>
+            </header>
 
-                {/* OTP Inputs + Countdown */}
-                <div className="flex flex-col gap-4">
-                    <OtpInput value={otpDigits} onChange={setOtpDigits} />
-
-                    {isExpired ? (
-                        <div
-                            className="flex items-center justify-center gap-1 text-sm font-semibold"
-                            style={{ color: "#ba1a1a" }}
-                        >
-                            <span
-                                className="material-symbols-outlined"
-                                style={{ fontSize: "18px" }}
-                            >
-                                timer_off
-                            </span>
-                            Mã OTP đã hết hạn. Vui lòng gửi lại.
+            <main className="flex-grow flex items-center justify-center pt-16 px-4">
+                <div className="max-w-md w-full py-12">
+                    {/* Auth Container Card */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col gap-6 border border-[#c3c6d6]">
+                        {/* Branding/Icon Section */}
+                        <div className="flex flex-col items-center text-center gap-2">
+                            <div className="w-16 h-16 bg-[#dae2ff] rounded-full flex items-center justify-center mb-2">
+                                <span className="material-symbols-outlined text-[#003d9b] text-4xl">verified_user</span>
+                            </div>
+                            <h1 className="text-2xl font-bold text-[#191c1e]">Xác thực OTP</h1>
+                            <p className="text-sm text-[#434654]">Mã OTP đã được gửi đến email:</p>
+                            <p className="text-sm font-semibold text-[#003d9b]">{email}</p>
                         </div>
-                    ) : (
-                        <CountdownTimer
-                            key={timerResetKey}
-                            durationSeconds={300}
-                            onExpire={handleExpire}
-                        />
-                    )}
-                </div>
 
-                {/* Error */}
-                {error && (
-                    <div
-                        className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg"
-                        style={{ backgroundColor: "#ffdad6", color: "#93000a" }}
-                    >
-                        <span
-                            className="material-symbols-outlined"
-                            style={{ fontSize: "18px" }}
-                        >
-                            error
-                        </span>
-                        {error}
-                    </div>
-                )}
-
-                {/* Resend success */}
-                {resendSuccess && (
-                    <div
-                        className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg"
-                        style={{ backgroundColor: "#d4edda", color: "#155724" }}
-                    >
-                        <span
-                            className="material-symbols-outlined"
-                            style={{ fontSize: "18px" }}
-                        >
-                            check_circle
-                        </span>
-                        Mã OTP mới đã được gửi về email của bạn.
-                    </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-3">
-                    {/* Confirm Button */}
-                    <button
-                        id="btn-verify-otp"
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={loading || !isOtpComplete || isExpired}
-                        className="w-full font-semibold text-sm py-3 rounded-lg transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
-                        style={{
-                            backgroundColor:
-                                loading || !isOtpComplete || isExpired
-                                    ? "#ffb693"
-                                    : "#fe6b00",
-                            color: "#ffffff",
-                            cursor:
-                                loading || !isOtpComplete || isExpired
-                                    ? "not-allowed"
-                                    : "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!loading && isOtpComplete && !isExpired)
-                                e.currentTarget.style.backgroundColor = "#a04100";
-                        }}
-                        onMouseLeave={(e) => {
-                            if (!loading && isOtpComplete && !isExpired)
-                                e.currentTarget.style.backgroundColor = "#fe6b00";
-                        }}
-                    >
-                        {loading ? (
-                            <>
-                                <span
-                                    className="material-symbols-outlined animate-spin"
-                                    style={{ fontSize: "20px" }}
-                                >
-                                    progress_activity
-                                </span>
-                                Đang xác nhận...
-                            </>
-                        ) : (
-                            "Xác nhận"
+                        {error && (
+                            <div className="p-4 rounded-lg text-sm font-medium text-center bg-[#ffdad6] text-[#93000a]">
+                                {error}
+                            </div>
                         )}
-                    </button>
 
-                    {/* Resend */}
-                    <div
-                        className="text-center text-sm"
-                        style={{ color: "#434654" }}
-                    >
-                        Bạn chưa nhận được mã?{" "}
-                        <button
-                            onClick={handleResend}
-                            disabled={resendLoading}
-                            className="font-bold ml-1 hover:underline transition-colors"
-                            style={{
-                                color: resendLoading ? "#737685" : "#003d9b",
-                                cursor: resendLoading ? "not-allowed" : "pointer",
-                                textDecorationColor: "#a04100",
-                            }}
+                        {resendSuccess && (
+                            <div className="p-4 rounded-lg text-sm font-medium text-center bg-green-100 text-green-800">
+                                Mã OTP mới đã được gửi thành công.
+                            </div>
+                        )}
+
+                        {/* OTP Input Grid */}
+                        <div className="flex flex-col gap-4">
+                            <div className="flex justify-center gap-4" id="otp-container">
+                                {otp.map((digit, idx) => (
+                                    <input
+                                        key={idx}
+                                        ref={inputRefs[idx]}
+                                        className="otp-input w-14 h-16 text-center text-2xl font-bold rounded-lg border border-[#737685] bg-white focus:border-[#003d9b] focus:ring-2 focus:ring-[#dae2ff] outline-none transition-all"
+                                        maxLength={1}
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={digit}
+                                        onKeyDown={(e) => handleKeyDown(idx, e)}
+                                        onPaste={handlePaste}
+                                        onChange={(e) => handleInputChange(idx, e.target.value)}
+                                    />
+                                ))}
+                            </div>
+                            {/* Countdown */}
+                            <div className="flex items-center justify-center gap-1 text-xs">
+                                <span className="material-symbols-outlined text-[#434654] text-[18px]">schedule</span>
+                                <span className="text-[#434654]">Mã sẽ hết hạn sau</span>
+                                <span className={`font-bold ${timeInSeconds <= 0 ? "text-red-600" : "text-[#a04100]"}`}>
+                                    {formatTime()}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-4">
+                            <button
+                                id="verifyBtn"
+                                onClick={handleVerify}
+                                disabled={loading || !isOtpComplete || timeInSeconds <= 0}
+                                className="w-full bg-[#fe6b00] hover:bg-[#a04100] text-white py-3 rounded-lg font-semibold transition-all active:scale-[0.98] shadow-md flex justify-center items-center gap-2 disabled:bg-[#ffb693] disabled:cursor-not-allowed"
+                            >
+                                {loading ? "Đang xác thực..." : "Xác nhận"}
+                            </button>
+                            <div className="text-center text-sm">
+                                <span className="text-[#434654]">Bạn chưa nhận được mã?</span>
+                                <button
+                                    onClick={handleResend}
+                                    disabled={resendLoading}
+                                    className="ml-1 text-[#003d9b] font-semibold hover:underline disabled:text-[#737685] disabled:cursor-not-allowed"
+                                >
+                                    {resendLoading ? "Đang gửi..." : "Gửi lại mã"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Decorative Image / Brand Context */}
+                    <div className="mt-8 rounded-xl overflow-hidden relative h-48 shadow-md group">
+                        <img
+                            alt="Security Travel"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyHCb-VABOvWPETXxydPK3XAQLE2kbmXjjueaJwlZzmBcF6TmSuirkzllq_oybXMBzHbQbznbGdd40VkXe7UwWzr474dJD5VoxraqQI0JxJVvLWNma38kbMq_Y5Dl99E3YUdhief9DhvakLfGIA2TKR7NPFWOoteGfTknuAZRcmhGRufd7rDL1ebZTLgTqMcEBVXyCd73Ibpcq1PFk66tR0ktSHFAehAUbw4NzLmu6lnINbX7jqg4_HKdMRAU2Suf1bHDILI15Ceq4"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                            <p className="text-white text-sm">Chip3Chip bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.</p>
+                        </div>
+                    </div>
+
+                    {/* Back to Forgot Password */}
+                    <div className="mt-4 text-center">
+                        <Link
+                            to="/forgot-password"
+                            className="inline-flex items-center gap-1 text-sm hover:underline transition-all text-[#003d9b] font-semibold"
                         >
-                            {resendLoading ? "Đang gửi..." : "Gửi lại mã"}
-                        </button>
+                            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
+                                arrow_back
+                            </span>
+                            Quay lại
+                        </Link>
                     </div>
                 </div>
-            </div>
+            </main>
 
-            {/* Security Banner Image */}
-            <div className="mt-6 rounded-xl overflow-hidden relative h-48 shadow-md group">
-                <div
-                    className="w-full h-full flex items-center justify-center"
-                    style={{
-                        background:
-                            "linear-gradient(135deg, #001848 0%, #003d9b 40%, #004b58 100%)",
-                    }}
-                >
-                    {/* Decorative elements */}
-                    <div className="absolute inset-0 opacity-10">
-                        {[...Array(8)].map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute rounded-full"
-                                style={{
-                                    width: `${40 + i * 15}px`,
-                                    height: `${40 + i * 15}px`,
-                                    border: "1px solid rgba(255,255,255,0.3)",
-                                    top: `${10 + i * 8}%`,
-                                    left: `${5 + i * 12}%`,
-                                }}
-                            />
-                        ))}
+            {/* Footer */}
+            <footer className="bg-[#f3f4f6] border-t border-[#c3c6d6] text-xs">
+                <div className="flex flex-col md:flex-row justify-between items-center px-4 md:px-16 py-6 w-full gap-4">
+                    <div className="font-bold text-[#191c1e]">Chip3Chip</div>
+                    <div className="flex gap-4 text-[#434654]">
+                        <a className="hover:underline" href="#">Điều khoản</a>
+                        <a className="hover:underline" href="#">Bảo mật</a>
+                        <a className="hover:underline" href="#">Liên hệ</a>
                     </div>
-                    <div className="relative text-center px-6">
-                        <span
-                            className="material-symbols-outlined block mb-2"
-                            style={{
-                                color: "#5dd6f3",
-                                fontSize: "40px",
-                                fontVariationSettings: "'FILL' 1",
-                            }}
-                        >
-                            shield_locked
-                        </span>
-                        <p
-                            className="text-sm font-semibold"
-                            style={{ color: "rgba(255,255,255,0.9)" }}
-                        >
-                            GlobalExplore bảo vệ mọi chuyến đi của bạn
-                        </p>
-                        <p
-                            className="text-xs mt-1"
-                            style={{ color: "rgba(255,255,255,0.6)" }}
-                        >
-                            với hệ thống bảo mật đa lớp
-                        </p>
+                    <div className="text-[#434654]">
+                        © 2024 Chip3Chip. Tất cả quyền được bảo lưu.
                     </div>
                 </div>
-            </div>
-
-            {/* Back to forgot password */}
-            <div className="mt-4 text-center">
-                <Link
-                    to="/forgot-password"
-                    className="inline-flex items-center gap-1 text-sm hover:underline transition-all"
-                    style={{ color: "#003d9b", textDecorationColor: "#a04100" }}
-                >
-                    <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                        arrow_back
-                    </span>
-                    Quay lại
-                </Link>
-            </div>
-        </AuthLayout>
+            </footer>
+        </div>
     );
 };
 
