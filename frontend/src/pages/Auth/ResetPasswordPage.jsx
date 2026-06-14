@@ -5,7 +5,7 @@ import {
     resetPassword,
     resetForgotPasswordState,
 } from "../../features/auth/forgotPasswordSlice";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/Auth/AuthLayout";
 
 /**
  * ResetPasswordPage – Bước 3

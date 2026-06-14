@@ -5,7 +5,7 @@ import {
     requestForgotPassword,
     setForgotEmail,
 } from "../../features/auth/forgotPasswordSlice";
-import AuthLayout from "../../components/auth/AuthLayout";
+import AuthLayout from "../../components/Auth/AuthLayout";
 
 /**
  * ForgotPasswordPage – Bước 1
