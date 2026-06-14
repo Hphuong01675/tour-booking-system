@@ -1,54 +1,54 @@
-// Path: backend/src/controllers/manager/manager.controller.js
+// Path: backend/src/controllers/operator/operator.controller.js
 "use strict";
 
 const bcrypt = require("bcryptjs");
 const db = require("../../models");
 const { User } = db;
 
-class ManagerController {
+class OperatorController {
     /**
-     * Lấy thông tin cá nhân của manager (operator-1)
+     * Lấy thông tin cá nhân của operator (operator-1)
      */
     async getProfile(req, res) {
         try {
-            const manager = await User.findByPk("operator-1");
-            if (!manager) {
-                return res.status(404).json({ error: "Manager not found" });
+            const operator = await User.findByPk("operator-1");
+            if (!operator) {
+                return res.status(404).json({ error: "Operator not found" });
             }
-            res.json(manager);
+            res.json(operator);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
     }
 
     /**
-     * Cập nhật thông tin cá nhân của manager (operator-1)
+     * Cập nhật thông tin cá nhân của operator (operator-1)
      */
     async updateProfile(req, res) {
         try {
             const { fullName, phone, dateOfBirth, address, avatarUrl } = req.body;
-            const manager = await User.findByPk("operator-1");
-            if (!manager) {
-                return res.status(404).json({ error: "Manager not found" });
+            const operator = await User.findByPk("operator-1");
+            if (!operator) {
+                return res.status(404).json({ error: "Operator not found" });
             }
 
-            if (fullName !== undefined) manager.fullName = fullName;
-            if (phone !== undefined) manager.phone = phone;
+            if (fullName !== undefined) operator.fullName = fullName;
+            if (phone !== undefined) operator.phone = phone;
             if (dateOfBirth !== undefined) {
-                manager.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+                operator.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
             }
-            if (address !== undefined) manager.address = address;
-            if (avatarUrl !== undefined) manager.avatarUrl = avatarUrl;
+            if (address !== undefined) operator.address = address;
+            if (avatarUrl !== undefined) operator.avatarUrl = avatarUrl;
 
-            await manager.save();
-            res.json(manager);
+            await operator.save();
+            res.json(operator);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
     }
 
     /**
-     * Thay đổi mật khẩu của manager (operator-1)
+     * Thay đổi mật khẩu của operator (operator-1)
      */
     async changePassword(req, res) {
         try {
@@ -57,14 +57,14 @@ class ManagerController {
                 return res.status(400).json({ error: "Mật khẩu hiện tại và mật khẩu mới là bắt buộc." });
             }
 
-            const manager = await User.findByPk("operator-1");
-            if (!manager) {
-                return res.status(404).json({ error: "Manager not found" });
+            const operator = await User.findByPk("operator-1");
+            if (!operator) {
+                return res.status(404).json({ error: "Operator not found" });
             }
 
             // Kiểm tra mật khẩu hiện tại
-            let isMatch = await bcrypt.compare(currentPassword, manager.passwordHash);
-            if (!isMatch && currentPassword === manager.passwordHash) {
+            let isMatch = await bcrypt.compare(currentPassword, operator.passwordHash);
+            if (!isMatch && currentPassword === operator.passwordHash) {
                 isMatch = true;
             }
 
@@ -90,8 +90,8 @@ class ManagerController {
             // Mã hóa mật khẩu mới và lưu
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(newPassword, salt);
-            manager.passwordHash = passwordHash;
-            await manager.save();
+            operator.passwordHash = passwordHash;
+            await operator.save();
 
             res.json({ success: true, message: "Đổi mật khẩu thành công!" });
         } catch (err) {
@@ -100,4 +100,4 @@ class ManagerController {
     }
 }
 
-module.exports = new ManagerController();
+module.exports = new OperatorController();

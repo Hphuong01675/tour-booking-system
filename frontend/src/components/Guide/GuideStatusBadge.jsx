@@ -49,7 +49,7 @@ const GuideStatusBadge = ({ status = 'open', size = 'md', showLabel = true }) =>
       className={`
         inline-flex
         items-center
-        gap-xs
+        gap-s-xs
         rounded-full
         ${sizeClasses.badge}
         ${config.bgColor}

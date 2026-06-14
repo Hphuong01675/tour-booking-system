@@ -184,9 +184,9 @@ const GuideProfilePage = () => {
             <GuideHeader currentUser={user} />
 
             {/* Main Content Area */}
-            <main className="flex-grow pt-32 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-32 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Page Title */}
-                <div className="mb-xl">
+                <div className="mb-s-xl">
                     <h2 className="font-headline-lg text-headline-lg text-on-surface">
                         Cài đặt Hồ sơ
                     </h2>
@@ -196,12 +196,12 @@ const GuideProfilePage = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-s-lg items-start">
                     {/* Left Column: Profile Snapshot */}
-                    <aside className="lg:col-span-4 flex flex-col gap-lg">
+                    <aside className="lg:col-span-4 flex flex-col gap-s-lg">
                         {/* User Card */}
-                        <div className="bg-surface-container-lowest p-xl rounded-xl shadow-sm border border-outline-variant/30 text-center">
-                            <div className="relative w-32 h-32 mx-auto mb-lg group">
+                        <div className="bg-surface-container-lowest p-s-xl rounded-xl shadow-sm border border-outline-variant/30 text-center">
+                            <div className="relative w-32 h-32 mx-auto mb-s-lg group">
                                 <img
                                     alt="Ảnh đại diện của bạn"
                                     className="w-full h-full object-cover rounded-xl shadow-md"
@@ -224,25 +224,25 @@ const GuideProfilePage = () => {
                             <h3 className="font-headline-sm text-headline-sm text-on-surface">
                                 {user?.fullName || "—"}
                             </h3>
-                            <p className="font-body-md text-body-md text-on-surface-variant mb-md">
+                            <p className="font-body-md text-body-md text-on-surface-variant mb-s-md">
                                 Hướng dẫn viên du lịch (Guide)
                             </p>
 
-                            <div className="inline-flex items-center gap-xs px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-md text-label-md">
+                            <div className="inline-flex items-center gap-s-xs px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-md text-label-md">
                                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                                 Đang hoạt động
                             </div>
                         </div>
 
                         {/* Quick Actions sidebar */}
-                        <div className="bg-surface-container-lowest p-xl rounded-xl shadow-sm border border-outline-variant/30">
-                            <h4 className="font-label-md text-label-md text-primary mb-md uppercase tracking-wider">
+                        <div className="bg-surface-container-lowest p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
+                            <h4 className="font-label-md text-label-md text-primary mb-s-md uppercase tracking-wider">
                                 Hành động nhanh
                             </h4>
-                            <nav className="flex flex-col gap-sm">
+                            <nav className="flex flex-col gap-s-sm">
                                 <button
                                     onClick={() => setActiveSection("personal")}
-                                    className={`flex items-center gap-md w-full p-md rounded-lg font-body-md text-body-md text-left transition-all ${
+                                    className={`flex items-center gap-s-md w-full p-s-md rounded-lg font-body-md text-body-md text-left transition-all ${
                                         activeSection === "personal"
                                             ? "bg-primary-fixed text-on-primary-fixed font-bold"
                                             : "hover:bg-surface-container-low text-on-surface-variant"
@@ -255,7 +255,7 @@ const GuideProfilePage = () => {
                                 </button>
                                 <button
                                     onClick={() => setActiveSection("security")}
-                                    className={`flex items-center gap-md w-full p-md rounded-lg font-body-md text-body-md text-left transition-all ${
+                                    className={`flex items-center gap-s-md w-full p-s-md rounded-lg font-body-md text-body-md text-left transition-all ${
                                         activeSection === "security"
                                             ? "bg-primary-fixed text-on-primary-fixed font-bold"
                                             : "hover:bg-surface-container-low text-on-surface-variant"
@@ -274,8 +274,8 @@ const GuideProfilePage = () => {
                     <section className="lg:col-span-8">
                         {/* View 1: Personal Details */}
                         {activeSection === "personal" && (
-                            <div className="bg-surface-container-lowest p-xl rounded-xl shadow-sm border border-outline-variant/30">
-                                <div className="flex justify-between items-center mb-xl border-b border-outline-variant/20 pb-xs">
+                            <div className="bg-surface-container-lowest p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
+                                <div className="flex justify-between items-center mb-s-xl border-b border-outline-variant/20 pb-s-xs">
                                     <h4 className="font-headline-sm text-headline-sm text-on-surface">
                                         Thông tin chi tiết
                                     </h4>
@@ -285,7 +285,7 @@ const GuideProfilePage = () => {
                                     onSubmit={handleSubmitProfile}
                                     className="space-y-lg"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                                         {/* Họ và tên */}
                                         <div className="space-y-xs">
                                             <label
@@ -328,7 +328,7 @@ const GuideProfilePage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                                         {/* Email */}
                                         <div className="space-y-xs">
                                             <label
@@ -375,7 +375,7 @@ const GuideProfilePage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                                         {/* Ngày sinh */}
                                         <div className="space-y-xs">
                                             <label
@@ -444,9 +444,9 @@ const GuideProfilePage = () => {
                                     </div>
 
                                     {/* Submit buttons */}
-                                    <div className="pt-xl flex flex-col sm:flex-row items-center justify-end gap-md">
+                                    <div className="pt-s-xl flex flex-col sm:flex-row items-center justify-end gap-s-md">
                                         {saveSuccess && (
-                                            <span className="text-green-600 font-label-md flex items-center gap-xs">
+                                            <span className="text-green-600 font-label-md flex items-center gap-s-xs">
                                                 <span className="material-symbols-outlined text-[20px]">
                                                     check_circle
                                                 </span>
@@ -457,7 +457,7 @@ const GuideProfilePage = () => {
                                         <button
                                             type="submit"
                                             disabled={isSaving}
-                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-secondary-container text-white font-label-md text-label-md hover:brightness-110 shadow-lg shadow-secondary/20 transition-all active:scale-95 flex items-center justify-center gap-sm"
+                                            className="w-full sm:w-auto px-s-xl py-3 rounded-lg bg-secondary-container text-white font-label-md text-label-md hover:brightness-110 shadow-lg shadow-secondary/20 transition-all active:scale-95 flex items-center justify-center gap-s-sm"
                                         >
                                             {isSaving ? (
                                                 <>
@@ -482,8 +482,8 @@ const GuideProfilePage = () => {
 
                         {/* View 2: Security & Password */}
                         {activeSection === "security" && (
-                            <div className="bg-surface-container-lowest p-xl rounded-xl shadow-sm border border-outline-variant/30">
-                                <div className="flex justify-between items-center mb-xl border-b border-outline-variant/20 pb-xs">
+                            <div className="bg-surface-container-lowest p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
+                                <div className="flex justify-between items-center mb-s-xl border-b border-outline-variant/20 pb-s-xs">
                                     <h4 className="font-headline-sm text-headline-sm text-on-surface">
                                         Bảo mật tài khoản
                                     </h4>
@@ -576,9 +576,9 @@ const GuideProfilePage = () => {
                                     </div>
 
                                     {/* Submit buttons */}
-                                    <div className="pt-xl flex flex-col sm:flex-row items-center justify-end gap-md">
+                                    <div className="pt-s-xl flex flex-col sm:flex-row items-center justify-end gap-s-md">
                                         {changePasswordSuccess && (
-                                            <span className="text-green-600 font-label-md flex items-center gap-xs">
+                                            <span className="text-green-600 font-label-md flex items-center gap-s-xs">
                                                 <span className="material-symbols-outlined text-[20px]">
                                                     check_circle
                                                 </span>
@@ -588,7 +588,7 @@ const GuideProfilePage = () => {
                                         <button
                                             type="submit"
                                             disabled={isChangingPassword}
-                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-sm"
+                                            className="w-full sm:w-auto px-s-xl py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-s-sm"
                                         >
                                             {isChangingPassword ? (
                                                 <>

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
-// Lấy thông tin tour: GET /api/managers/tour-schedules/{scheduleId}
-// Lấy HDV đang rảnh: GET /api/managers/guides/available?scheduleId={id}
-// Phân công HDV: POST /api/managers/tour-assignments {scheduleId, guideId, role}
+// Lấy thông tin tour: GET /api/operator/tour-schedules/{scheduleId}
+// Lấy HDV đang rảnh: GET /api/operator/guides/available?scheduleId={id}
+// Phân công HDV: POST /api/operator/tour-assignments {scheduleId, guideId, role}
 // Dữ liệu dựa trên models: TourAssignment, User (role=guide), TourSchedule, Tour
 // =============================================================
 const FAKE_TOUR_INFO = {
@@ -76,15 +76,15 @@ const CERT_ICONS = {
     email: { icon: "mail", color: "text-teal-500", label: "Liên lạc" },
 };
 
-const ManagerGuideAssignPage = () => {
+const OperatorGuideAssignPage = () => {
     const [user, setUser] = useState(null);
     const [assignedGuide, setAssignedGuide] = useState(null);
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager từ token/session
+        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -94,16 +94,16 @@ const ManagerGuideAssignPage = () => {
     }, []);
 
     const handleAssign = (guide) => {
-        // TODO: POST /api/managers/tour-assignments
+        // TODO: POST /api/operator/tour-assignments
         setAssignedGuide(guide.id);
         alert(`Đã phân công ${guide.name} cho tour! (TODO: Kết nối API)`);
     };
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-xs text-on-surface-variant mb-4">
                     <span>Guides</span>
@@ -112,7 +112,7 @@ const ManagerGuideAssignPage = () => {
                 </nav>
 
                 {/* Page Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-xl">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-s-xl">
                     <div>
                         <h1 className="text-2xl font-bold text-on-surface">Phân Công Hướng Dẫn Viên</h1>
                         <p className="text-sm text-on-surface-variant mt-1">
@@ -125,7 +125,7 @@ const ManagerGuideAssignPage = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-lg items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-s-lg items-start">
                     {/* Left: Tour Info Panel */}
                     <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
                         <div className="relative">
@@ -138,9 +138,9 @@ const ManagerGuideAssignPage = () => {
                                 {FAKE_TOUR_INFO.scheduleCode}
                             </span>
                         </div>
-                        <div className="p-lg">
+                        <div className="p-s-lg">
                             <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">Thông tin Tour</p>
-                            <h2 className="font-bold text-on-surface text-base leading-snug mb-lg">
+                            <h2 className="font-bold text-on-surface text-base leading-snug mb-s-lg">
                                 {FAKE_TOUR_INFO.tourTitle}
                             </h2>
 
@@ -168,7 +168,7 @@ const ManagerGuideAssignPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-lg">
+                            <div className="mt-s-lg">
                                 <p className="text-xs font-medium text-on-surface-variant mb-2">Yêu cầu kỹ năng:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {FAKE_TOUR_INFO.requiredSkills.map((s) => (
@@ -179,7 +179,7 @@ const ManagerGuideAssignPage = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-lg p-3 bg-blue-50 rounded-lg flex items-start gap-2">
+                            <div className="mt-s-lg p-3 bg-blue-50 rounded-lg flex items-start gap-2">
                                 <span className="material-symbols-outlined text-blue-500 text-[16px] mt-0.5">info</span>
                                 <p className="text-xs text-blue-700 leading-relaxed">
                                     Hệ thống tự động lọc ra những hướng dẫn viên không có lịch trình trùng lắp trong khoảng thời gian trên.
@@ -190,7 +190,7 @@ const ManagerGuideAssignPage = () => {
 
                     {/* Right: Available Guides */}
                     <div>
-                        <div className="flex items-center justify-between mb-lg">
+                        <div className="flex items-center justify-between mb-s-lg">
                             <h2 className="font-semibold text-on-surface">
                                 Hướng dẫn viên đang trống lịch ({FAKE_GUIDES.length})
                             </h2>
@@ -204,11 +204,11 @@ const ManagerGuideAssignPage = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                             {FAKE_GUIDES.map((guide) => (
                                 <div
                                     key={guide.id}
-                                    className={`bg-white rounded-xl border shadow-sm p-lg transition ${
+                                    className={`bg-white rounded-xl border shadow-sm p-s-lg transition ${
                                         assignedGuide === guide.id
                                             ? "border-green-400 ring-2 ring-green-200"
                                             : "border-outline-variant/30 hover:shadow-md"
@@ -274,16 +274,16 @@ const ManagerGuideAssignPage = () => {
                             ))}
                         </div>
 
-                        <button className="w-full mt-lg py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container-low transition">
+                        <button className="w-full mt-s-lg py-3 rounded-xl border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container-low transition">
                             Xem thêm hướng dẫn viên ↓
                         </button>
                     </div>
                 </div>
             </main>
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerGuideAssignPage;
+export default OperatorGuideAssignPage;

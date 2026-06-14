@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
-// Tìm khách hàng: GET /api/managers/customers?search={emailOrPhone}
-// Lấy danh sách booking: GET /api/managers/customers/{customerId}/bookings?status=active
-// Hủy chuyến: POST /api/managers/bookings/{bookingId}/cancel
-// Tính hoàn tiền: GET /api/managers/bookings/{bookingId}/refund-estimate
+// Tìm khách hàng: GET /api/operator/customers?search={emailOrPhone}
+// Lấy danh sách booking: GET /api/operator/customers/{customerId}/bookings?status=active
+// Hủy chuyến: POST /api/operator/bookings/{bookingId}/cancel
+// Tính hoàn tiền: GET /api/operator/bookings/{bookingId}/refund-estimate
 // Dữ liệu dựa trên models: User, Booking, TourSchedule, Tour, Payment
 // =============================================================
 const FAKE_CUSTOMER = {
@@ -47,7 +47,7 @@ const FAKE_REFUND_ESTIMATE = {
     refundPolicy: "Hủy trước 15 ngày: Hoàn 80% tổng tiền (trừ phí xử lý 2%)",
 };
 
-const ManagerCancelCustomerPage = () => {
+const OperatorCancelCustomerPage = () => {
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResult, setSearchResult] = useState(null);
@@ -55,10 +55,10 @@ const ManagerCancelCustomerPage = () => {
     const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager từ token/session
+        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -78,26 +78,26 @@ const ManagerCancelCustomerPage = () => {
     };
 
     const handleSelectBooking = (booking) => {
-        // TODO: GET /api/managers/bookings/{booking.id}/refund-estimate
+        // TODO: GET /api/operator/bookings/{booking.id}/refund-estimate
         setSelectedBooking(booking);
     };
 
     const handleCancel = (booking) => {
-        // TODO: POST /api/managers/bookings/{booking.id}/cancel
+        // TODO: POST /api/operator/bookings/{booking.id}/cancel
         alert(`Xác nhận hủy chuyến ${booking.code}? (TODO: Kết nối API)`);
     };
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 <div className="max-w-5xl mx-auto">
 
                     {/* Page Header */}
-                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl mb-lg">
+                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl mb-s-lg">
                         <h1 className="text-2xl font-bold text-primary mb-1">DH - Hủy khách hàng</h1>
-                        <p className="text-sm text-on-surface-variant mb-lg leading-relaxed">
+                        <p className="text-sm text-on-surface-variant mb-s-lg leading-relaxed">
                             Nhập thông tin email hoặc số điện thoại của khách hàng để tra cứu danh sách các
                             chuyến đi đang hoạt động và thực hiện quy trình hoàn tiền/hủy chuyến.
                         </p>
@@ -125,11 +125,11 @@ const ManagerCancelCustomerPage = () => {
                     </div>
 
                     {searchResult && (
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-lg">
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-s-lg">
                             {/* Left: Customer Info + Bookings */}
                             <div className="space-y-lg">
                                 {/* Customer Card */}
-                                <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-lg">
+                                <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg">
                                     <div className="flex items-center gap-4">
                                         <div className="w-14 h-14 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0">
                                             <span className="material-symbols-outlined text-primary text-[28px]">person</span>
@@ -157,7 +157,7 @@ const ManagerCancelCustomerPage = () => {
 
                                 {/* Active Bookings */}
                                 <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
-                                    <div className="px-lg py-4 border-b border-outline-variant/20 flex items-center justify-between">
+                                    <div className="px-s-lg py-4 border-b border-outline-variant/20 flex items-center justify-between">
                                         <h3 className="font-semibold text-on-surface">Chuyến đi đang hoạt động</h3>
                                         <span className="text-sm text-on-surface-variant">
                                             {searchResult.bookings.length} Kết quả tìm thấy
@@ -165,7 +165,7 @@ const ManagerCancelCustomerPage = () => {
                                     </div>
 
                                     {/* Table Header */}
-                                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant">
+                                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-s-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant">
                                         <span>Tour / Booking ID</span>
                                         <span>Ngày khởi hành</span>
                                         <span>Tổng tiền</span>
@@ -176,7 +176,7 @@ const ManagerCancelCustomerPage = () => {
                                         {searchResult.bookings.map((booking) => (
                                             <div
                                                 key={booking.id}
-                                                className={`grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-lg py-4 items-center transition cursor-pointer ${
+                                                className={`grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-s-lg py-4 items-center transition cursor-pointer ${
                                                     selectedBooking?.id === booking.id
                                                         ? "bg-primary-fixed/30"
                                                         : "hover:bg-surface-container-low/50"
@@ -211,15 +211,15 @@ const ManagerCancelCustomerPage = () => {
                             </div>
 
                             {/* Right: Refund Detail */}
-                            <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-lg h-fit">
-                                <div className="flex items-center gap-2 mb-lg">
+                            <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg h-fit">
+                                <div className="flex items-center gap-2 mb-s-lg">
                                     <span className="material-symbols-outlined text-secondary text-[22px]">receipt_long</span>
                                     <h3 className="font-semibold text-on-surface">Chi tiết hoàn tiền</h3>
                                 </div>
                                 {selectedBooking ? (
                                     <div className="space-y-3">
                                         <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 leading-relaxed">
-                                            {/* TODO: GET /api/managers/bookings/{id}/refund-estimate */}
+                                            {/* TODO: GET /api/operator/bookings/{id}/refund-estimate */}
                                             {FAKE_REFUND_ESTIMATE.refundPolicy}
                                         </div>
                                         <div className="space-y-2 text-sm">
@@ -263,9 +263,9 @@ const ManagerCancelCustomerPage = () => {
                 </div>
             </main>
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerCancelCustomerPage;
+export default OperatorCancelCustomerPage;

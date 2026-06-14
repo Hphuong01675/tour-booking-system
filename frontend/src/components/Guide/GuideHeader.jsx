@@ -34,22 +34,22 @@ const GuideHeader = ({ currentUser }) => {
     const avatarUrl = currentUser?.avatarUrl || "https://via.placeholder.com/150?text=Guide";
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-outline-variant/30 px-margin-mobile md:px-margin-desktop shadow-sm flex items-center justify-between">
+        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-outline-variant/30 px-s-margin-mobile md:px-s-margin-desktop shadow-sm flex items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-xxl">
+            <div className="flex items-center gap-s-xxl">
                 <Link to="/guides/tours" className="text-2xl font-bold text-primary tracking-tight font-headline-lg flex items-center">
                     Chip3Chip
                 </Link>
 
                 {/* Desktop Navigation Tabs */}
-                <nav className="hidden md:flex items-center gap-xl h-16">
+                <nav className="hidden md:flex items-center gap-s-xl h-16">
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`relative flex items-center h-full px-xs text-[15px] font-medium transition-colors hover:text-primary ${
+                                className={`relative flex items-center h-full px-s-xs text-[15px] font-medium transition-colors hover:text-primary ${
                                     isActive ? "text-primary font-bold" : "text-on-surface-variant/70"
                                 }`}
                             >
@@ -78,9 +78,9 @@ const GuideHeader = ({ currentUser }) => {
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                    <div className="absolute right-0 mt-sm w-48 bg-white border border-outline-variant/30 rounded-xl shadow-lg py-sm z-50 animate-fadeIn">
+                    <div className="absolute right-0 mt-s-sm w-48 bg-white border border-outline-variant/30 rounded-xl shadow-lg py-s-sm z-50 animate-fadeIn">
                         {currentUser?.fullName && (
-                            <div className="px-md py-sm border-b border-outline-variant/20 mb-xs">
+                            <div className="px-s-md py-s-sm border-b border-outline-variant/20 mb-s-xs">
                                 <p className="font-semibold text-sm text-on-surface truncate">{currentUser.fullName}</p>
                                 <p className="text-xs text-on-surface-variant/80 truncate">Hướng dẫn viên</p>
                             </div>
@@ -88,7 +88,7 @@ const GuideHeader = ({ currentUser }) => {
                         <Link
                             to="/guides/profile"
                             onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-sm px-md py-sm text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                            className="flex items-center gap-s-sm px-s-md py-s-sm text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
                         >
                             <span className="material-symbols-outlined text-[18px]">person</span>
                             Thông tin cá nhân
@@ -98,7 +98,7 @@ const GuideHeader = ({ currentUser }) => {
                                 setIsDropdownOpen(false);
                                 handleLogout();
                             }}
-                            className="w-full flex items-center gap-sm px-md py-sm text-sm text-error hover:bg-error-container/10 transition-colors text-left"
+                            className="w-full flex items-center gap-s-sm px-s-md py-s-sm text-sm text-error hover:bg-error-container/10 transition-colors text-left"
                         >
                             <span className="material-symbols-outlined text-[18px]">logout</span>
                             Đăng xuất

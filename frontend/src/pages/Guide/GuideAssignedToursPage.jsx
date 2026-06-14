@@ -191,10 +191,10 @@ const GuideAssignedToursPage = () => {
   // ==================== RENDER ====================
 
   return (
-    <main className="flex-grow px-margin-mobile md:px-margin-desktop py-xl max-w-[1440px] mx-auto w-full">
+    <main className="flex-grow px-s-margin-mobile md:px-s-margin-desktop py-s-xl max-w-[1440px] mx-auto w-full">
       {/* Error Alert */}
       {error && (
-        <div className="mb-lg p-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-md">
+        <div className="mb-s-lg p-s-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-s-md">
           <span className="material-symbols-outlined text-error flex-shrink-0 mt-0.5">
             error
           </span>
@@ -211,9 +211,9 @@ const GuideAssignedToursPage = () => {
       )}
 
       {/* Page Title & Stats */}
-      <div className="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
+      <div className="mb-s-xl flex flex-col md:flex-row md:items-end justify-between gap-s-md">
         <div>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
+          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-s-xs">
             Tour đang được phân công
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
@@ -222,7 +222,7 @@ const GuideAssignedToursPage = () => {
         </div>
 
         {/* Stat Cards */}
-        <div className="flex gap-sm">
+        <div className="flex gap-s-sm">
           <GuideStatCard
             icon="tour"
             title="Tổng Tour"

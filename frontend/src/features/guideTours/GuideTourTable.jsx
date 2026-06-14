@@ -19,8 +19,8 @@ import { formatDate, calculatePercentage, getCapacityColor } from '../../utils/g
 // Skeleton Loading Row
 const TourRowSkeleton = () => (
   <tr className="border-b border-outline-variant/10">
-    <td className="px-lg py-lg">
-      <div className="flex items-center gap-md">
+    <td className="px-s-lg py-s-lg">
+      <div className="flex items-center gap-s-md">
         <div className="w-16 h-12 rounded-lg bg-surface-container-low animate-pulse" />
         <div className="flex-1">
           <div className="h-4 bg-surface-container-low rounded animate-pulse mb-2" />
@@ -28,18 +28,18 @@ const TourRowSkeleton = () => (
         </div>
       </div>
     </td>
-    <td className="px-lg py-lg text-center">
+    <td className="px-s-lg py-s-lg text-center">
       <div className="h-4 bg-surface-container-low rounded animate-pulse w-20 mx-auto mb-2" />
       <div className="h-3 bg-surface-container-low rounded w-16 mx-auto animate-pulse" />
     </td>
-    <td className="px-lg py-lg text-center">
+    <td className="px-s-lg py-s-lg text-center">
       <div className="h-6 bg-surface-container-low rounded-full animate-pulse w-24 mx-auto" />
     </td>
-    <td className="px-lg py-lg text-center">
+    <td className="px-s-lg py-s-lg text-center">
       <div className="h-4 bg-surface-container-low rounded animate-pulse w-12 mx-auto mb-2" />
       <div className="h-2 bg-surface-container-low rounded-full w-20 mx-auto animate-pulse" />
     </td>
-    <td className="px-lg py-lg text-right">
+    <td className="px-s-lg py-s-lg text-right">
       <div className="h-8 bg-surface-container-low rounded animate-pulse w-24 ml-auto" />
     </td>
   </tr>
@@ -48,13 +48,13 @@ const TourRowSkeleton = () => (
 // Empty State
 const EmptyState = () => (
   <tr>
-    <td colSpan="5" className="px-lg py-xl text-center">
-      <div className="flex flex-col items-center gap-md py-xl">
+    <td colSpan="5" className="px-s-lg py-s-xl text-center">
+      <div className="flex flex-col items-center gap-s-md py-s-xl">
         <span className="material-symbols-outlined text-6xl text-outline-variant">
           no_data
         </span>
         <div>
-          <h3 className="font-headline-sm text-headline-sm text-on-surface mb-xs">
+          <h3 className="font-headline-sm text-headline-sm text-on-surface mb-s-xs">
             Không có tour nào
           </h3>
           <p className="font-body-sm text-body-sm text-on-surface-variant">
@@ -153,19 +153,19 @@ const GuideTourTable = ({
           {/* Table Head */}
           <thead className="bg-surface-container-low">
             <tr>
-              <th className="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">
+              <th className="px-s-lg py-s-md font-label-md text-label-md text-on-surface-variant uppercase">
                 Tên tour & Điểm đến
               </th>
-              <th className="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
+              <th className="px-s-lg py-s-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
                 Ngày khởi hành
               </th>
-              <th className="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
+              <th className="px-s-lg py-s-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
                 Trạng thái
               </th>
-              <th className="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
+              <th className="px-s-lg py-s-md font-label-md text-label-md text-on-surface-variant uppercase text-center">
                 Số lượng khách
               </th>
-              <th className="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-right">
+              <th className="px-s-lg py-s-md font-label-md text-label-md text-on-surface-variant uppercase text-right">
                 Thao tác
               </th>
             </tr>
@@ -198,8 +198,8 @@ const GuideTourTable = ({
                     className="hover:bg-surface-container-lowest transition-colors group cursor-pointer"
                   >
                     {/* Tour Name & Destination */}
-                    <td className="px-lg py-lg">
-                      <div className="flex items-center gap-md">
+                    <td className="px-s-lg py-s-lg">
+                      <div className="flex items-center gap-s-md">
                         <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
                           <img
                             alt={tour.title}
@@ -214,7 +214,7 @@ const GuideTourTable = ({
                           <p className="font-body-md font-semibold text-on-surface">
                             {tour.title}
                           </p>
-                          <p className="font-body-sm text-on-surface-variant flex items-center gap-xs">
+                          <p className="font-body-sm text-on-surface-variant flex items-center gap-s-xs">
                             <span className="material-symbols-outlined text-[16px]">
                               location_on
                             </span>
@@ -225,7 +225,7 @@ const GuideTourTable = ({
                     </td>
 
                     {/* Departure Date & Time */}
-                    <td className="px-lg py-lg text-center">
+                    <td className="px-s-lg py-s-lg text-center">
                       <p className="font-body-md text-on-surface">
                         {formatDate(tour.departureDate)}
                       </p>
@@ -235,12 +235,12 @@ const GuideTourTable = ({
                     </td>
 
                     {/* Status */}
-                    <td className="px-lg py-lg text-center">
+                    <td className="px-s-lg py-s-lg text-center">
                       <GuideStatusBadge status={tour.status} />
                     </td>
 
                     {/* Participant Count & Progress Bar */}
-                    <td className="px-lg py-lg text-center">
+                    <td className="px-s-lg py-s-lg text-center">
                       <div className="flex flex-col items-center">
                         <p className="font-body-md font-semibold text-on-surface">
                           {tour.registered}/{tour.maxCapacity}
@@ -258,13 +258,13 @@ const GuideTourTable = ({
                     </td>
 
                     {/* Action Button */}
-                    <td className="px-lg py-lg text-right">
+                    <td className="px-s-lg py-s-lg text-right">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onDetailClick?.(tour);
                         }}
-                        className="px-lg py-2 bg-primary-container text-on-primary-container rounded-lg font-label-md hover:bg-primary hover:text-on-primary transition-all duration-200 active:scale-95 shadow-sm"
+                        className="px-s-lg py-2 bg-primary-container text-on-primary-container rounded-lg font-label-md hover:bg-primary hover:text-on-primary transition-all duration-200 active:scale-95 shadow-sm"
                       >
                         Xem chi tiết
                       </button>
@@ -279,12 +279,12 @@ const GuideTourTable = ({
 
       {/* Pagination */}
       {tours.length > 0 && !isLoading && (
-        <div className="px-lg py-md bg-surface-container-low flex flex-col sm:flex-row justify-between items-center gap-md border-t border-outline-variant/20">
+        <div className="px-s-lg py-s-md bg-surface-container-low flex flex-col sm:flex-row justify-between items-center gap-s-md border-t border-outline-variant/20">
           <p className="font-label-md text-label-md text-on-surface-variant">
             Hiển thị {startIndex}-{endIndex} trên {total} tour
           </p>
 
-          <div className="flex items-center gap-sm">
+          <div className="flex items-center gap-s-sm">
             {renderPageButtons()}
           </div>
         </div>

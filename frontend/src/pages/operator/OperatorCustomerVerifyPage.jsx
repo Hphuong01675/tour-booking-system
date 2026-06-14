@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
-// Lấy chi tiết xác thực: GET /api/managers/bookings/{bookingId}/verify
-// Phê duyệt: PUT /api/managers/bookings/{bookingId}/approve
-// Từ chối: PUT /api/managers/bookings/{bookingId}/reject {reason}
+// Lấy chi tiết xác thực: GET /api/operator/bookings/{bookingId}/verify
+// Phê duyệt: PUT /api/operator/bookings/{bookingId}/approve
+// Từ chối: PUT /api/operator/bookings/{bookingId}/reject {reason}
 // Dựa trên: Booking, Participant, User, TourSchedule, Tour, Payment
 // =============================================================
 const FAKE_VERIFICATION_DATA = {
@@ -38,17 +38,17 @@ const FAKE_VERIFICATION_DATA = {
     customerNote: "Gia đình có trẻ em, vui lòng sắp xếp HDV có kinh nghiệm hỗ trợ trẻ nhỏ. Chúng tôi đã hoàn tất tiêm chủng định kỳ.",
 };
 
-const ManagerCustomerVerifyPage = () => {
+const OperatorCustomerVerifyPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [toast, setToast] = useState(null);
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager từ token/session
+        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -57,7 +57,7 @@ const ManagerCustomerVerifyPage = () => {
         fetchProfile();
     }, []);
 
-    // TODO: Fetch verification data by id: GET /api/managers/bookings/{id}/verify
+    // TODO: Fetch verification data by id: GET /api/operator/bookings/{id}/verify
     const data = FAKE_VERIFICATION_DATA;
 
     const showToast = (type) => {
@@ -66,22 +66,22 @@ const ManagerCustomerVerifyPage = () => {
     };
 
     const handleApprove = () => {
-        // TODO: PUT /api/managers/bookings/{id}/approve
+        // TODO: PUT /api/operator/bookings/{id}/approve
         showToast("approve");
     };
 
     const handleReject = () => {
-        // TODO: PUT /api/managers/bookings/{id}/reject
+        // TODO: PUT /api/operator/bookings/{id}/reject
         showToast("reject");
     };
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Header Actions */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-xl gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-s-xl gap-4">
                     <div className="flex flex-col gap-2">
                         <button
                             onClick={() => navigate(-1)}
@@ -116,8 +116,8 @@ const ManagerCustomerVerifyPage = () => {
                     {/* Left Column: Profile & Docs */}
                     <div className="lg:col-span-8 flex flex-col gap-gutter">
                         {/* Customer Profile Section */}
-                        <section className="bg-white p-xl rounded-xl shadow-sm border border-outline-variant/30">
-                            <div className="flex items-center gap-3 mb-lg">
+                        <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
+                            <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">person</span>
                                 <h2 className="text-lg font-semibold text-on-surface">Thông tin khách hàng</h2>
                             </div>
@@ -146,8 +146,8 @@ const ManagerCustomerVerifyPage = () => {
                         </section>
 
                         {/* Document Verification Section */}
-                        <section className="bg-white p-xl rounded-xl shadow-sm border border-outline-variant/30">
-                            <div className="flex justify-between items-center mb-lg">
+                        <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
+                            <div className="flex justify-between items-center mb-s-lg">
                                 <div className="flex items-center gap-3">
                                     <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">id_card</span>
                                     <h2 className="text-lg font-semibold text-on-surface">Giấy tờ định danh</h2>
@@ -157,7 +157,7 @@ const ManagerCustomerVerifyPage = () => {
                                     Pending
                                 </span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                                 {[
                                     { label: "Mặt trước CMND/CCCD", src: data.documents.frontImage },
                                     { label: "Mặt sau CMND/CCCD", src: data.documents.backImage },
@@ -186,7 +186,7 @@ const ManagerCustomerVerifyPage = () => {
                     {/* Right Column: Booking Summary & Companions */}
                     <div className="lg:col-span-4 flex flex-col gap-gutter">
                         {/* Booking Summary Card */}
-                        <div className="bg-primary text-on-primary p-xl rounded-xl shadow-lg relative overflow-hidden">
+                        <div className="bg-primary text-on-primary p-s-xl rounded-xl shadow-lg relative overflow-hidden">
                             <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
                             <h3 className="font-semibold text-lg mb-4">Mã đặt chỗ: {data.bookingCode}</h3>
                             <div className="space-y-4">
@@ -208,8 +208,8 @@ const ManagerCustomerVerifyPage = () => {
                         </div>
 
                         {/* Accompanied Persons */}
-                        <section className="bg-white p-xl rounded-xl shadow-sm border border-outline-variant/30 flex-grow">
-                            <div className="flex items-center gap-3 mb-lg">
+                        <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30 flex-grow">
+                            <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">group</span>
                                 <h2 className="text-lg font-semibold text-on-surface">Người đi cùng</h2>
                             </div>
@@ -265,9 +265,9 @@ const ManagerCustomerVerifyPage = () => {
                 </div>
             )}
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerCustomerVerifyPage;
+export default OperatorCustomerVerifyPage;

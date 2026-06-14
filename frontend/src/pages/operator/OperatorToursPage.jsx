@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
 // Ví dụ: const { data } = await getToursByOperator(currentUser.id);
-// API endpoint gợi ý: GET /api/managers/tours?status=open&page=1
+// API endpoint gợi ý: GET /api/operator/tours?status=open&page=1
 // Dữ liệu dựa trên model: Tour, TourSchedule, TourImage
 // =============================================================
 const FAKE_TOURS = [
@@ -78,7 +78,7 @@ const STATUS_CONFIG = {
 const formatPrice = (p) =>
     p != null ? p.toLocaleString("vi-VN") + "đ" : "TBC";
 
-const ManagerToursPage = () => {
+const OperatorToursPage = () => {
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState("open");
     const [category, setCategory] = useState("all");
@@ -88,10 +88,10 @@ const ManagerToursPage = () => {
     const totalTours = 26;
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager đã đăng nhập từ API/token
+        // TODO: Lấy thông tin operator đã đăng nhập từ API/token
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile in tours page", err);
@@ -102,11 +102,11 @@ const ManagerToursPage = () => {
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Page Header */}
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-xl">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-s-xl">
                     <div>
                         <h1 className="text-2xl font-bold text-on-surface">Quản lý Tour Đang Vận Hành</h1>
                         <p className="text-sm text-on-surface-variant mt-1">
@@ -119,7 +119,7 @@ const ManagerToursPage = () => {
                             Xuất báo cáo
                         </button>
                         <button
-                            onClick={() => navigate("/managers/tours/new")}
+                            onClick={() => navigate("/operator/tours/new")}
                             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary-container text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all shadow-sm"
                         >
                             <span className="material-symbols-outlined text-[18px]">add</span>
@@ -129,7 +129,7 @@ const ManagerToursPage = () => {
                 </div>
 
                 {/* Main Card */}
-                <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden mb-lg">
+                <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden mb-s-lg">
                     {/* Tabs */}
                     <div className="border-b border-outline-variant/30 flex gap-0 overflow-x-auto">
                         {TABS.map((tab) => (
@@ -285,7 +285,7 @@ const ManagerToursPage = () => {
                                     )}
                                     {tour.status === "closed" && (
                                         <button
-                                            onClick={() => navigate("/managers/guides/assign")}
+                                            onClick={() => navigate("/operator/guides/assign")}
                                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition"
                                         >
                                             <span className="material-symbols-outlined text-[14px]">person_add</span>
@@ -294,7 +294,7 @@ const ManagerToursPage = () => {
                                     )}
                                     {tour.status === "draft" && (
                                         <button
-                                            onClick={() => navigate("/managers/tours/new")}
+                                            onClick={() => navigate("/operator/tours/new")}
                                             className="text-primary text-xs font-semibold underline hover:opacity-70 transition"
                                         >
                                             Tiếp tục chỉnh sửa
@@ -348,15 +348,15 @@ const ManagerToursPage = () => {
                 </div>
 
                 {/* Bottom Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-s-lg">
                     {/* Overview Card */}
-                    <div className="lg:col-span-2 bg-primary rounded-xl p-xl text-white relative overflow-hidden">
+                    <div className="lg:col-span-2 bg-primary rounded-xl p-s-xl text-white relative overflow-hidden">
                         <div className="absolute right-0 top-0 w-48 h-48 opacity-10">
                             <span className="material-symbols-outlined text-[180px]">explore</span>
                         </div>
                         <h3 className="font-bold text-lg mb-4">Tổng quan Vận Hành Tháng 10</h3>
-                        {/* TODO: Lấy từ API thống kê - GET /api/managers/stats/monthly */}
-                        <div className="grid grid-cols-3 gap-lg relative z-10">
+                        {/* TODO: Lấy từ API thống kê - GET /api/operator/stats/monthly */}
+                        <div className="grid grid-cols-3 gap-s-lg relative z-10">
                             <div>
                                 <p className="text-xs text-white/70 mb-1">Tổng số khách</p>
                                 <p className="text-3xl font-bold">1,280</p>
@@ -375,9 +375,9 @@ const ManagerToursPage = () => {
                     </div>
 
                     {/* Action Required Card */}
-                    <div className="bg-white rounded-xl border border-outline-variant/30 p-xl shadow-sm">
+                    <div className="bg-white rounded-xl border border-outline-variant/30 p-s-xl shadow-sm">
                         <h3 className="font-semibold text-on-surface mb-4">Yêu cầu cần xử lý</h3>
-                        {/* TODO: Lấy từ API - GET /api/managers/pending-actions */}
+                        {/* TODO: Lấy từ API - GET /api/operator/pending-actions */}
                         <ul className="space-y-3">
                             <li className="flex items-start gap-2 text-sm">
                                 <span className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 flex-shrink-0"></span>
@@ -395,9 +395,9 @@ const ManagerToursPage = () => {
                 </div>
             </main>
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerToursPage;
+export default OperatorToursPage;

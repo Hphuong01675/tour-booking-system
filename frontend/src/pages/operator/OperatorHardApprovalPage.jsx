@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
 // Lấy danh sách tour cấp độ Hard cần duyệt:
-//   GET /api/managers/tours/hard-approval?page={page}&search={q}
+//   GET /api/operator/tours/hard-approval?page={page}&search={q}
 // Dựa trên: Tour (difficulty=hard), TourSchedule, Booking (status=pending_approval), User (customers)
-// Xem chi tiết: GET /api/managers/bookings/{bookingId}/verify
+// Xem chi tiết: GET /api/operator/bookings/{bookingId}/verify
 // =============================================================
 const FAKE_HARD_TOURS = [
     {
@@ -59,7 +59,7 @@ const AVATAR_COLORS = [
     "bg-rose-500", "bg-amber-500", "bg-teal-500",
 ];
 
-const ManagerHardApprovalPage = () => {
+const OperatorHardApprovalPage = () => {
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -68,10 +68,10 @@ const ManagerHardApprovalPage = () => {
     const totalPending = 32;
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager từ token/session
+        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -87,11 +87,11 @@ const ManagerHardApprovalPage = () => {
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Page Header */}
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-xl">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-s-xl">
                     <div>
                         <h1 className="text-2xl font-bold text-on-surface">Danh sách Duyệt Tour (Cấp độ Hard)</h1>
                         <p className="text-sm text-on-surface-variant mt-1">
@@ -110,15 +110,15 @@ const ManagerHardApprovalPage = () => {
                 </div>
 
                 {/* Banner + Stats Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-lg mb-lg">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-s-lg mb-s-lg">
                     {/* Priority Banner */}
-                    <div className="bg-primary rounded-xl p-xl text-white relative overflow-hidden">
+                    <div className="bg-primary rounded-xl p-s-xl text-white relative overflow-hidden">
                         <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full" />
                         <div className="absolute right-8 bottom-0 w-24 h-24 bg-white/5 rounded-full" />
                         <div className="relative z-10">
                             <p className="font-bold text-lg mb-2">Ưu tiên xác minh ngay</p>
                             {/* TODO: Lấy tour sắp khởi hành từ API */}
-                            <p className="text-sm text-white/80 mb-lg leading-relaxed">
+                            <p className="text-sm text-white/80 mb-s-lg leading-relaxed">
                                 Có 12 khách hàng cho tour 'Chinh phục Fansipan' sắp khởi hành
                                 trong 48h tới cần được duyệt giấy tờ ngay lập tức.
                             </p>
@@ -130,9 +130,9 @@ const ManagerHardApprovalPage = () => {
                     </div>
 
                     {/* Performance Card */}
-                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
+                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
                         <p className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant mb-3">Hiệu suất tháng</p>
-                        {/* TODO: GET /api/managers/stats/approval-efficiency */}
+                        {/* TODO: GET /api/operator/stats/approval-efficiency */}
                         <div className="flex items-end gap-2 mb-2">
                             <span className="text-5xl font-bold text-on-surface">94%</span>
                             <span className="text-green-500 font-semibold text-sm mb-2">+2.4%</span>
@@ -145,7 +145,7 @@ const ManagerHardApprovalPage = () => {
 
                 {/* Queue Table */}
                 <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm overflow-hidden">
-                    <div className="p-lg border-b border-outline-variant/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="p-s-lg border-b border-outline-variant/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <h2 className="font-semibold text-on-surface">Danh sách hàng đợi</h2>
                         <div className="relative">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
@@ -160,7 +160,7 @@ const ManagerHardApprovalPage = () => {
                     </div>
 
                     {/* Table Header */}
-                    <div className="grid grid-cols-[2.5fr_1fr_1.5fr_1fr_1fr] gap-4 px-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant tracking-wide">
+                    <div className="grid grid-cols-[2.5fr_1fr_1.5fr_1fr_1fr] gap-4 px-s-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant tracking-wide">
                         <span>Thông tin Tour</span>
                         <span>Ngày khởi hành</span>
                         <span>Khách chờ duyệt</span>
@@ -172,7 +172,7 @@ const ManagerHardApprovalPage = () => {
                         {filtered.map((tour, rowIdx) => (
                             <div
                                 key={tour.id}
-                                className="grid grid-cols-[2.5fr_1fr_1.5fr_1fr_1fr] gap-4 px-lg py-4 items-center hover:bg-surface-container-low/50 transition"
+                                className="grid grid-cols-[2.5fr_1fr_1.5fr_1fr_1fr] gap-4 px-s-lg py-4 items-center hover:bg-surface-container-low/50 transition"
                             >
                                 {/* Tour Info */}
                                 <div className="flex items-center gap-3">
@@ -215,7 +215,7 @@ const ManagerHardApprovalPage = () => {
                                 {/* Action */}
                                 <div className="text-right">
                                     <button
-                                        onClick={() => navigate(`/managers/customers/verify/${tour.id}`)}
+                                        onClick={() => navigate(`/operator/customers/verify/${tour.id}`)}
                                         className="text-primary text-sm font-semibold hover:underline transition"
                                     >
                                         Xem chi tiết
@@ -226,7 +226,7 @@ const ManagerHardApprovalPage = () => {
                     </div>
 
                     {/* Pagination */}
-                    <div className="px-lg py-4 border-t border-outline-variant/20 flex items-center justify-between flex-wrap gap-3">
+                    <div className="px-s-lg py-4 border-t border-outline-variant/20 flex items-center justify-between flex-wrap gap-3">
                         <p className="text-xs text-on-surface-variant">
                             Đang hiển thị {filtered.length} trong tổng số {totalPending} tour yêu cầu xác minh.
                         </p>
@@ -268,9 +268,9 @@ const ManagerHardApprovalPage = () => {
                 </div>
             </main>
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerHardApprovalPage;
+export default OperatorHardApprovalPage;

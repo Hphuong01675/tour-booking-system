@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const ManagerHeader = ({ currentUser }) => {
+const OperatorHeader = ({ currentUser }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const location = useLocation();
@@ -21,37 +21,37 @@ const ManagerHeader = ({ currentUser }) => {
     }, []);
 
     const handleLogout = () => {
-        // Clear manager-related profile from localStorage
-        localStorage.removeItem("managerProfile");
+        // Clear operator-related profile from localStorage
+        localStorage.removeItem("operatorProfile");
         // Redirect to homepage or login success fallback
         navigate("/");
     };
 
     const navItems = [
-        { path: "/managers/tours", label: "Điều hành tour" },
-        { path: "/managers/approvals", label: "Phê duyệt khách hàng" },
-        { path: "/managers/customers/cancel", label: "Quản lý khách hàng" },
+        { path: "/operator/tours", label: "Điều hành tour" },
+        { path: "/operator/approvals", label: "Phê duyệt khách hàng" },
+        { path: "/operator/customers/cancel", label: "Quản lý khách hàng" },
     ];
 
     const avatarUrl = currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop";
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-outline-variant/30 px-margin-mobile md:px-margin-desktop shadow-sm flex items-center justify-between">
+        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-outline-variant/30 px-s-margin-mobile md:px-s-margin-desktop shadow-sm flex items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-xxl">
-                <Link to="/managers/tours" className="text-2xl font-bold text-primary tracking-tight font-headline-lg flex items-center">
+            <div className="flex items-center gap-s-xxl">
+                <Link to="/operator/tours" className="text-2xl font-bold text-primary tracking-tight font-headline-lg flex items-center">
                     Chip3Chip
                 </Link>
-
+ 
                 {/* Desktop Navigation Tabs */}
-                <nav className="hidden md:flex items-center gap-xl h-16">
+                <nav className="hidden md:flex items-center gap-s-xl h-16">
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
-                                className={`relative flex items-center h-full px-xs text-[15px] font-medium transition-colors hover:text-primary ${
+                                className={`relative flex items-center h-full px-s-xs text-[15px] font-medium transition-colors hover:text-primary ${
                                     isActive ? "text-primary font-bold" : "text-on-surface-variant/70"
                                 }`}
                             >
@@ -74,25 +74,25 @@ const ManagerHeader = ({ currentUser }) => {
                 >
                     <img
                         src={avatarUrl}
-                        alt={currentUser?.fullName || "Manager Avatar"}
+                        alt={currentUser?.fullName || "Operator Avatar"}
                         className="w-10 h-10 rounded-full object-cover border border-primary/20 shadow-sm"
                     />
                 </button>
 
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
-                    <div className="absolute right-0 mt-sm w-48 bg-white border border-outline-variant/30 rounded-xl shadow-lg py-sm z-50 animate-fadeIn">
+                    <div className="absolute right-0 mt-s-sm w-48 bg-white border border-outline-variant/30 rounded-xl shadow-lg py-s-sm z-50 animate-fadeIn">
                         {/* Dropdown Header */}
                         {currentUser?.fullName && (
-                            <div className="px-md py-sm border-b border-outline-variant/20 mb-xs">
+                            <div className="px-s-md py-s-sm border-b border-outline-variant/20 mb-s-xs">
                                 <p className="font-semibold text-sm text-on-surface truncate">{currentUser.fullName}</p>
                                 <p className="text-xs text-on-surface-variant/80 truncate">Điều hành</p>
                             </div>
                         )}
                         <Link
-                            to="/managers/profile"
+                            to="/operator/profile"
                             onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-sm px-md py-sm text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
+                            className="flex items-center gap-s-sm px-s-md py-s-sm text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
                         >
                             <span className="material-symbols-outlined text-[18px]">person</span>
                             Thông tin cá nhân
@@ -102,7 +102,7 @@ const ManagerHeader = ({ currentUser }) => {
                                 setIsDropdownOpen(false);
                                 handleLogout();
                             }}
-                            className="w-full flex items-center gap-sm px-md py-sm text-sm text-error hover:bg-error-container/10 transition-colors text-left"
+                            className="w-full flex items-center gap-s-sm px-s-md py-s-sm text-sm text-error hover:bg-error-container/10 transition-colors text-left"
                         >
                             <span className="material-symbols-outlined text-[18px]">logout</span>
                             Đăng xuất
@@ -124,4 +124,4 @@ const ManagerHeader = ({ currentUser }) => {
     );
 };
 
-export default ManagerHeader;
+export default OperatorHeader;

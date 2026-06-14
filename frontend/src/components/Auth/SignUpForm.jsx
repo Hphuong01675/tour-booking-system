@@ -138,7 +138,7 @@ const SignUpForm = ({ onSignUpSuccess }) => {
       </div>
 
       {/* Ngày tháng năm sinh & Số điện thoại */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-s-md">
         <div className="space-y-base">
           <label className="text-label-md font-label-md text-on-surface">Ngày tháng năm sinh</label>
           <div className="relative">
@@ -219,7 +219,7 @@ const SignUpForm = ({ onSignUpSuccess }) => {
       </div>
 
       {/* Mật khẩu & Xác nhận mật khẩu */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-s-md">
         <div className="space-y-base">
           <label className="text-label-md font-label-md text-on-surface">Mật khẩu</label>
           <div className="relative">
@@ -283,7 +283,7 @@ const SignUpForm = ({ onSignUpSuccess }) => {
       </div>
 
       {/* Nút gửi */}
-      <div className="pt-sm">
+      <div className="pt-s-sm">
         <button
           type="submit"
           disabled={loading}
@@ -294,7 +294,7 @@ const SignUpForm = ({ onSignUpSuccess }) => {
       </div>
 
       {/* Điều khoản dịch vụ */}
-      <div className="flex items-start gap-sm">
+      <div className="flex items-start gap-s-sm">
         <input
           type="checkbox"
           id="terms"

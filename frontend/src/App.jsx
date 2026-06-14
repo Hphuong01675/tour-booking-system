@@ -1,42 +1,41 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 // Auth Pages - Login
-import LoginPage from "./pages/Auth/LoginPage";
+import LoginPage from "./pages/auth/LoginPage";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 // Auth Pages - Register
-import RegisterPage from "./pages/Auth/RegisterPage";
-import OTPPage from "./pages/Auth/OTPPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import OTPPage from "./pages/auth/OTPPage";
 
 // Auth Pages - Forgot Password
-import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
-import VerifyOTPPage from "./pages/Auth/VerifyOTPPage";
-import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
 // Guide Pages
-import GuideDashboardPage from "./pages/Guide/GuideDashboardPage";
-import GuideAssignedToursPage from "./pages/Guide/GuideAssignedToursPage";
-import GuideTourDetailPage from "./pages/Guide/GuideTourDetailPage";
-import GuideChatPage from "./pages/Guide/GuideChatPage";
-import GuideProfilePage from "./pages/Guide/GuideProfilePage";
+import GuideDashboardPage from "./pages/guide/GuideDashboardPage";
+import GuideAssignedToursPage from "./pages/guide/GuideAssignedToursPage";
+import GuideTourDetailPage from "./pages/guide/GuideTourDetailPage";
+import GuideChatPage from "./pages/guide/GuideChatPage";
+import GuideProfilePage from "./pages/guide/GuideProfilePage";
 
-// Manager Pages
-import ManagerToursPage from "./pages/manager/ManagerToursPage";
-import ManagerApprovalsPage from "./pages/manager/ManagerApprovalsPage";
-import ManagerProfilePage from "./pages/manager/ManagerProfilePage";
-import ManagerNewTourPage from "./pages/manager/ManagerNewTourPage";
-import ManagerCancelCustomerPage from "./pages/manager/ManagerCancelCustomerPage";
-import ManagerGuideAssignPage from "./pages/manager/ManagerGuideAssignPage";
-import ManagerHardApprovalPage from "./pages/manager/ManagerHardApprovalPage";
-import ManagerCustomerVerifyPage from "./pages/manager/ManagerCustomerVerifyPage";
+// Operator Pages
+import OperatorToursPage from "./pages/operator/OperatorToursPage";
+import OperatorApprovalsPage from "./pages/operator/OperatorApprovalsPage";
+import OperatorProfilePage from "./pages/operator/OperatorProfilePage";
+import OperatorNewTourPage from "./pages/operator/OperatorNewTourPage";
+import OperatorCancelCustomerPage from "./pages/operator/OperatorCancelCustomerPage";
+import OperatorGuideAssignPage from "./pages/operator/OperatorGuideAssignPage";
+import OperatorHardApprovalPage from "./pages/operator/OperatorHardApprovalPage";
+import OperatorCustomerVerifyPage from "./pages/operator/OperatorCustomerVerifyPage";
+import OperatorDashboardPage from "./pages/operator/OperatorDashboardPage";
 
-// Profile Pages
-import CustomerToursPage from "./pages/Customer/CustomerToursPage";
-import CustomerProfilePage from "./pages/Customer/CustomerProfilePage";
-import AdminDashboardPage from "./pages/Admin/AdminDashboardPage";
-import AdminProfilePage from "./pages/Admin/AdminProfilePage";
-import OperatorDashboardPage from "./pages/Operator/OperatorDashboardPage";
-import OperatorProfilePage from "./pages/Operator/OperatorProfilePage";
+// Profile/Dashboard Pages for other roles
+import CustomerToursPage from "./pages/customer/CustomerToursPage";
+import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 
 function App() {
     return (
@@ -157,32 +156,62 @@ function App() {
                 }
             />
 
-            {/* Manager routes */}
-            <Route path="/managers/tours" element={<ManagerToursPage />} />
+            {/* Operator routes */}
             <Route
-                path="/managers/tours/new"
-                element={<ManagerNewTourPage />}
+                path="/operator/tours"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorToursPage />
+                    </ProtectedRoute>
+                }
             />
             <Route
-                path="/managers/approvals"
-                element={<ManagerApprovalsPage />}
+                path="/operator/tours/new"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorNewTourPage />
+                    </ProtectedRoute>
+                }
             />
             <Route
-                path="/managers/approvals/hard"
-                element={<ManagerHardApprovalPage />}
-            />
-            <Route path="/managers/profile" element={<ManagerProfilePage />} />
-            <Route
-                path="/managers/customers/cancel"
-                element={<ManagerCancelCustomerPage />}
-            />
-            <Route
-                path="/managers/customers/verify/:id"
-                element={<ManagerCustomerVerifyPage />}
+                path="/operator/approvals"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorApprovalsPage />
+                    </ProtectedRoute>
+                }
             />
             <Route
-                path="/managers/guides/assign"
-                element={<ManagerGuideAssignPage />}
+                path="/operator/approvals/hard"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorHardApprovalPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/customers/cancel"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorCancelCustomerPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/customers/verify/:id"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorCustomerVerifyPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/guides/assign"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorGuideAssignPage />
+                    </ProtectedRoute>
+                }
             />
 
             {/* Fallback */}

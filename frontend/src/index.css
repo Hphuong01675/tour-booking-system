@@ -67,14 +67,14 @@
   --font-sans: 'Inter', sans-serif;
 
   /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 0.75rem;
-  --spacing-lg: 1rem;
-  --spacing-xl: 1.5rem;
-  --spacing-xxl: 2rem;
-  --spacing-margin-mobile: 1rem;
-  --spacing-margin-desktop: 4rem;
+  --spacing-s-xs: 0.25rem;
+  --spacing-s-sm: 0.5rem;
+  --spacing-s-md: 0.75rem;
+  --spacing-s-lg: 1rem;
+  --spacing-s-xl: 1.5rem;
+  --spacing-s-xxl: 2rem;
+  --spacing-s-margin-mobile: 1rem;
+  --spacing-s-margin-desktop: 4rem;
 }
 
 /* ========================================

@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ManagerHeader from "../../components/manager/ManagerHeader";
-import ManagerFooter from "../../components/manager/ManagerFooter";
-import { getManagerProfile } from "../../api/managerApi";
+import OperatorHeader from "../../components/operator/OperatorHeader";
+import OperatorFooter from "../../components/operator/OperatorFooter";
+import { getOperatorProfile } from "../../api/operatorApi";
 
 // =============================================================
 // TODO: Thay bằng API call khi có login
-// Ví dụ: POST /api/managers/tours — tạo tour mới với operator ID
+// Ví dụ: POST /api/operator/tours — tạo tour mới với operator ID
 // Dữ liệu tương ứng với models: Tour, TourItineraryDay, TourInformation,
 // TourImage, TourSchedule, TourInformationCategory (enums: TOUR_DIFFICULTY, TOUR_STATUS)
 // =============================================================
@@ -39,7 +39,7 @@ const defaultDay = (num) => ({
     locations: [],
 });
 
-const ManagerNewTourPage = () => {
+const OperatorNewTourPage = () => {
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
@@ -65,10 +65,10 @@ const ManagerNewTourPage = () => {
     const [accommodation, setAccommodation] = useState("");
 
     useEffect(() => {
-        // TODO: Lấy thông tin manager từ token/session
+        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
-                const profileData = await getManagerProfile();
+                const profileData = await getOperatorProfile();
                 setUser(profileData);
             } catch (err) {
                 console.error("Failed to load profile", err);
@@ -121,26 +121,26 @@ const ManagerNewTourPage = () => {
     };
 
     const handleSaveDraft = () => {
-        // TODO: POST /api/managers/tours với status: 'draft'
+        // TODO: POST /api/operator/tours với status: 'draft'
         alert("Đã lưu bản nháp! (TODO: Kết nối API)");
     };
     const handleSubmit = () => {
-        // TODO: POST /api/managers/tours với status: 'pending'
+        // TODO: POST /api/operator/tours với status: 'pending'
         alert("Đã gửi duyệt! (TODO: Kết nối API)");
     };
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
-            <ManagerHeader currentUser={user} />
+            <OperatorHeader currentUser={user} />
 
-            <main className="flex-grow pt-20 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-xs text-on-surface-variant mb-4 pt-4">
-                    <button onClick={() => navigate("/managers/tours")} className="hover:text-primary transition">
+                    <button onClick={() => navigate("/operator/tours")} className="hover:text-primary transition">
                         Admin Dashboard
                     </button>
                     <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                    <button onClick={() => navigate("/managers/tours")} className="hover:text-primary transition">
+                    <button onClick={() => navigate("/operator/tours")} className="hover:text-primary transition">
                         Tất cả Tour
                     </button>
                     <span className="material-symbols-outlined text-[14px]">chevron_right</span>
@@ -148,7 +148,7 @@ const ManagerNewTourPage = () => {
                 </nav>
 
                 {/* Header Row */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-xl">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-s-xl">
                     <h1 className="text-2xl font-bold text-on-surface">Thiết kế Hành trình Tour mới</h1>
                     <div className="flex gap-3">
                         <button
@@ -171,8 +171,8 @@ const ManagerNewTourPage = () => {
                     <div className="space-y-lg">
 
                         {/* 1. Thông tin chung */}
-                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
-                            <div className="flex items-center gap-3 mb-lg">
+                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
+                            <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">ℹ</span>
                                 <h2 className="font-semibold text-on-surface text-lg">Thông tin chung</h2>
                             </div>
@@ -303,8 +303,8 @@ const ManagerNewTourPage = () => {
                         </section>
 
                         {/* 2. Điểm nhấn hành trình */}
-                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
-                            <div className="flex items-center justify-between mb-lg">
+                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
+                            <div className="flex items-center justify-between mb-s-lg">
                                 <div className="flex items-center gap-3">
                                     <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
                                         <span className="material-symbols-outlined text-[16px]">star</span>
@@ -341,8 +341,8 @@ const ManagerNewTourPage = () => {
                         </section>
 
                         {/* 3. Lịch trình chi tiết */}
-                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
-                            <div className="flex items-center justify-between mb-lg">
+                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
+                            <div className="flex items-center justify-between mb-s-lg">
                                 <div className="flex items-center gap-3">
                                     <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
                                         <span className="material-symbols-outlined text-[16px]">calendar_today</span>
@@ -429,8 +429,8 @@ const ManagerNewTourPage = () => {
                         </section>
 
                         {/* 4. Chính sách & Giá */}
-                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
-                            <div className="flex items-center gap-3 mb-lg">
+                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
+                            <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
                                     <span className="material-symbols-outlined text-[16px]">payments</span>
                                 </span>
@@ -535,8 +535,8 @@ const ManagerNewTourPage = () => {
                         </section>
 
                         {/* 5. Thông tin bổ sung */}
-                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-xl">
-                            <div className="flex items-center gap-3 mb-lg">
+                        <section className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl">
+                            <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
                                     <span className="material-symbols-outlined text-[16px]">info</span>
                                 </span>
@@ -569,11 +569,11 @@ const ManagerNewTourPage = () => {
 
                     {/* ========== RIGHT PREVIEW COLUMN ========== */}
                     <div className="sticky top-24">
-                        <div className="bg-primary rounded-xl p-xl text-white shadow-lg">
+                        <div className="bg-primary rounded-xl p-s-xl text-white shadow-lg">
                             <p className="text-xs font-medium uppercase tracking-widest opacity-70 mb-1">Xem trước tóm tắt</p>
-                            <p className="text-xs opacity-60 mb-lg">Thông tin tour đang được khởi tạo</p>
+                            <p className="text-xs opacity-60 mb-s-lg">Thông tin tour đang được khởi tạo</p>
 
-                            <div className="space-y-3 mb-lg text-sm">
+                            <div className="space-y-3 mb-s-lg text-sm">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[16px] opacity-70">Trạng thái</span>
                                     <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Đang chỉnh sửa</span>
@@ -631,7 +631,7 @@ const ManagerNewTourPage = () => {
                                 Lưu &amp; Tiếp tục sau
                             </button>
                             <button
-                                onClick={() => navigate("/managers/tours")}
+                                onClick={() => navigate("/operator/tours")}
                                 className="w-full py-3 rounded-xl border border-rose-300 text-rose-500 font-medium text-sm hover:bg-rose-50 transition"
                             >
                                 Hủy bỏ
@@ -641,9 +641,9 @@ const ManagerNewTourPage = () => {
                 </div>
             </main>
 
-            <ManagerFooter />
+            <OperatorFooter />
         </div>
     );
 };
 
-export default ManagerNewTourPage;
+export default OperatorNewTourPage;

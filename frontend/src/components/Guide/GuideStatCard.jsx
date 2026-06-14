@@ -29,12 +29,12 @@ const GuideStatCard = ({
       onClick={onClick}
       className={`
         bg-surface-container-lowest
-        p-md
+        p-s-md
         rounded-xl
         shadow-sm
         border border-outline-variant/30
         flex items-center
-        gap-sm
+        gap-s-sm
         transition-all
         duration-200
         ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-1' : ''}
@@ -68,7 +68,7 @@ const GuideStatCard = ({
         <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
           {title}
         </p>
-        <div className="flex items-baseline gap-xs mt-xs">
+        <div className="flex items-baseline gap-s-xs mt-s-xs">
           <p className="font-headline-sm text-headline-sm text-on-surface font-semibold">
             {value}
           </p>
@@ -79,13 +79,13 @@ const GuideStatCard = ({
               className={`
                 font-label-sm
                 text-label-sm
-                px-xs
+                px-s-xs
                 py-0
                 rounded-full
                 ml-auto
                 flex
                 items-center
-                gap-xs
+                gap-s-xs
                 ${
                   trend.isUp
                     ? 'bg-tertiary-container/20 text-tertiary'

@@ -43,9 +43,9 @@ const GuideFilterGroup = ({
   };
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-md mb-lg flex flex-wrap gap-md items-center shadow-sm border border-outline-variant/10">
+    <div className="bg-surface-container-lowest rounded-xl p-s-md mb-s-lg flex flex-wrap gap-s-md items-center shadow-sm border border-outline-variant/10">
       {/* Filter Label */}
-      <div className="flex items-center gap-xs px-md py-sm bg-surface-container-low rounded-lg border border-outline-variant/20">
+      <div className="flex items-center gap-s-xs px-s-md py-s-sm bg-surface-container-low rounded-lg border border-outline-variant/20">
         <span className="material-symbols-outlined text-body-md">filter_list</span>
         <span className="font-label-md text-label-md">Bộ lọc</span>
       </div>
@@ -61,8 +61,8 @@ const GuideFilterGroup = ({
           rounded-lg
           font-body-sm
           text-body-sm
-          px-md
-          py-sm
+          px-s-md
+          py-s-sm
           focus:ring-primary
           focus:border-primary
           transition-all
@@ -86,8 +86,8 @@ const GuideFilterGroup = ({
           rounded-lg
           font-body-sm
           text-body-sm
-          px-md
-          py-sm
+          px-s-md
+          py-s-sm
           focus:ring-primary
           focus:border-primary
           transition-all
@@ -101,14 +101,14 @@ const GuideFilterGroup = ({
       </select>
 
       {/* Export Report Button */}
-      <div className="ml-auto flex gap-sm">
+      <div className="ml-auto flex gap-s-sm">
         <button
           onClick={handleExportClick}
           disabled={isLoading}
           className={`
-            flex items-center gap-xs
-            px-md
-            py-sm
+            flex items-center gap-s-xs
+            px-s-md
+            py-s-sm
             rounded-lg
             text-primary
             font-label-md
