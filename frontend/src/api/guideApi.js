@@ -17,3 +17,14 @@ export const exportToursReport = async (params) => {
   });
   return response.data;
 };
+
+export const getGuideProfile = async () => {
+  const response = await axiosInstance.get("/api/guides/profile");
+  return response.data;
+};
+
+export const updateGuideProfile = async (profileData) => {
+  const response = await axiosInstance.patch("/api/guides/profile", profileData);
+  return response.data;
+};
+

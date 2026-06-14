@@ -1,16 +1,11 @@
 import { useState, useEffect } from "react";
-import GuideHeader from "../../components/Guide/GuideHeader";
-import GuideFooter from "../../components/Guide/GuideFooter";
-import { getGuideProfile, updateGuideProfile } from "../../api/guideApi";
+import ManagerHeader from "../../components/manager/ManagerHeader";
+import ManagerFooter from "../../components/manager/ManagerFooter";
+import { getManagerProfile, updateManagerProfile, changeManagerPassword } from "../../api/managerApi";
 
-// NOTE: removed hard-coded MOCK_USER. Component will fetch real profile from backend
-// and render empty placeholders when no data is available. This avoids sample data
-// and ensures the UI still renders if API fails.
-
-const GuideProfilePage = () => {
+const ManagerProfilePage = () => {
     // States
     const [user, setUser] = useState(null);
-
     const [activeSection, setActiveSection] = useState("personal"); // 'personal' or 'security'
     const [formData, setFormData] = useState({
         fullName: "",
@@ -21,12 +16,13 @@ const GuideProfilePage = () => {
 
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [profileError, setProfileError] = useState("");
 
-    // Fetch actual profile from backend
+    // Fetch actual manager profile from backend
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const profileData = await getGuideProfile();
+                const profileData = await getManagerProfile();
                 setUser(profileData || null);
 
                 let dob = "";
@@ -43,7 +39,6 @@ const GuideProfilePage = () => {
                 });
             } catch (err) {
                 console.error("Failed to load profile from API", err);
-                // Leave user as null and formData empty so UI shows placeholders
                 setUser(null);
             }
         };
@@ -58,6 +53,7 @@ const GuideProfilePage = () => {
     });
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [changePasswordSuccess, setChangePasswordSuccess] = useState(false);
+    const [securityError, setSecurityError] = useState("");
 
     // Helper date formatting for joining date
     const formatDate = (dateStr) => {
@@ -87,93 +83,90 @@ const GuideProfilePage = () => {
         e.preventDefault();
         setIsSaving(true);
         setSaveSuccess(false);
+        setProfileError("");
 
         try {
-            const updatedUser = await updateGuideProfile({
+            const updatedUser = await updateManagerProfile({
                 fullName: formData.fullName,
                 phone: formData.phone,
                 dateOfBirth: formData.dateOfBirth,
                 address: formData.address,
             });
             setUser(updatedUser);
-            localStorage.setItem("guideProfile", JSON.stringify(updatedUser));
+            localStorage.setItem("managerProfile", JSON.stringify(updatedUser));
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err) {
-            console.error(
-                "Failed to save profile via API, using fallback logic",
-                err,
-            );
-            // Fallback logic
-            const updatedUser = {
-                ...user,
-                fullName: formData.fullName,
-                phone: formData.phone,
-                dateOfBirth: formData.dateOfBirth,
-                address: formData.address,
-            };
-            setUser(updatedUser);
-            localStorage.setItem("guideProfile", JSON.stringify(updatedUser));
-            setSaveSuccess(true);
-            setTimeout(() => setSaveSuccess(false), 3000);
+            console.error("Failed to save profile via API", err);
+            setProfileError(err.response?.data?.error || "Cập nhật thông tin thất bại.");
         } finally {
             setIsSaving(false);
         }
     };
 
     // Submit Password Change
-    const handleSubmitPassword = (e) => {
+    const handleSubmitPassword = async (e) => {
         e.preventDefault();
-        if (securityForm.newPassword !== securityForm.confirmPassword) {
-            alert("Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+        setSecurityError("");
+        setChangePasswordSuccess(false);
+
+        // Client-side validations
+        const { currentPassword, newPassword, confirmPassword } = securityForm;
+
+        if (newPassword.length < 8) {
+            setSecurityError("Mật khẩu mới phải có ít nhất 8 ký tự.");
+            return;
+        }
+
+        const hasUpper = /[A-Z]/.test(newPassword);
+        const hasLower = /[a-z]/.test(newPassword);
+        const hasNumber = /\d/.test(newPassword);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+
+        if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+            setSecurityError("Mật khẩu mới phải bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt.");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setSecurityError("Mật khẩu xác nhận không trùng khớp!");
             return;
         }
 
         setIsChangingPassword(true);
-        setChangePasswordSuccess(false);
 
-        // Simulate API request saving password
-        setTimeout(() => {
-            setIsChangingPassword(false);
+        try {
+            await changeManagerPassword(currentPassword, newPassword);
             setChangePasswordSuccess(true);
             setSecurityForm({
                 currentPassword: "",
                 newPassword: "",
                 confirmPassword: "",
             });
-
-            // Hide success message after 3 seconds
             setTimeout(() => setChangePasswordSuccess(false), 3000);
-        }, 1200);
+        } catch (err) {
+            console.error("Failed to change password", err);
+            setSecurityError(err.response?.data?.error || "Thay đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại.");
+        } finally {
+            setIsChangingPassword(false);
+        }
     };
 
     // Profile picture upload simulation
     const handleAvatarChange = async () => {
         const newAvatar = prompt(
             "Nhập URL ảnh đại diện mới:",
-            user?.avatarUrl || "",
+            user?.avatarUrl || ""
         );
-        if (newAvatar) {
+        if (newAvatar !== null) {
             try {
-                const updatedUser = await updateGuideProfile({
+                const updatedUser = await updateManagerProfile({
                     avatarUrl: newAvatar,
                 });
                 setUser(updatedUser);
-                localStorage.setItem(
-                    "guideProfile",
-                    JSON.stringify(updatedUser),
-                );
+                localStorage.setItem("managerProfile", JSON.stringify(updatedUser));
             } catch (err) {
-                console.error(
-                    "Failed to update avatar via API, using fallback",
-                    err,
-                );
-                const updatedUser = { ...(user || {}), avatarUrl: newAvatar };
-                setUser(updatedUser);
-                localStorage.setItem(
-                    "guideProfile",
-                    JSON.stringify(updatedUser),
-                );
+                console.error("Failed to update avatar via API", err);
             }
         }
     };
@@ -181,18 +174,17 @@ const GuideProfilePage = () => {
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
             {/* TopNavBar Header */}
-            <GuideHeader currentUser={user} />
+            <ManagerHeader currentUser={user} />
 
             {/* Main Content Area */}
-            <main className="flex-grow pt-32 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
+            <main className="flex-grow pt-24 pb-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">
                 {/* Page Title */}
                 <div className="mb-xl">
                     <h2 className="font-headline-lg text-headline-lg text-on-surface">
                         Cài đặt Hồ sơ
                     </h2>
                     <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-                        Quản lý thông tin cá nhân và thiết lập bảo mật tài khoản
-                        của bạn.
+                        Quản lý thông tin cá nhân và thiết lập bảo mật tài khoản của bạn.
                     </p>
                 </div>
 
@@ -207,7 +199,7 @@ const GuideProfilePage = () => {
                                     className="w-full h-full object-cover rounded-xl shadow-md"
                                     src={
                                         user?.avatarUrl ||
-                                        "https://via.placeholder.com/320x320?text=No+Avatar"
+                                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop"
                                     }
                                 />
                                 <button
@@ -225,7 +217,7 @@ const GuideProfilePage = () => {
                                 {user?.fullName || "—"}
                             </h3>
                             <p className="font-body-md text-body-md text-on-surface-variant mb-md">
-                                Hướng dẫn viên du lịch (Guide)
+                                Điều hành Tour Cao cấp (Operator)
                             </p>
 
                             <div className="inline-flex items-center gap-xs px-3 py-1 bg-green-100 text-green-700 rounded-full font-label-md text-label-md">
@@ -281,6 +273,13 @@ const GuideProfilePage = () => {
                                     </h4>
                                 </div>
 
+                                {profileError && (
+                                    <div className="mb-md p-sm bg-error-container text-error rounded-lg text-sm flex items-center gap-xs">
+                                        <span className="material-symbols-outlined">error</span>
+                                        {profileError}
+                                    </div>
+                                )}
+
                                 <form
                                     onSubmit={handleSubmitProfile}
                                     className="space-y-lg"
@@ -320,7 +319,7 @@ const GuideProfilePage = () => {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    value="Hướng dẫn viên chuyên nghiệp"
+                                                    value="Điều hành & Hướng dẫn viên"
                                                     className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-lg text-outline cursor-not-allowed font-body-md text-body-md outline-none"
                                                     disabled
                                                 />
@@ -410,9 +409,7 @@ const GuideProfilePage = () => {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    value={formatDate(
-                                                        user?.createdAt,
-                                                    )}
+                                                    value={formatDate(user?.createdAt)}
                                                     className="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-lg text-outline cursor-not-allowed font-body-md text-body-md outline-none"
                                                     disabled
                                                 />
@@ -450,14 +447,13 @@ const GuideProfilePage = () => {
                                                 <span className="material-symbols-outlined text-[20px]">
                                                     check_circle
                                                 </span>
-                                                Đã cập nhật thông tin thành
-                                                công!
+                                                Đã cập nhật thông tin thành công!
                                             </span>
                                         )}
                                         <button
                                             type="submit"
                                             disabled={isSaving}
-                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-secondary-container text-white font-label-md text-label-md hover:brightness-110 shadow-lg shadow-secondary/20 transition-all active:scale-95 flex items-center justify-center gap-sm"
+                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-secondary-container text-white font-label-md text-label-md hover:brightness-110 shadow-lg shadow-secondary/20 transition-all active:scale-95 flex items-center justify-center gap-sm cursor-pointer"
                                         >
                                             {isSaving ? (
                                                 <>
@@ -489,6 +485,13 @@ const GuideProfilePage = () => {
                                     </h4>
                                 </div>
 
+                                {securityError && (
+                                    <div className="mb-md p-sm bg-error-container text-error rounded-lg text-sm flex items-center gap-xs">
+                                        <span className="material-symbols-outlined">error</span>
+                                        {securityError}
+                                    </div>
+                                )}
+
                                 <form
                                     onSubmit={handleSubmitPassword}
                                     className="space-y-lg"
@@ -508,12 +511,8 @@ const GuideProfilePage = () => {
                                             <input
                                                 id="currentPassword"
                                                 type="password"
-                                                value={
-                                                    securityForm.currentPassword
-                                                }
-                                                onChange={
-                                                    handleSecurityInputChange
-                                                }
+                                                value={securityForm.currentPassword}
+                                                onChange={handleSecurityInputChange}
                                                 className="w-full pl-10 pr-4 py-3 bg-surface border border-outline-variant/50 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-body-md text-body-md transition-all outline-none"
                                                 placeholder="Nhập mật khẩu hiện tại..."
                                                 required
@@ -537,9 +536,7 @@ const GuideProfilePage = () => {
                                                 id="newPassword"
                                                 type="password"
                                                 value={securityForm.newPassword}
-                                                onChange={
-                                                    handleSecurityInputChange
-                                                }
+                                                onChange={handleSecurityInputChange}
                                                 className="w-full pl-10 pr-4 py-3 bg-surface border border-outline-variant/50 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-body-md text-body-md transition-all outline-none"
                                                 placeholder="Nhập mật khẩu mới..."
                                                 required
@@ -562,12 +559,8 @@ const GuideProfilePage = () => {
                                             <input
                                                 id="confirmPassword"
                                                 type="password"
-                                                value={
-                                                    securityForm.confirmPassword
-                                                }
-                                                onChange={
-                                                    handleSecurityInputChange
-                                                }
+                                                value={securityForm.confirmPassword}
+                                                onChange={handleSecurityInputChange}
                                                 className="w-full pl-10 pr-4 py-3 bg-surface border border-outline-variant/50 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-body-md text-body-md transition-all outline-none"
                                                 placeholder="Nhập lại mật khẩu mới..."
                                                 required
@@ -588,7 +581,7 @@ const GuideProfilePage = () => {
                                         <button
                                             type="submit"
                                             disabled={isChangingPassword}
-                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-sm"
+                                            className="w-full sm:w-auto px-xl py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-sm cursor-pointer"
                                         >
                                             {isChangingPassword ? (
                                                 <>
@@ -615,9 +608,9 @@ const GuideProfilePage = () => {
             </main>
 
             {/* Footer component */}
-            <GuideFooter />
+            <ManagerFooter />
         </div>
     );
 };
 
-export default GuideProfilePage;
+export default ManagerProfilePage;

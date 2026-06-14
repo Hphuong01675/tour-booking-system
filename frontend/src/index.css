@@ -65,7 +65,50 @@
 
   /* Font Family */
   --font-sans: 'Inter', sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-xxl: 2rem;
+  --spacing-margin-mobile: 1rem;
+  --spacing-margin-desktop: 4rem;
 }
+
+/* ========================================
+   Typography Utilities
+   ======================================== */
+@utility text-headline-lg {
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+@utility font-headline-lg {
+  font-weight: 700;
+}
+@utility text-headline-sm {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+@utility font-headline-sm {
+  font-weight: 600;
+}
+@utility text-body-md {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+@utility font-body-md {
+  font-weight: 400;
+}
+@utility text-label-md {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+@utility font-label-md {
+  font-weight: 500;
+}
+
 
 /* ========================================
    Base Styles
