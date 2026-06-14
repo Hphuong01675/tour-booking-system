@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import db from './models';
 import authRoutes from './routes/auth.routes';
+import loginRoutes from './routes/login.routes';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Mount authentication routes
 app.use('/', authRoutes);
+app.use('/', loginRoutes);
 
 
 

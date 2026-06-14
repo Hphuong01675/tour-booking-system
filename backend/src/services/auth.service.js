@@ -189,6 +189,10 @@ class AuthService {
     await authRepository.upsertOTP(email, otp);
     await authRepository.resetOtpAttempts(email);
 
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[AUTH SERVICE] Forgot password OTP for ${email}: ${otp}`);
+    }
+
     await mailService.sendForgotPasswordOTPEmail(email, otp);
   }
 
