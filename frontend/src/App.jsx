@@ -30,6 +30,8 @@ import OperatorGuideAssignPage from "./pages/operator/OperatorGuideAssignPage";
 import OperatorHardApprovalPage from "./pages/operator/OperatorHardApprovalPage";
 import OperatorCustomerVerifyPage from "./pages/operator/OperatorCustomerVerifyPage";
 import OperatorDashboardPage from "./pages/operator/OperatorDashboardPage";
+import OperatorTourDetailPage from "./pages/operator/OperatorTourDetailPage";
+import OperatorParticipantsPage from "./pages/operator/OperatorParticipantsPage";
 
 // Profile/Dashboard Pages for other roles
 import CustomerToursPage from "./pages/customer/CustomerToursPage";
@@ -162,6 +164,22 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={["operator"]}>
                         <OperatorToursPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/:id"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorTourDetailPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/:id/participants"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorParticipantsPage />
                     </ProtectedRoute>
                 }
             />

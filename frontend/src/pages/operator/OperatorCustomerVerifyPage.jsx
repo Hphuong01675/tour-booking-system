@@ -2,50 +2,22 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile } from "../../api/operatorApi";
-
-// =============================================================
-// TODO: Thay bằng API call khi có login
-// Lấy chi tiết xác thực: GET /api/operator/bookings/{bookingId}/verify
-// Phê duyệt: PUT /api/operator/bookings/{bookingId}/approve
-// Từ chối: PUT /api/operator/bookings/{bookingId}/reject {reason}
-// Dựa trên: Booking, Participant, User, TourSchedule, Tour, Payment
-// =============================================================
-const FAKE_VERIFICATION_DATA = {
-    bookingCode: "#GE-88291",
-    tourName: "Khám phá Hang Sơn Đoòng - 5N4Đ",
-    customer: {
-        fullName: "Nguyễn Văn Hoàng Anh",
-        dateOfBirth: "12/05/1990",
-        phone: "+84 901 234 567",
-        email: "hoanganh.nguyen@email.com",
-        address: "456 Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh",
-    },
-    booking: {
-        registeredDate: "24/05/2024",
-        totalGuests: "03 người",
-        paymentStatus: "Đã đặt cọc 50%",
-    },
-    documents: {
-        status: "pending",
-        frontImage: "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
-        backImage: "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
-    },
-    companions: [
-        { name: "Trần Thu Thủy", dateOfBirth: "15/09/1992", type: "Người lớn" },
-        { name: "Nguyễn Văn Bình", dateOfBirth: "02/01/2018", type: "Trẻ em" },
-    ],
-    customerNote: "Gia đình có trẻ em, vui lòng sắp xếp HDV có kinh nghiệm hỗ trợ trẻ nhỏ. Chúng tôi đã hoàn tất tiêm chủng định kỳ.",
-};
+import { getOperatorProfile, getBookingVerification, approveBooking, rejectBooking } from "../../api/operatorApi";
 
 const OperatorCustomerVerifyPage = () => {
-    const { id } = useParams();
+    const { id } = useParams(); // bookingId
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
+    
+    // Rejection modal state
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [submittingReject, setSubmittingReject] = useState(false);
 
     useEffect(() => {
-        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
                 const profileData = await getOperatorProfile();
@@ -57,23 +29,85 @@ const OperatorCustomerVerifyPage = () => {
         fetchProfile();
     }, []);
 
-    // TODO: Fetch verification data by id: GET /api/operator/bookings/{id}/verify
-    const data = FAKE_VERIFICATION_DATA;
+    const fetchVerificationData = async () => {
+        setLoading(true);
+        try {
+            const result = await getBookingVerification(id);
+            setData(result);
+        } catch (err) {
+            console.error("Failed to load verification data", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (id) {
+            fetchVerificationData();
+        }
+    }, [id]);
 
     const showToast = (type) => {
         setToast(type);
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handleApprove = () => {
-        // TODO: PUT /api/operator/bookings/{id}/approve
-        showToast("approve");
+    const handleApprove = async () => {
+        if (!window.confirm("Bạn có chắc chắn muốn phê duyệt hồ sơ đặt chỗ này?")) return;
+        try {
+            await approveBooking(id);
+            showToast("approve");
+            fetchVerificationData();
+        } catch (err) {
+            console.error("Failed to approve booking", err);
+            alert("Lỗi khi phê duyệt: " + (err.message || err));
+        }
     };
 
-    const handleReject = () => {
-        // TODO: PUT /api/operator/bookings/{id}/reject
-        showToast("reject");
+    const handleRejectSubmit = async (e) => {
+        e.preventDefault();
+        if (!rejectReason.trim()) {
+            alert("Vui lòng nhập lý do từ chối.");
+            return;
+        }
+        setSubmittingReject(true);
+        try {
+            await rejectBooking(id, rejectReason);
+            setShowRejectModal(false);
+            setRejectReason("");
+            showToast("reject");
+            fetchVerificationData();
+        } catch (err) {
+            console.error("Failed to reject booking", err);
+            alert("Lỗi khi từ chối phê duyệt: " + (err.message || err));
+        } finally {
+            setSubmittingReject(false);
+        }
     };
+
+    if (loading) {
+        return (
+            <div className="bg-background text-on-background min-h-screen flex flex-col">
+                <OperatorHeader currentUser={user} />
+                <main className="flex-grow pt-24 text-center text-sm text-on-surface-variant">
+                    Đang tải thông tin xác thực...
+                </main>
+                <OperatorFooter />
+            </div>
+        );
+    }
+
+    if (!data) {
+        return (
+            <div className="bg-background text-on-background min-h-screen flex flex-col">
+                <OperatorHeader currentUser={user} />
+                <main className="flex-grow pt-24 text-center text-sm text-red-500 font-semibold">
+                    Không tìm thấy thông tin đặt chỗ/xác thực.
+                </main>
+                <OperatorFooter />
+            </div>
+        );
+    }
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -96,20 +130,22 @@ const OperatorCustomerVerifyPage = () => {
                             <span className="font-bold text-on-surface">{data.tourName}</span>
                         </p>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={handleReject}
-                            className="px-6 py-2.5 rounded-lg border border-error text-error text-sm font-semibold hover:bg-error-container/10 transition"
-                        >
-                            Từ chối
-                        </button>
-                        <button
-                            onClick={handleApprove}
-                            className="px-6 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-semibold shadow-sm hover:opacity-90 active:scale-95 transition"
-                        >
-                            Phê duyệt
-                        </button>
-                    </div>
+                    {data.documents.status === "pending" && (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowRejectModal(true)}
+                                className="px-6 py-2.5 rounded-lg border border-error text-error text-sm font-semibold hover:bg-error-container/10 transition"
+                            >
+                                Từ chối
+                            </button>
+                            <button
+                                onClick={handleApprove}
+                                className="px-6 py-2.5 rounded-lg bg-primary text-on-primary text-sm font-semibold shadow-sm hover:opacity-90 active:scale-95 transition"
+                            >
+                                Phê duyệt
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
@@ -152,18 +188,26 @@ const OperatorCustomerVerifyPage = () => {
                                     <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">id_card</span>
                                     <h2 className="text-lg font-semibold text-on-surface">Giấy tờ định danh</h2>
                                 </div>
-                                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">pending</span>
-                                    Pending
+                                <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
+                                    data.documents.status === "pending" ? "bg-amber-100 text-amber-700" :
+                                    data.documents.status === "approved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                }`}>
+                                    <span className="material-symbols-outlined text-[14px]">
+                                        {data.documents.status === "pending" ? "pending" :
+                                         data.documents.status === "approved" ? "check_circle" : "cancel"}
+                                    </span>
+                                    {data.documents.status === "pending" ? "Chờ duyệt" :
+                                     data.documents.status === "approved" ? "Đã duyệt" : "Đã từ chối"}
                                 </span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
                                 {[
-                                    { label: "Mặt trước CMND/CCCD", src: data.documents.frontImage },
-                                    { label: "Mặt sau CMND/CCCD", src: data.documents.backImage },
+                                    { label: "Mặt trước CMND/CCCD/Hộ chiếu", src: data.documents.frontImage },
+                                    { label: "Mặt sau CMND/CCCD/Hộ chiếu", src: data.documents.backImage },
                                 ].map((doc) => (
                                     <div
                                         key={doc.label}
+                                        onClick={() => window.open(doc.src, "_blank")}
                                         className="group relative overflow-hidden rounded-xl border-2 border-dashed border-outline-variant aspect-video flex flex-col items-center justify-center bg-surface-container-low hover:border-primary transition-colors cursor-pointer"
                                     >
                                         <img
@@ -200,7 +244,7 @@ const OperatorCustomerVerifyPage = () => {
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-semibold opacity-80">Trạng thái thanh toán</span>
-                                    <span className="px-2 py-0.5 rounded bg-teal-400/30 text-teal-100 text-xs font-semibold">
+                                    <span className="px-2 py-0.5 rounded bg-teal-400/30 text-teal-100 text-xs font-semibold font-mono">
                                         {data.booking.paymentStatus}
                                     </span>
                                 </div>
@@ -213,35 +257,39 @@ const OperatorCustomerVerifyPage = () => {
                                 <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">group</span>
                                 <h2 className="text-lg font-semibold text-on-surface">Người đi cùng</h2>
                             </div>
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="border-b border-outline-variant/30">
-                                        <th className="pb-3 text-xs font-semibold uppercase text-outline">Họ tên</th>
-                                        <th className="pb-3 text-xs font-semibold uppercase text-outline text-center">Loại</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-outline-variant/20">
-                                    {data.companions.map((c) => (
-                                        <tr key={c.name}>
-                                            <td className="py-4">
-                                                <p className="text-sm font-semibold text-on-surface">{c.name}</p>
-                                                <p className="text-xs text-on-surface-variant">{c.dateOfBirth}</p>
-                                            </td>
-                                            <td className="py-4 text-center">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    c.type === "Người lớn"
-                                                        ? "bg-surface-container-high text-on-surface-variant"
-                                                        : "bg-primary-fixed text-on-primary-fixed"
-                                                }`}>
-                                                    {c.type}
-                                                </span>
-                                            </td>
+                            {data.companions.length === 0 ? (
+                                <p className="text-xs italic text-on-surface-variant">Không có người đi cùng.</p>
+                            ) : (
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="border-b border-outline-variant/30">
+                                            <th className="pb-3 text-xs font-semibold uppercase text-outline">Họ tên</th>
+                                            <th className="pb-3 text-xs font-semibold uppercase text-outline text-center">Loại</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-outline-variant/20">
+                                        {data.companions.map((c, idx) => (
+                                            <tr key={idx}>
+                                                <td className="py-4">
+                                                    <p className="text-sm font-semibold text-on-surface">{c.name}</p>
+                                                    <p className="text-xs text-on-surface-variant">{c.dateOfBirth}</p>
+                                                </td>
+                                                <td className="py-4 text-center">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                        c.type === "Người lớn"
+                                                            ? "bg-surface-container-high text-on-surface-variant"
+                                                            : "bg-primary-fixed text-on-primary-fixed"
+                                                    }`}>
+                                                        {c.type}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                             <div className="mt-6 p-4 bg-surface-container-low rounded-lg">
-                                <p className="text-xs text-on-surface-variant mb-2 font-medium">Ghi chú từ khách hàng:</p>
+                                <p className="text-xs text-on-surface-variant mb-2 font-medium">Ghi chú / Lý do hủy:</p>
                                 <p className="text-xs italic text-on-surface-variant leading-relaxed">
                                     "{data.customerNote}"
                                 </p>
@@ -250,6 +298,48 @@ const OperatorCustomerVerifyPage = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Rejection Modal */}
+            {showRejectModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeIn">
+                        <div className="p-6 border-b border-outline-variant/20">
+                            <h3 className="font-bold text-lg text-on-surface">Lý do từ chối hồ sơ</h3>
+                            <p className="text-xs text-on-surface-variant mt-1">
+                                Vui lòng cho biết lý do từ chối hồ sơ đặt chỗ này của khách hàng.
+                            </p>
+                        </div>
+                        <form onSubmit={handleRejectSubmit}>
+                            <div className="p-6">
+                                <textarea
+                                    required
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Ví dụ: Ảnh CCCD bị mờ, không khớp thông tin đăng ký..."
+                                    rows={4}
+                                    className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                                />
+                            </div>
+                            <div className="p-6 bg-surface-container-low flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
+                                    className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface transition"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingReject}
+                                    className="px-5 py-2 rounded-lg bg-error text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                >
+                                    {submittingReject ? "Đang xử lý..." : "Xác nhận từ chối"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Toast */}
             {toast && (

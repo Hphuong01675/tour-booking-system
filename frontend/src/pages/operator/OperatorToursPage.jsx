@@ -2,64 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile } from "../../api/operatorApi";
-
-// =============================================================
-// TODO: Thay bằng API call khi có login
-// Ví dụ: const { data } = await getToursByOperator(currentUser.id);
-// API endpoint gợi ý: GET /api/operator/tours?status=open&page=1
-// Dữ liệu dựa trên model: Tour, TourSchedule, TourImage
-// =============================================================
-const FAKE_TOURS = [
-    {
-        id: "1",
-        code: "HL-2024-001",
-        title: "Vẻ đẹp Vịnh Hạ Long 2N1Đ",
-        thumbnail: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=120&h=80&fit=crop",
-        openDate: "01/10/2023",
-        closeDate: "30/10/2023",
-        status: "open",
-        price: 3500000,
-        difficulty: "normal",
-    },
-    {
-        id: "2",
-        code: "SP-2024-042",
-        title: "Khám phá Sapa Mùa Lúa Chín",
-        thumbnail: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=120&h=80&fit=crop",
-        openDate: null,
-        closeDate: null,
-        status: "pending",
-        approvalProgress: 85,
-        price: 2800000,
-        difficulty: "normal",
-    },
-    {
-        id: "3",
-        code: "HU-2024-015",
-        title: "Cố đô Huế - Vang bóng một thời",
-        thumbnail: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=120&h=80&fit=crop",
-        openDate: "15/09/2023",
-        closeDate: "01/10/2023",
-        status: "closed",
-        price: 1950000,
-        difficulty: "normal",
-    },
-    {
-        id: "4",
-        code: null,
-        title: "Tour Đà Lạt: Sân Mây Đại Ngàn",
-        thumbnail: null,
-        openDate: null,
-        closeDate: null,
-        status: "draft",
-        draftNumber: "4421",
-        price: null,
-        difficulty: "normal",
-    },
-];
+import { getOperatorProfile, getOperatorTours, updateOperatorTour } from "../../api/operatorApi";
 
 const TABS = [
+    { key: "all", label: "Tất cả" },
     { key: "open", label: "Đang đăng ký" },
     { key: "pending", label: "Chờ duyệt" },
     { key: "upcoming", label: "Chưa mở" },
@@ -73,22 +19,32 @@ const STATUS_CONFIG = {
     upcoming: { label: "Chưa mở", classes: "bg-gray-100 text-gray-600" },
     closed: { label: "Đã đóng", classes: "bg-rose-100 text-rose-600" },
     draft: { label: "Bản nháp", classes: "bg-gray-100 text-gray-500" },
+    cancelled: { label: "Đã hủy", classes: "bg-red-100 text-red-600" },
 };
 
 const formatPrice = (p) =>
-    p != null ? p.toLocaleString("vi-VN") + "đ" : "TBC";
+    p != null ? parseFloat(p).toLocaleString("vi-VN") + "đ" : "TBC";
 
 const OperatorToursPage = () => {
     const [user, setUser] = useState(null);
-    const [activeTab, setActiveTab] = useState("open");
+    const [activeTab, setActiveTab] = useState("all");
     const [category, setCategory] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [departureDate, setDepartureDate] = useState("");
+    
+    // Áp dụng khi bấm nút lọc
+    const [searchVal, setSearchVal] = useState("");
+    const [dateVal, setDateVal] = useState("");
+
     const [currentPage, setCurrentPage] = useState(1);
+    const [tours, setTours] = useState([]);
+    const [totalTours, setTotalTours] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
-    const totalPages = 7;
-    const totalTours = 26;
 
     useEffect(() => {
-        // TODO: Lấy thông tin operator đã đăng nhập từ API/token
         const fetchProfile = async () => {
             try {
                 const profileData = await getOperatorProfile();
@@ -99,6 +55,68 @@ const OperatorToursPage = () => {
         };
         fetchProfile();
     }, []);
+
+    const fetchTours = async () => {
+        setLoading(true);
+        try {
+            const data = await getOperatorTours({
+                status: activeTab,
+                difficulty: category,
+                search: searchVal,
+                departureDate: dateVal,
+                page: currentPage,
+                limit: 5
+            });
+            setTours(data.tours || []);
+            setTotalTours(data.totalTours || 0);
+            setTotalPages(data.totalPages || 1);
+        } catch (err) {
+            console.error("Failed to fetch tours", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTours();
+    }, [activeTab, category, searchVal, dateVal, currentPage]);
+
+    const handleApplyFilters = () => {
+        setSearchVal(searchQuery);
+        setDateVal(departureDate);
+        setCurrentPage(1);
+    };
+
+    const handleResetFilters = () => {
+        setSearchQuery("");
+        setDepartureDate("");
+        setCategory("all");
+        setSearchVal("");
+        setDateVal("");
+        setCurrentPage(1);
+    };
+
+    const handleTabChange = (tabKey) => {
+        setActiveTab(tabKey);
+        setCurrentPage(1);
+    };
+
+    const handleCloseRegistration = async (tourId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn đóng đăng ký cho tour này không?")) {
+            return;
+        }
+        setLoading(true);
+        try {
+            await updateOperatorTour(tourId, { status: "closed" });
+            alert("Đã đóng đăng ký tour thành công!");
+            fetchTours();
+        } catch (err) {
+            console.error("Failed to close registration", err);
+            alert(err.response?.data?.error || err.message || "Lỗi khi đóng đăng ký.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="bg-background text-on-background min-h-screen flex flex-col">
@@ -135,7 +153,7 @@ const OperatorToursPage = () => {
                         {TABS.map((tab) => (
                             <button
                                 key={tab.key}
-                                onClick={() => setActiveTab(tab.key)}
+                                onClick={() => handleTabChange(tab.key)}
                                 className={`px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                                     activeTab === tab.key
                                         ? "border-primary text-primary font-semibold"
@@ -147,16 +165,21 @@ const OperatorToursPage = () => {
                         ))}
                     </div>
 
-                    {/* Filter Row */}
-                    <div className="p-5 border-b border-outline-variant/20 flex flex-wrap gap-3 items-center">
+                    {/* Filter Row - Balanced Aligned items-end */}
+                    <div className="p-5 border-b border-outline-variant/20 flex flex-wrap gap-3 items-end">
                         {/* Search */}
-                        <div className="relative flex-1 min-w-[180px]">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm tour..."
-                                className="pl-9 pr-4 py-2 w-full rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
+                        <div className="flex flex-col flex-1 min-w-[200px]">
+                            <label className="text-xs text-on-surface-variant mb-1">Từ khóa</label>
+                            <div className="relative">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Tìm kiếm tiêu đề hoặc mã tour..."
+                                    className="pl-9 pr-4 py-2 w-full rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                />
+                            </div>
                         </div>
                         {/* Category filter */}
                         <div className="flex flex-col">
@@ -164,7 +187,7 @@ const OperatorToursPage = () => {
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
-                                className="px-3 py-2 rounded-lg border border-outline-variant text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[160px]"
+                                className="px-3 py-2 rounded-lg border border-outline-variant text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[160px] h-[38px]"
                             >
                                 <option value="all">Tất cả danh mục</option>
                                 <option value="normal">Thông thường</option>
@@ -173,17 +196,24 @@ const OperatorToursPage = () => {
                         </div>
                         {/* Date filter */}
                         <div className="flex flex-col">
-                            <label className="text-xs text-on-surface-variant mb-1">Ngày khởi hành</label>
+                            <label className="text-xs text-on-surface-variant mb-1">Ngày khởi hành (từ ngày)</label>
                             <input
                                 type="date"
-                                className="px-3 py-2 rounded-lg border border-outline-variant text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[160px]"
-                                placeholder="Chọn khoảng ngày"
+                                value={departureDate}
+                                onChange={(e) => setDepartureDate(e.target.value)}
+                                className="px-3 py-2 rounded-lg border border-outline-variant text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 min-w-[160px] h-[38px]"
                             />
                         </div>
-                        <button className="self-end px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition">
+                        <button
+                            onClick={handleApplyFilters}
+                            className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition h-[38px]"
+                        >
                             Áp dụng lọc
                         </button>
-                        <button className="self-end px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition">
+                        <button
+                            onClick={handleResetFilters}
+                            className="px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface transition h-[38px]"
+                        >
                             Đặt lại
                         </button>
                     </div>
@@ -191,133 +221,142 @@ const OperatorToursPage = () => {
                     {/* Table Header */}
                     <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4 px-6 py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant tracking-wide">
                         <span>Thông tin Tour</span>
-                        <span>Thời gian đăng ký</span>
+                        <span>Lịch trình tour</span>
                         <span>Trạng thái</span>
-                        <span>Giá Tour</span>
+                        <span>Giá khởi điểm</span>
                         <span className="text-right">Thao tác</span>
                     </div>
 
                     {/* Tour Rows */}
                     <div className="divide-y divide-outline-variant/20">
-                        {FAKE_TOURS.map((tour) => (
-                            <div
-                                key={tour.id}
-                                className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-surface-container-low/50 transition-colors"
-                            >
-                                {/* Tour Info */}
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-16 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-                                        {tour.thumbnail ? (
-                                            <img src={tour.thumbnail} alt={tour.title} className="w-full h-full object-cover" />
+                        {loading ? (
+                            <div className="text-center py-12 text-sm text-on-surface-variant">
+                                Đang tải danh sách tour...
+                            </div>
+                        ) : tours.length === 0 ? (
+                            <div className="text-center py-12 text-sm text-on-surface-variant">
+                                Không tìm thấy tour nào phù hợp.
+                            </div>
+                        ) : (
+                            tours.map((tour) => (
+                                <div
+                                    key={tour.id}
+                                    className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4 px-6 py-4 items-center hover:bg-surface-container-low/50 transition-colors"
+                                >
+                                    {/* Tour Info */}
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-16 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+                                            {tour.thumbnailUrl ? (
+                                                <img src={tour.thumbnailUrl} alt={tour.title} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-outline-variant text-[20px]">image</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p
+                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                className="font-semibold text-sm text-primary hover:underline cursor-pointer truncate"
+                                            >
+                                                {tour.title}
+                                            </p>
+                                            <p className="text-xs text-on-surface-variant mt-0.5">
+                                                Mã: {tour.tourCode} | {tour.difficulty === "hard" ? "Cấp độ Hard" : "Thông thường"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Time */}
+                                    <div className="text-sm">
+                                        {tour.schedules && tour.schedules.length > 0 ? (
+                                            <>
+                                                <p className="flex items-center gap-1 text-on-surface-variant">
+                                                    <span className="material-symbols-outlined text-[14px]">login</span>
+                                                    Đi: {new Date(tour.schedules[0].departureDate).toLocaleDateString("vi-VN")}
+                                                </p>
+                                                <p className="flex items-center gap-1 text-rose-500 mt-0.5">
+                                                    <span className="material-symbols-outlined text-[14px]">logout</span>
+                                                    Về: {new Date(tour.schedules[0].returnDate).toLocaleDateString("vi-VN")}
+                                                </p>
+                                            </>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-outline-variant text-[20px]">image</span>
-                                            </div>
+                                            <p className="text-on-surface-variant/60 italic">Chưa lập lịch trình</p>
                                         )}
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="font-semibold text-sm text-on-surface truncate">{tour.title}</p>
-                                        <p className="text-xs text-on-surface-variant mt-0.5">
-                                            {tour.code ? `Mã: ${tour.code}` : `Bản nháp #${tour.draftNumber}`}
-                                        </p>
+
+                                    {/* Status */}
+                                    <div className="flex flex-col gap-1">
+                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold w-fit ${STATUS_CONFIG[tour.status]?.classes}`}>
+                                            {STATUS_CONFIG[tour.status]?.label}
+                                        </span>
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="font-medium text-sm text-on-surface">
+                                        {formatPrice(tour.basePrice)}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex justify-end">
+                                        {tour.status === "open" && (
+                                            <button
+                                                onClick={() => handleCloseRegistration(tour.id)}
+                                                className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition"
+                                            >
+                                                Đóng đăng ký
+                                            </button>
+                                        )}
+                                        {tour.status === "pending" && (
+                                            <button
+                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                className="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant transition"
+                                                title="Xem chi tiết"
+                                            >
+                                                <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                            </button>
+                                        )}
+                                        {tour.status === "closed" && (
+                                            <button
+                                                onClick={() => {
+                                                    const schId = tour.schedules?.[0]?.id;
+                                                    if (schId) navigate(`/operator/guides/assign?scheduleId=${schId}`);
+                                                    else alert("Không có lịch trình khả dụng của tour này để phân công.");
+                                                }}
+                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">person_add</span>
+                                                Giao cho HDV
+                                            </button>
+                                        )}
+                                        {tour.status === "draft" && (
+                                            <button
+                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                className="text-primary text-xs font-semibold underline hover:opacity-70 transition"
+                                            >
+                                                Tiếp tục chỉnh sửa
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
-
-                                {/* Time */}
-                                <div className="text-sm">
-                                    {tour.openDate ? (
-                                        <>
-                                            <p className="flex items-center gap-1 text-on-surface-variant">
-                                                <span className="material-symbols-outlined text-[14px]">login</span>
-                                                Mở: {tour.openDate}
-                                            </p>
-                                            <p className="flex items-center gap-1 text-rose-500 mt-0.5">
-                                                <span className="material-symbols-outlined text-[14px]">logout</span>
-                                                Đóng: {tour.closeDate}
-                                            </p>
-                                        </>
-                                    ) : tour.status === "pending" ? (
-                                        <>
-                                            <p className="text-on-surface-variant">Mở: -/-/----</p>
-                                            <p className="text-xs text-on-surface-variant/70 italic mt-0.5">Đang chờ xét duyệt</p>
-                                        </>
-                                    ) : (
-                                        <p className="text-on-surface-variant/60 italic">Chưa thiết lập</p>
-                                    )}
-                                </div>
-
-                                {/* Status */}
-                                <div className="flex flex-col gap-1">
-                                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold w-fit ${STATUS_CONFIG[tour.status]?.classes}`}>
-                                        {STATUS_CONFIG[tour.status]?.label}
-                                    </span>
-                                    {tour.status === "pending" && tour.approvalProgress && (
-                                        <div className="flex items-center gap-1">
-                                            <div className="flex-1 h-1 bg-amber-100 rounded-full">
-                                                <div
-                                                    className="h-1 bg-amber-400 rounded-full"
-                                                    style={{ width: `${tour.approvalProgress}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-[10px] text-amber-600 font-medium">
-                                                Đang duyệt: {tour.approvalProgress}%
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Price */}
-                                <div className="font-medium text-sm text-on-surface">
-                                    {formatPrice(tour.price)}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex justify-end">
-                                    {tour.status === "open" && (
-                                        <button className="px-3 py-1.5 rounded-lg bg-rose-500 text-white text-xs font-semibold hover:bg-rose-600 transition">
-                                            Đóng đăng ký
-                                        </button>
-                                    )}
-                                    {tour.status === "pending" && (
-                                        <button className="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant transition">
-                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                        </button>
-                                    )}
-                                    {tour.status === "closed" && (
-                                        <button
-                                            onClick={() => navigate("/operator/guides/assign")}
-                                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition"
-                                        >
-                                            <span className="material-symbols-outlined text-[14px]">person_add</span>
-                                            Giao cho HDV
-                                        </button>
-                                    )}
-                                    {tour.status === "draft" && (
-                                        <button
-                                            onClick={() => navigate("/operator/tours/new")}
-                                            className="text-primary text-xs font-semibold underline hover:opacity-70 transition"
-                                        >
-                                            Tiếp tục chỉnh sửa
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
 
                     {/* Pagination */}
                     <div className="px-6 py-4 border-t border-outline-variant/20 flex items-center justify-between flex-wrap gap-3">
                         <p className="text-xs text-on-surface-variant">
-                            Hiển thị 1 - {FAKE_TOURS.length} của {totalTours} tours
+                            Hiển thị {(currentPage - 1) * 5 + 1} - {Math.min(currentPage * 5, totalTours)} của {totalTours} tours
                         </p>
                         <div className="flex items-center gap-1">
                             <button
+                                disabled={currentPage === 1}
                                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low transition"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low transition disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                             </button>
-                            {[1, 2, 3].map((p) => (
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                                 <button
                                     key={p}
                                     onClick={() => setCurrentPage(p)}
@@ -330,16 +369,10 @@ const OperatorToursPage = () => {
                                     {p}
                                 </button>
                             ))}
-                            <span className="w-8 h-8 flex items-center justify-center text-on-surface-variant text-sm">...</span>
                             <button
-                                onClick={() => setCurrentPage(totalPages)}
-                                className={`w-8 h-8 text-sm rounded-lg border border-outline-variant hover:bg-surface-container-low text-on-surface-variant transition`}
-                            >
-                                {totalPages}
-                            </button>
-                            <button
+                                disabled={currentPage === totalPages}
                                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low transition"
+                                className="w-8 h-8 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container-low transition disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                             </button>

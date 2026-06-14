@@ -1,103 +1,336 @@
 // Path: backend/src/controllers/operator/operator.controller.js
 "use strict";
 
-const bcrypt = require("bcryptjs");
-const db = require("../../models");
-const { User } = db;
+import operatorService from "../../services/operator.service";
 
 class OperatorController {
     /**
-     * Lấy thông tin cá nhân của operator (operator-1)
+     * Lấy thông tin cá nhân của operator đang đăng nhập
      */
     async getProfile(req, res) {
         try {
-            const operator = await User.findByPk("operator-1");
-            if (!operator) {
-                return res.status(404).json({ error: "Operator not found" });
-            }
+            const operator = await operatorService.getProfile(req.user.id);
             res.json(operator);
         } catch (err) {
+            if (err.message === "OPERATOR_NOT_FOUND") {
+                return res.status(404).json({ error: "Operator not found" });
+            }
             res.status(500).json({ error: err.message });
         }
     }
 
     /**
-     * Cập nhật thông tin cá nhân của operator (operator-1)
+     * Cập nhật thông tin cá nhân của operator
      */
     async updateProfile(req, res) {
         try {
-            const { fullName, phone, dateOfBirth, address, avatarUrl } = req.body;
-            const operator = await User.findByPk("operator-1");
-            if (!operator) {
-                return res.status(404).json({ error: "Operator not found" });
-            }
-
-            if (fullName !== undefined) operator.fullName = fullName;
-            if (phone !== undefined) operator.phone = phone;
-            if (dateOfBirth !== undefined) {
-                operator.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
-            }
-            if (address !== undefined) operator.address = address;
-            if (avatarUrl !== undefined) operator.avatarUrl = avatarUrl;
-
-            await operator.save();
+            const operator = await operatorService.updateProfile(req.user.id, req.body);
             res.json(operator);
         } catch (err) {
+            if (err.message === "OPERATOR_NOT_FOUND") {
+                return res.status(404).json({ error: "Operator not found" });
+            }
             res.status(500).json({ error: err.message });
         }
     }
 
     /**
-     * Thay đổi mật khẩu của operator (operator-1)
+     * Thay đổi mật khẩu của operator
      */
     async changePassword(req, res) {
         try {
             const { currentPassword, newPassword } = req.body;
-            if (!currentPassword || !newPassword) {
+            await operatorService.changePassword(req.user.id, currentPassword, newPassword);
+            res.json({ success: true, message: "Đổi mật khẩu thành công!" });
+        } catch (err) {
+            if (err.message === "PASSWORD_REQUIRED") {
                 return res.status(400).json({ error: "Mật khẩu hiện tại và mật khẩu mới là bắt buộc." });
             }
-
-            const operator = await User.findByPk("operator-1");
-            if (!operator) {
+            if (err.message === "OPERATOR_NOT_FOUND") {
                 return res.status(404).json({ error: "Operator not found" });
             }
-
-            // Kiểm tra mật khẩu hiện tại
-            let isMatch = await bcrypt.compare(currentPassword, operator.passwordHash);
-            if (!isMatch && currentPassword === operator.passwordHash) {
-                isMatch = true;
-            }
-
-            if (!isMatch) {
+            if (err.message === "INVALID_CURRENT_PASSWORD") {
                 return res.status(400).json({ error: "Mật khẩu hiện tại không chính xác." });
             }
-
-            // Kiểm tra các ràng buộc mật khẩu mới (8 ký tự, chữ hoa, chữ thường, số, ký tự đặc biệt)
-            const hasUpper = /[A-Z]/.test(newPassword);
-            const hasLower = /[a-z]/.test(newPassword);
-            const hasNumber = /\d/.test(newPassword);
-            const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
-
-            if (newPassword.length < 8) {
+            if (err.message === "PASSWORD_MIN_LENGTH") {
                 return res.status(400).json({ error: "Mật khẩu phải có ít nhất 8 ký tự." });
             }
-            if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+            if (err.message === "PASSWORD_STRENGTH_FAILED") {
                 return res.status(400).json({
                     error: "Mật khẩu phải bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt."
                 });
             }
+            res.status(500).json({ error: err.message });
+        }
+    }
 
-            // Mã hóa mật khẩu mới và lưu
-            const salt = await bcrypt.genSalt(10);
-            const passwordHash = await bcrypt.hash(newPassword, salt);
-            operator.passwordHash = passwordHash;
-            await operator.save();
+    /**
+     * GET /api/operator/tours
+     * Lấy danh sách tour kèm tìm kiếm, bộ lọc tab, difficulty, và phân trang
+     */
+    async getTours(req, res) {
+        try {
+            const result = await operatorService.getTours(req.user.id, req.query);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    }
 
-            res.json({ success: true, message: "Đổi mật khẩu thành công!" });
+    /**
+     * GET /api/operator/tours/:id
+     * Chi tiết một tour cùng các bảng liên quan
+     */
+    async getTourDetail(req, res) {
+        try {
+            const { id } = req.params;
+            const tour = await operatorService.getTourDetail(id, req.user.id);
+            res.json(tour);
+        } catch (err) {
+            if (err.message === "TOUR_NOT_FOUND") {
+                return res.status(404).json({ error: "Tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * PATCH /api/operator/tours/:id
+     * Cập nhật thông tin tour / Chuyển trạng thái tour
+     */
+    async updateTour(req, res) {
+        try {
+            const { id } = req.params;
+            const tour = await operatorService.updateTour(id, req.user.id, req.body);
+            res.json({ success: true, message: "Cập nhật tour thành công!", tour });
+        } catch (err) {
+            if (err.message === "TOUR_NOT_FOUND") {
+                return res.status(404).json({ error: "Tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            if (err.message === "INVALID_STATUS_TRANSITION") {
+                return res.status(400).json({ error: "Chuyển trạng thái không hợp lệ." });
+            }
+            if (err.message === "ONLY_DRAFT_CAN_BE_UPDATED") {
+                return res.status(400).json({ error: "Chỉ cho phép cập nhật thông tin đối với các Tour có trạng thái Bản nháp (draft)." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/tour-schedules/:scheduleId
+     * Lấy chi tiết lịch trình tour
+     */
+    async getScheduleDetail(req, res) {
+        try {
+            const { scheduleId } = req.params;
+            const schedule = await operatorService.getScheduleDetail(scheduleId, req.user.id);
+            res.json(schedule);
+        } catch (err) {
+            if (err.message === "SCHEDULE_NOT_FOUND") {
+                return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/guides/available
+     * Danh sách hướng dẫn viên, kiểm tra bận/rảnh và sắp xếp rảnh lên trước, hỗ trợ lazy load
+     */
+    async getAvailableGuides(req, res) {
+        try {
+            const { scheduleId, page, limit } = req.query;
+            const result = await operatorService.getAvailableGuides(scheduleId, req.user.id, page, limit);
+            res.json(result);
+        } catch (err) {
+            if (err.message === "SCHEDULE_NOT_FOUND") {
+                return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * POST /api/operator/tour-assignments
+     * Ghi nhận phân công hướng dẫn viên cho tour schedule
+     */
+    async assignGuide(req, res) {
+        try {
+            const { scheduleId, guideId } = req.body;
+            const assignment = await operatorService.assignGuide(scheduleId, guideId, req.user.id);
+            res.json({ success: true, message: "Phân công hướng dẫn viên thành công!", assignment });
+        } catch (err) {
+            if (err.message === "SCHEDULE_NOT_FOUND") {
+                return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/tours/hard-approval
+     * Danh sách các tour cấp độ hard đang có booking cần phê duyệt (status = pending_approval)
+     */
+    async getHardApprovalTours(req, res) {
+        try {
+            const tours = await operatorService.getHardApprovalTours(req.user.id);
+            res.json({
+                totalPending: tours.length,
+                tours
+            });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/tours/:id/participants
+     * Danh sách hành khách tham gia tour phục vụ tìm kiếm/lọc
+     */
+    async getTourParticipants(req, res) {
+        try {
+            const { id } = req.params;
+            const result = await operatorService.getTourParticipants(id, req.user.id, req.query);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/bookings/:bookingId/verify
+     * Hồ sơ chi tiết xác thực của một Booking
+     */
+    async getBookingVerification(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const result = await operatorService.getBookingVerification(bookingId, req.user.id);
+            res.json(result);
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Không tìm thấy hồ sơ booking này hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * PUT /api/operator/bookings/:bookingId/approve
+     * Phê duyệt hồ sơ thanh toán/CCCD của khách hàng
+     */
+    async approveBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const booking = await operatorService.approveBooking(bookingId, req.user.id);
+            res.json({ success: true, message: "Duyệt hồ sơ thành công!", booking });
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * PUT /api/operator/bookings/:bookingId/reject
+     * Từ chối hồ sơ thanh toán/CCCD của khách hàng
+     */
+    async rejectBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const { reason } = req.body;
+            const booking = await operatorService.rejectBooking(bookingId, reason, req.user.id);
+            res.json({ success: true, message: "Hủy duyệt hồ sơ thành công!", booking });
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/customers
+     * Tra cứu khách hàng theo email hoặc số điện thoại
+     */
+    async searchCustomer(req, res) {
+        try {
+            const { search } = req.query;
+            if (!search) {
+                return res.status(400).json({ error: "Vui lòng nhập email hoặc số điện thoại để tìm kiếm." });
+            }
+            const customer = await operatorService.searchCustomer(search, req.user.id);
+            res.json(customer);
+        } catch (err) {
+            if (err.message === "CUSTOMER_NOT_FOUND") {
+                return res.status(404).json({ error: "Không tìm thấy khách hàng ứng với thông tin tra cứu do bạn quản lý." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/customers/:customerId/bookings
+     * Lấy danh sách chuyến đi đang hoạt động của khách hàng
+     */
+    async getCustomerBookings(req, res) {
+        try {
+            const { customerId } = req.params;
+            const result = await operatorService.getCustomerBookings(customerId, req.user.id);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/bookings/:bookingId/refund-estimate
+     * Dự toán số tiền hoàn lại dựa trên khoảng cách ngày
+     */
+    async getRefundEstimate(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const result = await operatorService.getRefundEstimate(bookingId, req.user.id);
+            res.json(result);
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Không tìm thấy thông tin booking hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * POST /api/operator/bookings/:bookingId/cancel
+     * Thực hiện hủy booking và cập nhật lại số lượng capacity của tour schedule
+     */
+    async cancelBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const { reason } = req.body;
+            const result = await operatorService.cancelBooking(bookingId, reason, req.user.id);
+            res.json({ success: true, message: "Hủy chuyến đi thành công!", refundAmount: result.refundAmount });
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            res.status(500).json({ error: err.message });
+        }
+    }
+
+    /**
+     * GET /api/operator/bookings/pending
+     * Lấy danh sách booking đang chờ phê duyệt
+     */
+    async getPendingBookings(req, res) {
+        try {
+            const result = await operatorService.getPendingBookings(req.user.id);
+            res.json(result);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
     }
 }
 
-module.exports = new OperatorController();
+export default new OperatorController();

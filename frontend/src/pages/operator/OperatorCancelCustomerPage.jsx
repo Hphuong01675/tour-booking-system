@@ -1,61 +1,18 @@
 import { useState, useEffect } from "react";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile } from "../../api/operatorApi";
-
-// =============================================================
-// TODO: Thay bằng API call khi có login
-// Tìm khách hàng: GET /api/operator/customers?search={emailOrPhone}
-// Lấy danh sách booking: GET /api/operator/customers/{customerId}/bookings?status=active
-// Hủy chuyến: POST /api/operator/bookings/{bookingId}/cancel
-// Tính hoàn tiền: GET /api/operator/bookings/{bookingId}/refund-estimate
-// Dữ liệu dựa trên models: User, Booking, TourSchedule, Tour, Payment
-// =============================================================
-const FAKE_CUSTOMER = {
-    id: "cust-001",
-    fullName: "Nguyễn Minh Tuấn",
-    email: "tuan.nguyen@email.com",
-    phone: "+84 987 654 321",
-    tier: "Khách hàng thân thiết",
-    bookings: [
-        {
-            id: "bk-7281",
-            code: "#BK-7281",
-            tourTitle: "Vịnh Hạ Long: Du thuyền 5 sao",
-            thumbnail: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=80&h=60&fit=crop",
-            departureDate: "12/10/2023",
-            totalPrice: 12500000,
-            status: "paid",
-        },
-        {
-            id: "bk-9012",
-            code: "#BK-9012",
-            tourTitle: "Khám phá Phố cổ Hội An & Ẩm thực",
-            thumbnail: "https://images.unsplash.com/photo-1555400038-63f5ba517a47?w=80&h=60&fit=crop",
-            departureDate: "25/11/2023",
-            totalPrice: 4200000,
-            status: "paid",
-        },
-    ],
-};
-
-const FAKE_REFUND_ESTIMATE = {
-    bookingId: "bk-7281",
-    originalAmount: 12500000,
-    cancelFee: 2500000,
-    refundAmount: 10000000,
-    refundPolicy: "Hủy trước 15 ngày: Hoàn 80% tổng tiền (trừ phí xử lý 2%)",
-};
+import { getOperatorProfile, searchCustomer, getCustomerBookings, getRefundEstimate, cancelBooking } from "../../api/operatorApi";
 
 const OperatorCancelCustomerPage = () => {
     const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResult, setSearchResult] = useState(null);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [refundEstimate, setRefundEstimate] = useState(null);
     const [isSearching, setIsSearching] = useState(false);
+    const [loadingEstimate, setLoadingEstimate] = useState(false);
 
     useEffect(() => {
-        // TODO: Lấy thông tin operator từ token/session
         const fetchProfile = async () => {
             try {
                 const profileData = await getOperatorProfile();
@@ -67,24 +24,67 @@ const OperatorCancelCustomerPage = () => {
         fetchProfile();
     }, []);
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
-        // TODO: Gọi API tìm kiếm khách hàng thực
-        setTimeout(() => {
-            setSearchResult(FAKE_CUSTOMER);
+        setSelectedBooking(null);
+        setRefundEstimate(null);
+        try {
+            const customerData = await searchCustomer(searchQuery);
+            const bookingsData = await getCustomerBookings(customerData.id);
+            setSearchResult({
+                ...customerData,
+                bookings: bookingsData
+            });
+        } catch (err) {
+            console.error("Failed to search customer", err);
+            alert(err.response?.data?.error || "Không tìm thấy khách hàng ứng với thông tin tra cứu.");
+            setSearchResult(null);
+        } finally {
             setIsSearching(false);
-        }, 600);
+        }
     };
 
-    const handleSelectBooking = (booking) => {
-        // TODO: GET /api/operator/bookings/{booking.id}/refund-estimate
+    const handleSelectBooking = async (booking) => {
         setSelectedBooking(booking);
+        setLoadingEstimate(true);
+        try {
+            const estimate = await getRefundEstimate(booking.id);
+            setRefundEstimate(estimate);
+        } catch (err) {
+            console.error("Failed to get refund estimate", err);
+            alert("Lỗi khi tính toán hoàn tiền.");
+            setRefundEstimate(null);
+        } finally {
+            setLoadingEstimate(false);
+        }
     };
 
-    const handleCancel = (booking) => {
-        // TODO: POST /api/operator/bookings/{booking.id}/cancel
-        alert(`Xác nhận hủy chuyến ${booking.code}? (TODO: Kết nối API)`);
+    const handleCancel = async (booking) => {
+        const reason = window.prompt(`Nhập lý do hủy chuyến cho booking ${booking.code}:`);
+        if (reason === null) return; // User clicked cancel
+        if (!reason.trim()) {
+            alert("Lý do hủy là bắt buộc.");
+            return;
+        }
+
+        try {
+            const res = await cancelBooking(booking.id, reason);
+            alert(`Đã hủy chuyến đi thành công! Số tiền hoàn trả khách hàng: ${res.refundAmount.toLocaleString("vi-VN")} đ`);
+            setSelectedBooking(null);
+            setRefundEstimate(null);
+            // Reload bookings
+            if (searchResult) {
+                const bookingsData = await getCustomerBookings(searchResult.id);
+                setSearchResult(prev => ({
+                    ...prev,
+                    bookings: bookingsData
+                }));
+            }
+        } catch (err) {
+            console.error("Failed to cancel booking", err);
+            alert(err.response?.data?.error || err.message || "Lỗi khi thực hiện hủy chuyến.");
+        }
     };
 
     return (
@@ -96,7 +96,7 @@ const OperatorCancelCustomerPage = () => {
 
                     {/* Page Header */}
                     <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl mb-s-lg">
-                        <h1 className="text-2xl font-bold text-primary mb-1">DH - Hủy khách hàng</h1>
+                        <h1 className="text-2xl font-bold text-primary mb-1">Hủy chuyến & Hoàn tiền khách hàng</h1>
                         <p className="text-sm text-on-surface-variant mb-s-lg leading-relaxed">
                             Nhập thông tin email hoặc số điện thoại của khách hàng để tra cứu danh sách các
                             chuyến đi đang hoạt động và thực hiện quy trình hoàn tiền/hủy chuyến.
@@ -110,7 +110,7 @@ const OperatorCancelCustomerPage = () => {
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                    placeholder="Nhập Email hoặc Số điện thoại (ví dụ: khachhang@gmail.com)"
+                                    placeholder="Nhập Email hoặc Số điện thoại (ví dụ: customer1@gmail.com)"
                                     className="w-full pl-12 pr-4 py-3 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                                 />
                             </div>
@@ -125,9 +125,9 @@ const OperatorCancelCustomerPage = () => {
                     </div>
 
                     {searchResult && (
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-s-lg">
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-s-lg">
                             {/* Left: Customer Info + Bookings */}
-                            <div className="space-y-lg">
+                            <div className="space-y-4">
                                 {/* Customer Card */}
                                 <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg">
                                     <div className="flex items-center gap-4">
@@ -165,7 +165,7 @@ const OperatorCancelCustomerPage = () => {
                                     </div>
 
                                     {/* Table Header */}
-                                    <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-s-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant">
+                                    <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr] gap-4 px-s-lg py-3 bg-surface-container-low text-xs font-semibold uppercase text-on-surface-variant">
                                         <span>Tour / Booking ID</span>
                                         <span>Ngày khởi hành</span>
                                         <span>Tổng tiền</span>
@@ -173,39 +173,43 @@ const OperatorCancelCustomerPage = () => {
                                     </div>
 
                                     <div className="divide-y divide-outline-variant/20">
-                                        {searchResult.bookings.map((booking) => (
-                                            <div
-                                                key={booking.id}
-                                                className={`grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 px-s-lg py-4 items-center transition cursor-pointer ${
-                                                    selectedBooking?.id === booking.id
-                                                        ? "bg-primary-fixed/30"
-                                                        : "hover:bg-surface-container-low/50"
-                                                }`}
-                                                onClick={() => handleSelectBooking(booking)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={booking.thumbnail}
-                                                        alt={booking.tourTitle}
-                                                        className="w-14 h-10 rounded-lg object-cover flex-shrink-0"
-                                                    />
-                                                    <div>
-                                                        <p className="font-medium text-sm text-on-surface leading-snug">{booking.tourTitle}</p>
-                                                        <p className="text-xs text-primary font-medium mt-0.5">{booking.code}</p>
-                                                    </div>
-                                                </div>
-                                                <span className="text-sm text-on-surface">{booking.departureDate}</span>
-                                                <span className="text-sm font-semibold text-on-surface">
-                                                    {booking.totalPrice.toLocaleString("vi-VN")} VNĐ
-                                                </span>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleCancel(booking); }}
-                                                    className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-600 text-xs font-semibold hover:bg-rose-200 transition w-fit"
+                                        {searchResult.bookings.length === 0 ? (
+                                            <p className="p-6 text-sm text-on-surface-variant text-center">Không có chuyến đi nào đang hoạt động.</p>
+                                        ) : (
+                                            searchResult.bookings.map((booking) => (
+                                                <div
+                                                    key={booking.id}
+                                                    className={`grid grid-cols-[2fr_1.2fr_1fr_1fr] gap-4 px-s-lg py-4 items-center transition cursor-pointer ${
+                                                        selectedBooking?.id === booking.id
+                                                            ? "bg-primary-fixed/30"
+                                                            : "hover:bg-surface-container-low/50"
+                                                    }`}
+                                                    onClick={() => handleSelectBooking(booking)}
                                                 >
-                                                    Hủy chuyến đi
-                                                </button>
-                                            </div>
-                                        ))}
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={booking.thumbnail}
+                                                            alt={booking.tourTitle}
+                                                            className="w-14 h-10 rounded-lg object-cover flex-shrink-0"
+                                                        />
+                                                        <div>
+                                                            <p className="font-medium text-sm text-on-surface leading-snug">{booking.tourTitle}</p>
+                                                            <p className="text-xs text-primary font-medium mt-0.5">{booking.code}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-sm text-on-surface">{booking.departureDate}</span>
+                                                    <span className="text-sm font-semibold text-on-surface">
+                                                        {booking.totalPrice.toLocaleString("vi-VN")} VNĐ
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleCancel(booking); }}
+                                                        className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-600 text-xs font-semibold hover:bg-rose-200 transition w-fit"
+                                                    >
+                                                        Hủy chuyến đi
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -218,30 +222,37 @@ const OperatorCancelCustomerPage = () => {
                                 </div>
                                 {selectedBooking ? (
                                     <div className="space-y-3">
-                                        <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 leading-relaxed">
-                                            {/* TODO: GET /api/operator/bookings/{id}/refund-estimate */}
-                                            {FAKE_REFUND_ESTIMATE.refundPolicy}
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span className="text-on-surface-variant">Tổng tiền đã thanh toán</span>
-                                                <span className="font-medium">{FAKE_REFUND_ESTIMATE.originalAmount.toLocaleString("vi-VN")} đ</span>
-                                            </div>
-                                            <div className="flex justify-between text-rose-500">
-                                                <span>Phí hủy</span>
-                                                <span className="font-medium">-{FAKE_REFUND_ESTIMATE.cancelFee.toLocaleString("vi-VN")} đ</span>
-                                            </div>
-                                            <div className="border-t border-outline-variant/30 pt-2 flex justify-between font-bold text-green-700">
-                                                <span>Số tiền hoàn lại</span>
-                                                <span>{FAKE_REFUND_ESTIMATE.refundAmount.toLocaleString("vi-VN")} đ</span>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleCancel(selectedBooking)}
-                                            className="w-full py-2.5 rounded-lg bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 transition mt-2"
-                                        >
-                                            Xác nhận hủy &amp; Hoàn tiền
-                                        </button>
+                                        {loadingEstimate ? (
+                                            <p className="text-xs text-on-surface-variant">Đang tính toán hoàn tiền...</p>
+                                        ) : refundEstimate ? (
+                                            <>
+                                                <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 leading-relaxed font-medium">
+                                                    {refundEstimate.refundPolicy}
+                                                </div>
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-on-surface-variant">Tổng tiền đã thanh toán</span>
+                                                        <span className="font-medium">{refundEstimate.originalAmount.toLocaleString("vi-VN")} đ</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-rose-500">
+                                                        <span>Phí hủy</span>
+                                                        <span className="font-medium">-{refundEstimate.cancelFee.toLocaleString("vi-VN")} đ</span>
+                                                    </div>
+                                                    <div className="border-t border-outline-variant/30 pt-2 flex justify-between font-bold text-green-700">
+                                                        <span>Số tiền hoàn lại</span>
+                                                        <span>{refundEstimate.refundAmount.toLocaleString("vi-VN")} đ</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleCancel(selectedBooking)}
+                                                    className="w-full py-2.5 rounded-lg bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 transition mt-2"
+                                                >
+                                                    Xác nhận hủy &amp; Hoàn tiền
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <p className="text-xs text-red-500 font-semibold">Lỗi tải dữ liệu hoàn tiền.</p>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-8 text-center">
