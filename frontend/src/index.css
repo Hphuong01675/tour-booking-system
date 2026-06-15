@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* ========================================
+   GlobalExplore – Design System
+   Material Design 3 Color Palette
+   ======================================== */
+@theme {
+  /* Primary – Navy Blue */
+  --color-primary: #003d9b;
+  --color-primary-container: #0052cc;
+  --color-primary-fixed: #dae2ff;
+  --color-primary-fixed-dim: #b2c5ff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #c4d2ff;
+  --color-on-primary-fixed: #001848;
+  --color-inverse-primary: #b2c5ff;
+
+  /* Secondary – Burnt Orange */
+  --color-secondary: #a04100;
+  --color-secondary-container: #fe6b00;
+  --color-secondary-fixed: #ffdbcc;
+  --color-secondary-fixed-dim: #ffb693;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #572000;
+  --color-on-secondary-fixed: #351000;
+  --color-on-secondary-fixed-variant: #7a3000;
+
+  /* Tertiary – Teal */
+  --color-tertiary: #004b58;
+  --color-tertiary-container: #006476;
+  --color-tertiary-fixed: #adecff;
+  --color-tertiary-fixed-dim: #5dd6f3;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #70e2ff;
+  --color-on-tertiary-fixed: #001f26;
+  --color-on-tertiary-fixed-variant: #004e5d;
+
+  /* Error */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  /* Background & Surface */
+  --color-background: #f8f9fb;
+  --color-on-background: #191c1e;
+  --color-surface: #f8f9fb;
+  --color-surface-dim: #d9dadc;
+  --color-surface-bright: #f8f9fb;
+  --color-surface-tint: #0c56d0;
+  --color-surface-variant: #e1e2e4;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f4f6;
+  --color-surface-container: #edeef0;
+  --color-surface-container-high: #e7e8ea;
+  --color-surface-container-highest: #e1e2e4;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #434654;
+  --color-inverse-surface: #2e3132;
+  --color-inverse-on-surface: #f0f1f3;
+
+  /* Outline */
+  --color-outline: #737685;
+  --color-outline-variant: #c3c6d6;
+
+  /* Font Family */
+  --font-sans: 'Inter', sans-serif;
+
+  /* Spacing */
+  --spacing-s-xs: 0.25rem;
+  --spacing-s-sm: 0.5rem;
+  --spacing-s-md: 0.75rem;
+  --spacing-s-lg: 1rem;
+  --spacing-s-xl: 1.5rem;
+  --spacing-s-xxl: 2rem;
+  --spacing-s-margin-mobile: 1rem;
+  --spacing-s-margin-desktop: 4rem;
+}
+
+/* ========================================
+   Typography Utilities
+   ======================================== */
+@utility text-headline-lg {
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+@utility font-headline-lg {
+  font-weight: 700;
+}
+@utility text-headline-sm {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+@utility font-headline-sm {
+  font-weight: 600;
+}
+@utility text-body-md {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+@utility font-body-md {
+  font-weight: 400;
+}
+@utility text-label-md {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+@utility font-label-md {
+  font-weight: 500;
+}
+
+
+/* ========================================
+   Base Styles
+   ======================================== */
+*, *::before, *::after {
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f8f9fb;
+  color: #191c1e;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Symbols setup */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Glass panel effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* OTP input – hide number spinners */
+.otp-input::-webkit-outer-spin-button,
+.otp-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.otp-input {
+  -moz-appearance: textfield;
+}
+
+/* Spin animation for loading icon */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
