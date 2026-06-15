@@ -256,7 +256,7 @@ const OperatorToursPage = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <p
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="font-semibold text-sm text-primary hover:underline cursor-pointer truncate"
                                             >
                                                 {tour.title}
@@ -309,7 +309,7 @@ const OperatorToursPage = () => {
                                         )}
                                         {tour.status === "pending" && (
                                             <button
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant transition"
                                                 title="Xem chi tiết"
                                             >
@@ -331,7 +331,7 @@ const OperatorToursPage = () => {
                                         )}
                                         {tour.status === "draft" && (
                                             <button
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="text-primary text-xs font-semibold underline hover:opacity-70 transition"
                                             >
                                                 Tiếp tục chỉnh sửa

@@ -1,14 +1,13 @@
+import "dotenv/config";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import db from "./models";
 import authRoutes from "./routes/auth.routes";
 import operatorRoutes from "./routes/operator/operator.routes";
 import loginRoutes from "./routes/login.routes";
 import { seedDatabase } from "./seed/seed";
-
-dotenv.config();
+import { initializeDatabaseAndStartServer } from "./bootstrap";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,7 +49,10 @@ app.get("/api/guides/stats", async (req, res) => {
             upcomingTours,
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Internal Server Error:", err);
+        res.status(500).json({
+            error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+        });
     }
 });
 
@@ -115,7 +117,10 @@ app.get("/api/guides/assigned-tours", async (req, res) => {
             limit: parseInt(limit),
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Internal Server Error:", err);
+        res.status(500).json({
+            error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+        });
     }
 });
 
@@ -188,7 +193,10 @@ app.get("/api/guides/assigned-tours/:id", async (req, res) => {
 
         res.json(assignment);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Internal Server Error:", err);
+        res.status(500).json({
+            error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+        });
     }
 });
 
@@ -225,7 +233,10 @@ app.patch(
 
             res.json({ message: "Status updated successfully", status });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({
+                error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+            });
         }
     },
 );
@@ -240,7 +251,10 @@ app.get("/api/guides/profile", async (req, res) => {
         }
         res.json(guide);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Internal Server Error:", err);
+        res.status(500).json({
+            error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+        });
     }
 });
 
@@ -263,26 +277,21 @@ app.patch("/api/guides/profile", async (req, res) => {
         await guide.save();
         res.json(guide);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Internal Server Error:", err);
+        res.status(500).json({
+            error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+        });
     }
 });
 
-// ==================== START SERVER & DATABASE CONNECTION ====================
-
-db.sequelize
-    .authenticate()
-    .then(async () => {
-        console.log("MySQL Database Connected.");
-        // Sync database schema
-        await db.sequelize.sync();
-
-        // Seed default records if empty
-        await seedDatabase();
-
-        app.listen(PORT, () => {
-            console.log(`Backend Server running on port ${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error("Database Connection Error:", err);
+// Global error handling middleware
+app.use((err, req, res, next) => {
+    console.error("Unhandled error:", err);
+    res.status(err.status || 500).json({
+        error: err.message || "Đã xảy ra lỗi hệ thống nghiêm trọng.",
+        code: err.code || "INTERNAL_SERVER_ERROR",
     });
+});
+
+// ==================== START SERVER & DATABASE CONNECTION ====================
+initializeDatabaseAndStartServer(app, PORT);

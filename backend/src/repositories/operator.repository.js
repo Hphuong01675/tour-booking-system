@@ -57,10 +57,51 @@ class OperatorRepository {
             where: { id, createdBy: operatorId },
             include: [
                 { model: TourSchedule, as: "schedules" },
-                { model: TourItineraryDay, as: "itineraryDays" },
+                { 
+                    model: TourItineraryDay, 
+                    as: "itineraryDays",
+                    include: [
+                        { model: db.TourItineraryLocation, as: "locations" },
+                        { model: db.TourItineraryItem, as: "items" }
+                    ]
+                },
                 { model: TourImage, as: "images" },
-                { model: TourInformation, as: "information" }
+                { 
+                    model: TourInformation, 
+                    as: "information",
+                    include: [{ model: db.TourInformationCategory, as: "category" }]
+                }
             ]
+        });
+    }
+
+    async findTourBySlugAndOperator(slug, operatorId) {
+        return await Tour.findOne({
+            where: { slug, createdBy: operatorId },
+            include: [
+                { model: TourSchedule, as: "schedules" },
+                { 
+                    model: TourItineraryDay, 
+                    as: "itineraryDays",
+                    include: [
+                        { model: db.TourItineraryLocation, as: "locations" },
+                        { model: db.TourItineraryItem, as: "items" }
+                    ]
+                },
+                { model: TourImage, as: "images" },
+                { 
+                    model: TourInformation, 
+                    as: "information",
+                    include: [{ model: db.TourInformationCategory, as: "category" }]
+                }
+            ]
+        });
+    }
+
+    async findInfoCategories() {
+        return await db.TourInformationCategory.findAll({
+            where: { isActive: true },
+            order: [["sortOrder", "ASC"]]
         });
     }
 

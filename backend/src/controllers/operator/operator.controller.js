@@ -15,7 +15,8 @@ class OperatorController {
             if (err.message === "OPERATOR_NOT_FOUND") {
                 return res.status(404).json({ error: "Operator not found" });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -30,7 +31,8 @@ class OperatorController {
             if (err.message === "OPERATOR_NOT_FOUND") {
                 return res.status(404).json({ error: "Operator not found" });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -60,7 +62,8 @@ class OperatorController {
                     error: "Mật khẩu phải bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt."
                 });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -73,7 +76,8 @@ class OperatorController {
             const result = await operatorService.getTours(req.user.id, req.query);
             res.json(result);
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -90,7 +94,8 @@ class OperatorController {
             if (err.message === "TOUR_NOT_FOUND") {
                 return res.status(404).json({ error: "Tour không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -113,7 +118,8 @@ class OperatorController {
             if (err.message === "ONLY_DRAFT_CAN_BE_UPDATED") {
                 return res.status(400).json({ error: "Chỉ cho phép cập nhật thông tin đối với các Tour có trạng thái Bản nháp (draft)." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -130,7 +136,8 @@ class OperatorController {
             if (err.message === "SCHEDULE_NOT_FOUND") {
                 return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -147,7 +154,8 @@ class OperatorController {
             if (err.message === "SCHEDULE_NOT_FOUND") {
                 return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -164,7 +172,8 @@ class OperatorController {
             if (err.message === "SCHEDULE_NOT_FOUND") {
                 return res.status(404).json({ error: "Lịch trình tour không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -180,7 +189,8 @@ class OperatorController {
                 tours
             });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -194,7 +204,8 @@ class OperatorController {
             const result = await operatorService.getTourParticipants(id, req.user.id, req.query);
             res.json(result);
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -211,7 +222,8 @@ class OperatorController {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Không tìm thấy hồ sơ booking này hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -228,7 +240,8 @@ class OperatorController {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -246,7 +259,8 @@ class OperatorController {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -266,7 +280,8 @@ class OperatorController {
             if (err.message === "CUSTOMER_NOT_FOUND") {
                 return res.status(404).json({ error: "Không tìm thấy khách hàng ứng với thông tin tra cứu do bạn quản lý." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -280,7 +295,8 @@ class OperatorController {
             const result = await operatorService.getCustomerBookings(customerId, req.user.id);
             res.json(result);
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -297,7 +313,8 @@ class OperatorController {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Không tìm thấy thông tin booking hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -315,7 +332,8 @@ class OperatorController {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
             }
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 
@@ -328,7 +346,100 @@ class OperatorController {
             const result = await operatorService.getPendingBookings(req.user.id);
             res.json(result);
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
+     * POST /api/operator/tours
+     * Tạo một tour du lịch mới với đầy đủ thông tin chi tiết
+     */
+    async createTour(req, res) {
+        try {
+            const tour = await operatorService.createTour(req.user.id, req.body);
+            res.status(201).json({
+                success: true,
+                message: "Tạo tour mới thành công!",
+                tour
+            });
+        } catch (err) {
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
+     * POST /api/operator/tours/:id/images
+     * Upload các tệp hình ảnh của tour lên Cloudinary
+     */
+    async uploadTourImages(req, res) {
+        try {
+            if (!req.files || req.files.length === 0) {
+                return res.status(400).json({ error: "Vui lòng đính kèm ít nhất một file ảnh." });
+            }
+            const tour = await operatorService.uploadTourImages(req.params.id, req.user.id, req.files);
+            res.json({
+                success: true,
+                message: "Tải ảnh lên Cloudinary thành công!",
+                tour
+            });
+        } catch (err) {
+            if (err.message === "TOUR_NOT_FOUND") {
+                return res.status(404).json({ error: "Tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
+     * DELETE /api/operator/tours/:id/images/:imageId
+     * Xóa một hình ảnh khỏi thư viện ảnh của tour
+     */
+    async deleteTourImage(req, res) {
+        try {
+            const { id, imageId } = req.params;
+            await operatorService.deleteTourImage(id, req.user.id, imageId);
+            res.json({ success: true, message: "Xóa ảnh thành công!" });
+        } catch (err) {
+            if (["TOUR_NOT_FOUND", "ONLY_DRAFT_CAN_BE_UPDATED", "IMAGE_NOT_FOUND"].includes(err.message)) {
+                return res.status(400).json({ error: err.message });
+            }
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
+     * GET /api/operator/tours/by-slug/:slug
+     * Xem thông tin chi tiết tour bằng slug thay vì ID
+     */
+    async getTourBySlug(req, res) {
+        try {
+            const { slug } = req.params;
+            const tour = await operatorService.getTourBySlug(slug, req.user.id);
+            res.json(tour);
+        } catch (err) {
+            if (err.message === "TOUR_NOT_FOUND") {
+                return res.status(404).json({ error: "Tour không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
+     * GET /api/operator/info-categories
+     * Lấy danh mục thông tin bổ sung để hiển thị trên form
+     */
+    async getInfoCategories(req, res) {
+        try {
+            const categories = await operatorService.getInfoCategories();
+            res.json(categories);
+        } catch (err) {
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
         }
     }
 }

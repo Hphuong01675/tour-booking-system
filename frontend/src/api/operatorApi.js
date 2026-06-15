@@ -34,6 +34,35 @@ export const updateOperatorTour = async (id, tourData) => {
   return response.data;
 };
 
+export const createOperatorTour = async (tourData) => {
+  const response = await axiosInstance.post("/api/operator/tours", tourData);
+  return response.data;
+};
+
+export const uploadTourImages = async (tourId, formData) => {
+  const response = await axiosInstance.post(`/api/operator/tours/${tourId}/images`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 60000, // 60s timeout for image upload to avoid connection aborts
+  });
+  return response.data;
+};
+export const deleteTourImage = async (tourId, imageId) => {
+  const response = await axiosInstance.delete(`/api/operator/tours/${tourId}/images/${imageId}`);
+  return response.data;
+};
+
+export const getOperatorTourBySlug = async (slug) => {
+  const response = await axiosInstance.get(`/api/operator/tours/by-slug/${slug}`);
+  return response.data;
+};
+
+export const getInfoCategories = async () => {
+  const response = await axiosInstance.get("/api/operator/info-categories");
+  return response.data;
+};
+
 // --- Guide assignments ---
 export const getScheduleDetail = async (scheduleId) => {
   const response = await axiosInstance.get(`/api/operator/tour-schedules/${scheduleId}`);

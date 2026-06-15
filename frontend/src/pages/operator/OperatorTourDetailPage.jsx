@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile, getOperatorTourDetail, updateOperatorTour } from "../../api/operatorApi";
+import { getOperatorProfile, getOperatorTourBySlug, updateOperatorTour, uploadTourImages, deleteTourImage } from "../../api/operatorApi";
 
 const STATUS_CONFIG = {
     open: { label: "Đang đăng ký", classes: "bg-blue-100 text-blue-700" },
@@ -15,7 +15,7 @@ const STATUS_CONFIG = {
 };
 
 const OperatorTourDetailPage = () => {
-    const { id } = useParams();
+    const { slug } = useParams();
     const navigate = useNavigate();
 
     const [user, setUser] = useState(null);
@@ -23,6 +23,7 @@ const OperatorTourDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [uploadingImages, setUploadingImages] = useState(false);
 
     // --- Form state ---
     const [title, setTitle] = useState("");
@@ -52,7 +53,7 @@ const OperatorTourDetailPage = () => {
     const fetchTourDetail = async () => {
         setLoading(true);
         try {
-            const data = await getOperatorTourDetail(id);
+            const data = await getOperatorTourBySlug(slug);
             setTour(data);
             
             // Populate form state
@@ -77,12 +78,21 @@ const OperatorTourDetailPage = () => {
 
     useEffect(() => {
         fetchTourDetail();
-    }, [id]);
+    }, [slug]);
 
     const handleSaveChanges = async () => {
+        if (!tour) return;
+        
+        const days = parseInt(durationDays) || 1;
+        const nights = parseInt(durationNights) || 0;
+        if (Math.abs(days - nights) > 1) {
+            alert("Số ngày và số đêm không hợp lệ (chỉ được lệch nhau tối đa 1 đơn vị).");
+            return;
+        }
+
         setSaving(true);
         try {
-            await updateOperatorTour(id, {
+            await updateOperatorTour(tour.id, {
                 title,
                 tourCode,
                 difficulty,
@@ -107,9 +117,10 @@ const OperatorTourDetailPage = () => {
     };
 
     const handleStatusTransition = async (newStatus) => {
+        if (!tour) return;
         setSaving(true);
         try {
-            await updateOperatorTour(id, { status: newStatus });
+            await updateOperatorTour(tour.id, { status: newStatus });
             alert("Chuyển trạng thái tour thành công!");
             fetchTourDetail(); // Reload updated data
         } catch (err) {
@@ -138,6 +149,37 @@ const OperatorTourDetailPage = () => {
         // Re-index days
         const reindexed = filtered.map((day, idx) => ({ ...day, dayNumber: idx + 1 }));
         setItineraryDays(reindexed);
+    };
+
+    const handleAddGalleryImages = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        setUploadingImages(true);
+        try {
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append("images", file);
+            });
+            await uploadTourImages(tour.id, formData);
+            alert("Thêm ảnh thành công!");
+            fetchTourDetail(); // Reload updated images
+        } catch (err) {
+            console.error("Failed to upload images", err);
+            alert(err.response?.data?.error || err.message || "Lỗi khi thêm ảnh.");
+        } finally {
+            setUploadingImages(false);
+        }
+    };
+
+    const handleDeleteGalleryImage = async (imageId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh này khỏi thư viện?")) return;
+        try {
+            await deleteTourImage(tour.id, imageId);
+            fetchTourDetail(); // Reload
+        } catch (err) {
+            console.error("Failed to delete image", err);
+            alert(err.response?.data?.error || err.message || "Lỗi khi xóa ảnh.");
+        }
     };
 
     if (loading) {
@@ -397,6 +439,53 @@ const OperatorTourDetailPage = () => {
                                     {highlights || "Chưa thiết lập điểm nhấn."}
                                 </p>
                             )}
+                        </div>
+
+                        {/* Gallery Section */}
+                        <div className="border-t border-outline-variant/20 pt-6 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-primary flex items-center gap-2">
+                                    <span className="material-symbols-outlined">collections</span>
+                                    Thư viện ảnh
+                                </h3>
+                                {isDraft && (
+                                    <label className="flex items-center gap-1 text-xs font-bold text-primary hover:opacity-75 cursor-pointer">
+                                        <span className="material-symbols-outlined text-[16px]">add_photo_alternate</span>
+                                        {uploadingImages ? "Đang tải..." : "Thêm ảnh"}
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleAddGalleryImages}
+                                            className="hidden"
+                                            disabled={uploadingImages}
+                                        />
+                                    </label>
+                                )}
+                            </div>
+                            
+                            <div className="flex gap-3 overflow-x-auto pb-4 snap-x scroll-smooth" style={{ scrollbarWidth: 'thin' }}>
+                                {tour.images && tour.images.length > 0 ? (
+                                    tour.images.map((img) => (
+                                        <div key={img.id} className="relative w-40 h-32 flex-shrink-0 snap-start rounded-lg overflow-hidden border border-outline-variant/30 group shadow-sm">
+                                            <img src={img.imageUrl} alt="Tour gallery" className="w-full h-full object-cover" />
+                                            {isDraft && (
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => handleDeleteGalleryImage(img.id)}
+                                                        className="p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition shadow"
+                                                        title="Xóa ảnh này"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-xs italic text-on-surface-variant w-full">Chưa có ảnh nào trong thư viện.</p>
+                                )}
+                            </div>
                         </div>
 
                         {/* Itinerary Section */}

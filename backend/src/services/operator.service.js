@@ -461,40 +461,315 @@ class OperatorService {
         };
     }
 
-    async cancelBooking(bookingId, reason, operatorId) {
-        const booking = await operatorRepository.findBookingByPkAndOperator(bookingId, operatorId);
-        if (!booking) {
-            throw new Error("BOOKING_NOT_FOUND");
+    generateSlug(title) {
+        let slug = title.toLowerCase();
+        
+        // Convert Vietnamese characters to ASCII
+        slug = slug.replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, "a");
+        slug = slug.replace(/[èéẹẻẽêềếệểễ]/g, "e");
+        slug = slug.replace(/[ìíịỉĩ]/g, "i");
+        slug = slug.replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, "o");
+        slug = slug.replace(/[ùúụủũưừứựửữ]/g, "u");
+        slug = slug.replace(/[ỳýỵỷỹ]/g, "y");
+        slug = slug.replace(/đ/g, "d");
+        
+        // Remove special characters, keep only letters, numbers, and dashes
+        slug = slug.replace(/[^a-z0-9\s-]/g, "");
+        
+        // Replace multiple spaces or dashes with a single dash
+        slug = slug.replace(/[\s-]+/g, "-");
+        
+        // Trim leading/trailing dashes
+        slug = slug.trim().replace(/^-+|-+$/g, "");
+        
+        return slug;
+    }
+
+    async createTour(operatorId, tourData) {
+        const transaction = await db.sequelize.transaction();
+        try {
+            // 1. Generate tour_code
+            const tourCode = `TOUR-${Date.now()}`;
+
+            // 2. Generate slug
+            let baseSlug = this.generateSlug(tourData.title);
+            let slug = baseSlug;
+            let slugExists = await db.Tour.findOne({ where: { slug } });
+            let counter = 1;
+            while (slugExists) {
+                slug = `${baseSlug}-${counter}`;
+                slugExists = await db.Tour.findOne({ where: { slug } });
+                counter++;
+            }
+
+            // 3. Create Tour
+            const tour = await db.Tour.create({
+                createdBy: operatorId,
+                tourCode,
+                title: tourData.title,
+                slug,
+                description: tourData.description || "",
+                highlights: tourData.highlights || "",
+                departureLocation: tourData.departureLocation,
+                destination: tourData.destination,
+                difficulty: tourData.difficulty || "normal",
+                status: tourData.status || "draft",
+                durationDays: parseInt(tourData.durationDays) || 1,
+                durationNights: parseInt(tourData.durationNights) || 0,
+                basePrice: parseFloat(tourData.basePrice) || 0,
+                isPublished: tourData.status === "pending",
+                thumbnailUrl: tourData.thumbnailUrl || ""
+            }, { transaction });
+
+            // 4. Create Schedules
+            if (tourData.schedules && tourData.schedules.length > 0) {
+                const schedulesData = tourData.schedules.map((sch, i) => ({
+                    tourId: tour.id,
+                    scheduleCode: `SCH-${tourCode.substring(tourCode.length - 6)}-${String(i + 1).padStart(3, "0")}`,
+                    departureDate: new Date(sch.departureDate),
+                    returnDate: new Date(sch.returnDate),
+                    price: parseFloat(sch.price) || 0,
+                    maxCapacity: parseInt(sch.maxCapacity) || 0,
+                    registered: 0,
+                    status: "open"
+                }));
+                await db.TourSchedule.bulkCreate(schedulesData, { transaction });
+            }
+
+            // 5. Create Itinerary Days, Locations, Items
+            if (tourData.itineraryDays && tourData.itineraryDays.length > 0) {
+                for (let i = 0; i < tourData.itineraryDays.length; i++) {
+                    const dayData = tourData.itineraryDays[i];
+                    
+                    // Format meals
+                    let mealsStr = "";
+                    if (dayData.meals) {
+                        if (typeof dayData.meals === "object") {
+                            mealsStr = Object.keys(dayData.meals)
+                                .filter(k => dayData.meals[k])
+                                .map(k => k === "breakfast" ? "Sáng" : k === "lunch" ? "Trưa" : "Tối")
+                                .join(", ");
+                        } else {
+                            mealsStr = dayData.meals;
+                        }
+                    }
+
+                    const day = await db.TourItineraryDay.create({
+                        tourId: tour.id,
+                        dayNumber: i + 1,
+                        title: dayData.title || `Ngày ${i + 1}`,
+                        meals: mealsStr,
+                        mainActivity: dayData.mainActivity || dayData.title || "",
+                        description: dayData.description || "",
+                        imageUrl: dayData.imageUrl || ""
+                    }, { transaction });
+
+                    // Create Locations under this day
+                    if (dayData.locations && dayData.locations.length > 0) {
+                        const locationsData = dayData.locations.map((loc, idx) => ({
+                            itineraryDayId: day.id,
+                            name: loc.name,
+                            description: loc.description || "",
+                            latitude: parseFloat(loc.latitude) || 0,
+                            longitude: parseFloat(loc.longitude) || 0,
+                            imageUrl: loc.imageUrl || "",
+                            visitOrder: parseInt(loc.visitOrder) || (idx + 1)
+                        }));
+                        await db.TourItineraryLocation.bulkCreate(locationsData, { transaction });
+                    }
+
+                    // Create Items under this day
+                    if (dayData.items && dayData.items.length > 0) {
+                        const itemsData = dayData.items.map((item, idx) => ({
+                            itineraryDayId: day.id,
+                            title: item.title || "",
+                            description: item.description || "",
+                            activityTime: item.activityTime || null,
+                            sortOrder: parseInt(item.sortOrder) || idx
+                        }));
+                        await db.TourItineraryItem.bulkCreate(itemsData, { transaction });
+                    }
+                }
+            }
+
+            // 6. Create Tour Information
+            if (tourData.information && tourData.information.length > 0) {
+                // Fetch categories to map code to id
+                const categories = await db.TourInformationCategory.findAll({ transaction });
+                const categoryMap = {};
+                categories.forEach(cat => {
+                    categoryMap[cat.code] = cat.id;
+                });
+
+                const infoData = [];
+                tourData.information.forEach((info, idx) => {
+                    const categoryId = categoryMap[info.categoryCode];
+                    if (categoryId && info.content && info.content.trim().length > 0) {
+                        infoData.push({
+                            tourId: tour.id,
+                            categoryId,
+                            content: info.content,
+                            sortOrder: idx + 1
+                        });
+                    }
+                });
+
+                if (infoData.length > 0) {
+                    await db.TourInformation.bulkCreate(infoData, { transaction });
+                }
+            }
+
+            await transaction.commit();
+
+            // Return full tour details
+            return await operatorRepository.findTourByIdAndOperator(tour.id, operatorId);
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
+    }
+
+
+
+    async uploadTourImages(tourId, operatorId, files) {
+        const tour = await operatorRepository.findTourByPkAndOperator(tourId, operatorId);
+        if (!tour) {
+            throw new Error("TOUR_NOT_FOUND");
         }
 
-        const depDate = new Date(booking.schedule.departureDate);
-        const today = new Date();
-        const timeDiff = depDate.getTime() - today.getTime();
-        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        const cloudinary = require("../config/cloudinary").default;
+        const uploadToCloudinary = (fileBuffer, folder, publicId) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder,
+                        public_id: publicId,
+                        resource_type: "image"
+                    },
+                    (error, result) => {
+                        if (error) return reject(error);
+                        resolve(result.secure_url);
+                    }
+                );
+                stream.end(fileBuffer);
+            });
+        };
 
-        const originalAmount = parseFloat(booking.finalPrice);
-        let refundAmount = 0;
-        if (daysDiff > 15) {
-            refundAmount = originalAmount;
-        } else if (daysDiff >= 7 && daysDiff <= 15) {
-            refundAmount = originalAmount * 0.5;
-        } else {
-            refundAmount = 0;
+        const folder = `Home/Images/tours/${tourId}`;
+
+        // 1. Upload in parallel to Cloudinary
+        const uploadTasks = files.map(async (file) => {
+            const fieldname = file.fieldname;
+            let publicId = "";
+
+            if (fieldname === "thumbnail") {
+                publicId = "thumbnail";
+            } 
+            else if (fieldname === "images") {
+                const imgIndex = Date.now() + Math.floor(Math.random() * 1000);
+                publicId = `gallery_${imgIndex}`;
+            } 
+            else if (fieldname.startsWith("dayImage_")) {
+                const parts = fieldname.split("_");
+                const dayNum = parseInt(parts[1]);
+                publicId = `day_${dayNum}`;
+            } 
+            else if (fieldname.startsWith("locationImage_")) {
+                const parts = fieldname.split("_");
+                const dayNum = parseInt(parts[1]);
+                const visitOrd = parseInt(parts[2]);
+                publicId = `day_${dayNum}_loc_${visitOrd}`;
+            }
+
+            const url = await uploadToCloudinary(file.buffer, folder, publicId);
+            return { fieldname, url };
+        });
+
+        const uploadResults = await Promise.all(uploadTasks);
+
+        // 2. Open transaction and update database rows sequentially
+        const transaction = await db.sequelize.transaction();
+        try {
+            const itineraryDays = await db.TourItineraryDay.findAll({
+                where: { tourId },
+                include: [{ model: db.TourItineraryLocation, as: "locations" }],
+                transaction
+            });
+
+            for (const { fieldname, url } of uploadResults) {
+                if (fieldname === "thumbnail") {
+                    tour.thumbnailUrl = url;
+                    await tour.save({ transaction });
+                } 
+                else if (fieldname === "images") {
+                    await db.TourImage.create({
+                        tourId,
+                        imageUrl: url,
+                        sortOrder: 0
+                    }, { transaction });
+                } 
+                else if (fieldname.startsWith("dayImage_")) {
+                    const parts = fieldname.split("_");
+                    const dayNum = parseInt(parts[1]);
+                    const day = itineraryDays.find(d => d.dayNumber === dayNum);
+                    if (day) {
+                        day.imageUrl = url;
+                        await day.save({ transaction });
+                    }
+                } 
+                else if (fieldname.startsWith("locationImage_")) {
+                    const parts = fieldname.split("_");
+                    const dayNum = parseInt(parts[1]);
+                    const visitOrd = parseInt(parts[2]);
+                    
+                    const day = itineraryDays.find(d => d.dayNumber === dayNum);
+                    if (day && day.locations) {
+                        const loc = day.locations.find(l => l.visitOrder === visitOrd);
+                        if (loc) {
+                            loc.imageUrl = url;
+                            await loc.save({ transaction });
+                        }
+                    }
+                }
+            }
+
+            await transaction.commit();
+            return await operatorRepository.findTourByIdAndOperator(tourId, operatorId);
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
+    }
+
+    async getTourBySlug(slug, operatorId) {
+        const tour = await operatorRepository.findTourBySlugAndOperator(slug, operatorId);
+        if (!tour) {
+            throw new Error("TOUR_NOT_FOUND");
+        }
+        return tour;
+    }
+
+    async getInfoCategories() {
+        return await operatorRepository.findInfoCategories();
+    }
+
+    async deleteTourImage(tourId, operatorId, imageId) {
+        const tour = await operatorRepository.findTourByPkAndOperator(tourId, operatorId);
+        if (!tour) {
+            throw new Error("TOUR_NOT_FOUND");
+        }
+        if (tour.status !== "draft") {
+            throw new Error("ONLY_DRAFT_CAN_BE_UPDATED");
         }
 
-        booking.status = "cancelled";
-        booking.cancellationReason = reason || "Hủy bởi operator điều hành.";
-        booking.refundAmount = refundAmount;
-        await booking.save();
-
-        const schedule = await db.TourSchedule.findByPk(booking.scheduleId);
-        if (schedule) {
-            const count = await operatorRepository.countParticipantsByBooking(bookingId);
-            schedule.registered = Math.max(0, schedule.registered - count);
-            await schedule.save();
+        const image = await db.TourImage.findOne({
+            where: { id: imageId, tourId: tour.id }
+        });
+        if (!image) {
+            throw new Error("IMAGE_NOT_FOUND");
         }
-
-        return { refundAmount };
+        
+        await image.destroy();
     }
 }
 

@@ -168,7 +168,15 @@ function App() {
                 }
             />
             <Route
-                path="/operator/tours/:id"
+                path="/operator/tours/new"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorNewTourPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/:slug"
                 element={
                     <ProtectedRoute allowedRoles={["operator"]}>
                         <OperatorTourDetailPage />
@@ -180,14 +188,6 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={["operator"]}>
                         <OperatorParticipantsPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/tours/new"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorNewTourPage />
                     </ProtectedRoute>
                 }
             />
