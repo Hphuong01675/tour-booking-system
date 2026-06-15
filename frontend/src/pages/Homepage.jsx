@@ -29,6 +29,83 @@ const Homepage = () => {
     const [shakeMyTours, setShakeMyTours] = useState(false);
     const [showPaymentSimulator, setShowPaymentSimulator] = useState(null); // 'vnpay' | 'momo' | null
 
+    // Chat Bubble States
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [chatMessages, setChatMessages] = useState([
+        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm Chip3Chip. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
+    ]);
+    const [currentChatMessage, setCurrentChatMessage] = useState("");
+    const [isTyping, setIsTyping] = useState(false);
+
+    const handleSendChatMessage = (e) => {
+        if (e) e.preventDefault();
+        if (!currentChatMessage.trim()) return;
+
+        const userMsg = {
+            id: Date.now(),
+            sender: "user",
+            text: currentChatMessage,
+            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        };
+
+        setChatMessages(prev => [...prev, userMsg]);
+        const userText = currentChatMessage;
+        setCurrentChatMessage("");
+        setIsTyping(true);
+
+        setTimeout(() => {
+            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên Chip3Chip sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6868 nhé!";
+            const textLower = userText.toLowerCase();
+            if (textLower.includes("tour") || textLower.includes("lộ trình") || textLower.includes("ngày")) {
+                replyText = "Hiện tại Chip3Chip đang mở bán nhiều tour hấp dẫn (Hạ Long, Đà Lạt, Sơn Đoòng). Bạn có thể xem chi tiết ở Tab 'Tour du lịch' nhé!";
+            } else if (textLower.includes("giá") || textLower.includes("tiền") || textLower.includes("vnpay") || textLower.includes("momo") || textLower.includes("thanh toán")) {
+                replyText = "Hệ thống hỗ trợ thanh toán tự động tiện lợi qua VNPay & MoMo mô phỏng. Vé QR Code sẽ được gửi ngay sau khi xác nhận thanh toán thành công!";
+            } else if (textLower.includes("chào") || textLower.includes("hello") || textLower.includes("hi")) {
+                replyText = "Xin chào! Chúc bạn một ngày tốt lành. Mình có thể hỗ trợ thông tin gì về các chặng tour sắp khởi hành không?";
+            }
+
+            setChatMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                sender: "bot",
+                text: replyText,
+                time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+            }]);
+            setIsTyping(false);
+        }, 1200);
+    };
+
+    const handleQuickQuestion = (questionText) => {
+        const userMsg = {
+            id: Date.now(),
+            sender: "user",
+            text: questionText,
+            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        };
+
+        setChatMessages(prev => [...prev, userMsg]);
+        setIsTyping(true);
+
+        setTimeout(() => {
+            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên Chip3Chip sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6868 nhé!";
+            const textLower = questionText.toLowerCase();
+            if (textLower.includes("tour")) {
+                replyText = "Hiện tại Chip3Chip đang mở bán nhiều tour hấp dẫn (Hạ Long, Đà Lạt, Sơn Đoòng). Bạn có thể chọn ngày và nhấn 'Đặt Tour' để trải nghiệm!";
+            } else if (textLower.includes("thanh toán")) {
+                replyText = "Hệ thống hỗ trợ thanh toán mô phỏng tiện lợi qua VNPay hoặc MoMo. Trải nghiệm đặt tour mượt mà, cập nhật chỗ tức thì!";
+            } else if (textLower.includes("yêu thích")) {
+                replyText = "Bạn có thể nhấn vào biểu tượng trái tim ❤️ ở mỗi tour để lưu vào mục yêu thích. Sẽ có hiệu ứng trái tim bay cực đẹp hướng về nút My Tours đấy!";
+            }
+
+            setChatMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                sender: "bot",
+                text: replyText,
+                time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+            }]);
+            setIsTyping(false);
+        }, 1200);
+    };
+
     // Track scroll to change header style dynamically
     useEffect(() => {
         const handleScroll = () => {
@@ -973,6 +1050,119 @@ const Homepage = () => {
                     </div>
                 </div>
             )}
+            {/* Mock Floating Chat Bubble */}
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+                {isChatOpen && (
+                    <div className="w-80 md:w-96 h-[480px] bg-white/95 backdrop-blur-md rounded-[28px] border border-neutral-200/80 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-orange-500 to-rose-500 text-white p-4 flex items-center justify-between shadow-md">
+                            <div className="flex items-center gap-2.5">
+                                <div className="relative">
+                                    <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm uppercase">
+                                        🎧
+                                    </div>
+                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-black tracking-wide uppercase">Hỗ Trợ Trực Tuyến</h4>
+                                    <p className="text-[10px] text-orange-100 font-medium">Sẵn sàng phản hồi 24/7</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsChatOpen(false)}
+                                className="text-white hover:text-orange-200 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+
+                        {/* Message list */}
+                        <div className="flex-grow p-4 overflow-y-auto space-y-3 bg-neutral-50/50">
+                            {chatMessages.map((msg) => (
+                                <div 
+                                    key={msg.id} 
+                                    className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'ml-auto items-end' : 'items-start'}`}
+                                >
+                                    <div className={`px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${
+                                        msg.sender === 'user' 
+                                            ? 'bg-rose-500 text-white rounded-tr-none' 
+                                            : 'bg-white border border-neutral-200 text-neutral-800 rounded-tl-none'
+                                    }`}>
+                                        {msg.text}
+                                    </div>
+                                    <span className="text-[9px] text-neutral-400 font-bold mt-1 px-1">
+                                        {msg.time}
+                                    </span>
+                                </div>
+                            ))}
+                            {isTyping && (
+                                <div className="flex flex-col items-start max-w-[80%]">
+                                    <div className="bg-white border border-neutral-200 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce"></span>
+                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Quick Questions suggestion pills */}
+                        <div className="px-4 py-2 bg-neutral-100/50 border-t border-neutral-200/50 flex flex-wrap gap-1.5">
+                            <button 
+                                onClick={() => handleQuickQuestion("Tư vấn chọn Tour du lịch")}
+                                className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-600 transition-all border border-neutral-200/60 rounded-full px-2.5 py-1 text-neutral-600 font-semibold"
+                            >
+                                🗺️ Chọn Tour
+                            </button>
+                            <button 
+                                onClick={() => handleQuickQuestion("Thanh toán như thế nào?")}
+                                className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-600 transition-all border border-neutral-200/60 rounded-full px-2.5 py-1 text-neutral-600 font-semibold"
+                            >
+                                💳 Thanh toán
+                            </button>
+                            <button 
+                                onClick={() => handleQuickQuestion("Tính năng Yêu thích là gì?")}
+                                className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-600 transition-all border border-neutral-200/60 rounded-full px-2.5 py-1 text-neutral-600 font-semibold"
+                            >
+                                ❤️ Yêu thích
+                            </button>
+                        </div>
+
+                        {/* Footer Form */}
+                        <form onSubmit={handleSendChatMessage} className="p-3 border-t border-neutral-200 bg-white flex gap-2">
+                            <input 
+                                type="text"
+                                placeholder="Nhập tin nhắn hỗ trợ..."
+                                className="flex-grow bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all"
+                                value={currentChatMessage}
+                                onChange={(e) => setCurrentChatMessage(e.target.value)}
+                            />
+                            <button 
+                                type="submit"
+                                className="w-9 h-9 bg-rose-500 hover:bg-rose-600 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-sm">send</span>
+                            </button>
+                        </form>
+                    </div>
+                )}
+
+                {/* Floating Chat Trigger Button */}
+                <button 
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="w-14 h-14 bg-gradient-to-tr from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer relative"
+                >
+                    <span className="material-symbols-outlined text-[26px]">
+                        {isChatOpen ? "close" : "forum"}
+                    </span>
+                    {!isChatOpen && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-600 border border-white"></span>
+                        </span>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };
