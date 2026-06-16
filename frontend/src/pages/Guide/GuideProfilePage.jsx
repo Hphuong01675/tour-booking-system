@@ -96,26 +96,21 @@ const GuideProfilePage = () => {
                 address: formData.address,
             });
             setUser(updatedUser);
+            setFormData({
+                fullName: updatedUser?.fullName || "",
+                phone: updatedUser?.phone || "",
+                dateOfBirth: updatedUser?.dateOfBirth
+                    ? new Date(updatedUser.dateOfBirth).toISOString().split("T")[0]
+                    : "",
+                address: updatedUser?.address || "",
+            });
             localStorage.setItem("guideProfile", JSON.stringify(updatedUser));
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err) {
-            console.error(
-                "Failed to save profile via API, using fallback logic",
-                err,
-            );
-            // Fallback logic
-            const updatedUser = {
-                ...user,
-                fullName: formData.fullName,
-                phone: formData.phone,
-                dateOfBirth: formData.dateOfBirth,
-                address: formData.address,
-            };
-            setUser(updatedUser);
-            localStorage.setItem("guideProfile", JSON.stringify(updatedUser));
-            setSaveSuccess(true);
-            setTimeout(() => setSaveSuccess(false), 3000);
+            console.error("Failed to save profile via API", err);
+            setSaveSuccess(false);
+            setProfileError(err.response?.data?.error || "Cập nhật thông tin thất bại.");
         } finally {
             setIsSaving(false);
         }

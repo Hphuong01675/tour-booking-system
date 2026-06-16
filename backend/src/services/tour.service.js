@@ -32,6 +32,21 @@ class TourService {
                     as: "schedules",
                     where: { status: "open" },
                     required: false
+                },
+                {
+                    model: db.TourItineraryDay,
+                    as: "itineraryDays",
+                    required: false
+                },
+                {
+                    model: db.TourImage,
+                    as: "images",
+                    required: false
+                },
+                {
+                    model: db.TourInformation,
+                    as: "information",
+                    required: false
                 }
             ]
         });

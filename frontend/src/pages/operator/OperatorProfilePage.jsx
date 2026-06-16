@@ -93,6 +93,14 @@ const OperatorProfilePage = () => {
                 address: formData.address,
             });
             setUser(updatedUser);
+            setFormData({
+                fullName: updatedUser?.fullName || "",
+                phone: updatedUser?.phone || "",
+                dateOfBirth: updatedUser?.dateOfBirth
+                    ? new Date(updatedUser.dateOfBirth).toISOString().split("T")[0]
+                    : "",
+                address: updatedUser?.address || "",
+            });
             localStorage.setItem("operatorProfile", JSON.stringify(updatedUser));
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);

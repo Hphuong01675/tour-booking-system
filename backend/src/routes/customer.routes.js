@@ -11,6 +11,9 @@ router.post("/api/customer/bookings", customerController.createBooking);
 router.put("/api/customer/profile", customerController.updateProfile);
 router.put("/api/customer/password", customerController.updatePassword);
 router.put("/api/customer/bookings/:bookingId/pay", customerController.payBooking);
+router.put("/api/customer/bookings/:bookingId/cancel", customerController.cancelBooking);
+router.put("/api/customer/bookings/:bookingId/participants", customerController.updateBookingTraveler);
+router.post("/api/customer/bookings/:bookingId/reviews", customerController.createBookingReview);
 
 // Wishlist / Storage routes
 router.get("/api/customer/wishlist", customerController.getWishlist);

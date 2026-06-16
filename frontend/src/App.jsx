@@ -36,6 +36,8 @@ import OperatorParticipantsPage from "./pages/operator/OperatorParticipantsPage"
 // Profile/Dashboard Pages for other roles
 import CustomerToursPage from "./pages/customer/CustomerToursPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import CustomerTransactionsPage from "./pages/customer/CustomerTransactionsPage";
+import TourDetailPage from "./pages/customer/TourDetailPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import Homepage from "./pages/Homepage";
@@ -45,6 +47,7 @@ function App() {
         <Routes>
             {/* Redirect base URL to the Homepage */}
             <Route path="/" element={<Homepage />} />
+            <Route path="/tours/:id" element={<TourDetailPage />} />
 
             {/* Auth routes - Login */}
             <Route path="/login" element={<LoginPage />} />
@@ -97,6 +100,14 @@ function App() {
                 element={
                     <ProtectedRoute allowedRoles={["customer"]}>
                         <CustomerProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/customer/transactions"
+                element={
+                    <ProtectedRoute allowedRoles={["customer"]}>
+                        <CustomerTransactionsPage />
                     </ProtectedRoute>
                 }
             />

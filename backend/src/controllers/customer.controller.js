@@ -182,6 +182,98 @@ class CustomerController {
             });
         }
     }
+
+    async cancelBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const { reason } = req.body;
+            const booking = await customerService.cancelBooking(req.user.id, bookingId, reason);
+            return res.status(200).json({
+                success: true,
+                message: "Hủy đặt tour thành công.",
+                booking
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    async updateBookingTraveler(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const { fullName, phone } = req.body;
+            if (!fullName || !phone) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Họ tên trưởng đoàn và số điện thoại liên hệ là bắt buộc."
+                });
+            }
+
+            const booking = await customerService.updateBookingTraveler(req.user.id, bookingId, { fullName, phone });
+            return res.status(200).json({
+                success: true,
+                message: "Cập nhật thông tin trưởng đoàn thành công.",
+                booking
+            });
+        } catch (error) {
+            if (error.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({
+                    success: false,
+                    error: "Không tìm thấy đơn đặt tour này."
+                });
+            }
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    async createBookingReview(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const { overallRating, generalComment } = req.body;
+            if (overallRating === undefined || overallRating === null) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Điểm đánh giá là bắt buộc."
+                });
+            }
+
+            const booking = await customerService.createBookingReview(req.user.id, bookingId, { overallRating, generalComment });
+            return res.status(201).json({
+                success: true,
+                message: "Gửi đánh giá thành công.",
+                booking
+            });
+        } catch (error) {
+            if (error.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({
+                    success: false,
+                    error: "Không tìm thấy đơn đặt tour này."
+                });
+            }
+            if (error.message === "ONLY_PAID_BOOKINGS_CAN_BE_REVIEWED") {
+                return res.status(400).json({
+                    success: false,
+                    error: "Chỉ những đơn đặt tour đã thanh toán mới được phép đánh giá."
+                });
+            }
+            if (error.message === "BOOKING_ALREADY_REVIEWED") {
+                return res.status(400).json({
+                    success: false,
+                    error: "Đơn đặt tour này đã được đánh giá trước đó."
+                });
+            }
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
 }
 
 export default new CustomerController();

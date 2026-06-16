@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { fetchCurrentUser, logoutUser } from "../../features/auth/authSlice";
 import axiosInstance from "../../api/axiosInstance";
+import TopNavBar from "../../components/TopNavBar";
 
 const CustomerToursPage = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, loading } = useSelector((state) => state.auth);
 
     const [bookings, setBookings] = useState([]);
@@ -20,6 +22,15 @@ const CustomerToursPage = () => {
 
     // Active Dashboard Tab: "bookings" or "wishlist" (Kho hàng)
     const [activeTab, setActiveTab] = useState("bookings");
+
+    const searchParams = new URLSearchParams(location.search);
+    const isReviewMode = searchParams.get("tab") === "review";
+
+    useEffect(() => {
+        if (isReviewMode) {
+            setActiveTab("bookings");
+        }
+    }, [isReviewMode]);
 
     // Search and Filters
     const [bookingSearch, setBookingSearch] = useState("");
@@ -127,25 +138,42 @@ const CustomerToursPage = () => {
     const handleUpdateTravelerSubmit = async (e) => {
         e.preventDefault();
         try {
-            alert("Cập nhật thông tin hành khách thành công!");
-            setSelectedUpdateBooking(null);
-            fetchBookings();
+            const response = await axiosInstance.put(`/api/customer/bookings/${selectedUpdateBooking.id}/participants`, {
+                fullName: editTravelerName,
+                phone: editTravelerPhone
+            });
+            if (response.data.success) {
+                alert("Cập nhật thông tin hành khách thành công!");
+                setSelectedUpdateBooking(null);
+                fetchBookings();
+            } else {
+                alert(response.data.error || "Lỗi khi cập nhật thông tin.");
+            }
         } catch (err) {
             console.error(err);
-            alert("Lỗi khi cập nhật thông tin.");
+            alert(err.response?.data?.error || "Lỗi khi cập nhật thông tin.");
         }
     };
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
         try {
-            alert(`Đã gửi đánh giá ${reviewStars} sao thành công cho chuyến đi!`);
-            setSelectedReviewBooking(null);
-            setReviewComment("");
-            setReviewStars(5);
+            const response = await axiosInstance.post(`/api/customer/bookings/${selectedReviewBooking.id}/reviews`, {
+                overallRating: reviewStars,
+                generalComment: reviewComment
+            });
+            if (response.data.success) {
+                alert(`Đã gửi đánh giá ${reviewStars} sao thành công cho chuyến đi!`);
+                setSelectedReviewBooking(null);
+                setReviewComment("");
+                setReviewStars(5);
+                fetchBookings();
+            } else {
+                alert(response.data.error || "Lỗi khi gửi đánh giá.");
+            }
         } catch (err) {
             console.error(err);
-            alert("Lỗi khi gửi đánh giá.");
+            alert(err.response?.data?.error || "Lỗi khi gửi đánh giá.");
         }
     };
 
@@ -269,37 +297,8 @@ const CustomerToursPage = () => {
                 .ticket-cutout-right { right: -10px; }
             `}</style>
 
-            {/* Navigation Header - Synced with Homepage */}
-            <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur border-b border-neutral-200/50 px-6 py-5 md:px-12 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-rose-500 text-3xl font-black">explore</span>
-                    <Link className="text-2xl font-black tracking-tight bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent" to="/">
-                        Chip3Chip
-                    </Link>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <Link to="/" className="px-4 py-2.5 text-xs font-black uppercase tracking-wider text-neutral-600 hover:text-rose-500 transition-colors flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[18px]">home</span>
-                        Trang chủ
-                    </Link>
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-rose-500/10 to-orange-500/10 px-3.5 py-1.5 rounded-full border border-orange-200/50 shadow-sm">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-orange-500 to-rose-500 text-white flex items-center justify-center text-xs font-black shadow-sm uppercase">
-                            {user?.fullName?.charAt(0) || "U"}
-                        </div>
-                        <span className="hidden lg:inline text-xs font-black text-neutral-800">
-                            {user?.fullName}
-                        </span>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="px-3.5 py-2 text-xs font-bold text-neutral-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">logout</span>
-                        Đăng xuất
-                    </button>
-                </div>
-            </header>
+            {/* TopNavBar */}
+            <TopNavBar />
 
             {/* Premium Dashboard Banner with bright Sunset theme */}
             <section className="bg-gradient-to-r from-orange-500/10 via-rose-500/10 to-purple-500/10 text-neutral-800 py-16 px-6 md:px-12 relative overflow-hidden border-b border-neutral-200">
@@ -349,6 +348,15 @@ const CustomerToursPage = () => {
             <main className="flex-grow max-w-7xl mx-auto px-6 py-12 md:px-12 w-full">
                 {activeTab === "bookings" ? (
                     <div>
+                        {isReviewMode && (
+                            <div className="mb-6 p-4 bg-purple-50 border border-purple-100 text-purple-800 rounded-2xl flex items-center gap-3 animate-fade-in-up">
+                                <span className="material-symbols-outlined text-purple-600 text-[24px]">rate_review</span>
+                                <span className="text-sm font-semibold">
+                                    Vui lòng chọn chuyến đi đã hoàn tất bên dưới và nhấn <strong>Đánh giá</strong> để gửi cảm nhận của bạn!
+                                </span>
+                            </div>
+                        )}
+
                         {/* Transaction Search & Filter Bar */}
                         <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-200/60 mb-8 max-w-md flex items-center gap-2.5">
                             <span className="material-symbols-outlined text-neutral-400">search</span>
@@ -380,6 +388,7 @@ const CustomerToursPage = () => {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {(() => {
                                     const filtered = bookings.filter((b) => {
+                                        if (isReviewMode && b.status !== "paid") return false;
                                         const title = b.schedule?.tour?.title || "";
                                         const dest = b.schedule?.tour?.destination || "";
                                         const code = b.bookingCode || "";
@@ -512,12 +521,19 @@ const CustomerToursPage = () => {
 
                                                             {booking.status === "paid" && (
                                                                 <>
-                                                                    <button
-                                                                        onClick={() => setSelectedReviewBooking(booking)}
-                                                                        className="px-3.5 py-2 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
-                                                                    >
-                                                                        Đánh giá
-                                                                    </button>
+                                                                    {booking.review ? (
+                                                                        <span className="px-3.5 py-2 text-xs font-bold text-purple-700 bg-purple-50 rounded-xl border border-purple-100 flex-1 text-center select-none flex items-center justify-center gap-1">
+                                                                            <span className="material-symbols-outlined text-[14px]">star</span>
+                                                                            Đã đánh giá ({booking.review.overallRating}★)
+                                                                        </span>
+                                                                    ) : (
+                                                                        <button
+                                                                            onClick={() => setSelectedReviewBooking(booking)}
+                                                                            className="px-3.5 py-2 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                        >
+                                                                            Đánh giá
+                                                                        </button>
+                                                                    )}
                                                                     <button
                                                                         onClick={() => setSelectedInvoice(booking)}
                                                                         className="px-3.5 py-2 text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
@@ -625,7 +641,7 @@ const CustomerToursPage = () => {
                         <div className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-6 text-center relative">
                             <span className="material-symbols-outlined text-4xl animate-float">confirmation_number</span>
                             <h3 className="text-lg font-black mt-2 tracking-tight">VÉ TOUR DU LỊCH</h3>
-                            <p className="text-white/80 text-xs font-bold uppercase tracking-wider">Chip3Chip Boarding Pass</p>
+                            <p className="text-white/80 text-xs font-bold uppercase tracking-wider">GlobalExplore Boarding Pass</p>
 
                             <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-neutral-900 rounded-full" />
                             <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-neutral-900 rounded-full" />
@@ -735,7 +751,7 @@ const CustomerToursPage = () => {
                         
                         <div className="text-center mb-6">
                             <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest block mb-1">E-Receipt / Hóa Đơn Điện Tử</span>
-                            <h3 className="text-md font-black text-neutral-900">CHIP3CHIP TRAVEL SYSTEM</h3>
+                            <h3 className="text-md font-black text-neutral-900">GLOBALEXPLORE TRAVEL SYSTEM</h3>
                         </div>
 
                         <div className="space-y-4 border-t border-b border-dashed border-neutral-200 py-6 text-xs text-neutral-700 font-medium">
