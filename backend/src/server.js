@@ -2,12 +2,16 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import bcrypt from "bcryptjs";
 import db from "./models";
 import authRoutes from "./routes/auth.routes";
 import operatorRoutes from "./routes/operator/operator.routes";
 import loginRoutes from "./routes/login.routes";
+import adminRoutes from "./routes/admin/admin.routes";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/", authRoutes);
 app.use("/", operatorRoutes);
 app.use("/", loginRoutes);
+app.use("/", adminRoutes);
 
 // Helper function to seed data
 const seedDatabase = async () => {
@@ -35,6 +40,26 @@ const seedDatabase = async () => {
             Conversation,
             Message,
         } = db;
+
+        const adminPasswordHash = await bcrypt.hash("Admin@123", 10);
+        const [admin, adminCreated] = await User.findOrCreate({
+            where: { email: "admin@chip3chip.com" },
+            defaults: {
+                id: "admin-1",
+                fullName: "Quan tri vien",
+                email: "admin@chip3chip.com",
+                passwordHash: adminPasswordHash,
+                phone: "0900000000",
+                role: "admin",
+                isActive: true,
+            },
+        });
+
+        if (!adminCreated && (!admin.isActive || admin.role !== "admin")) {
+            admin.role = "admin";
+            admin.isActive = true;
+            await admin.save();
+        }
 
         // Check if Guide user exists
         const guideCount = await User.count({ where: { role: "guide" } });
@@ -810,8 +835,7 @@ db.sequelize
     .authenticate()
     .then(async () => {
         console.log("MySQL Database Connected.");
-        // Alter: true to automatically add missing columns (like role) without wiping data
-        await db.sequelize.sync({ alter: true });
+        await db.sequelize.sync();
 
         // Seed default records if empty
         await seedDatabase();
