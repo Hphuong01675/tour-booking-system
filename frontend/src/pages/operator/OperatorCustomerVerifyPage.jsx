@@ -53,7 +53,18 @@ const OperatorCustomerVerifyPage = () => {
     };
 
     const handleApprove = async () => {
-        if (!window.confirm("Bạn có chắc chắn muốn phê duyệt hồ sơ đặt chỗ này?")) return;
+        if (!data) return;
+        const totalPeople = 1 + (data.companions?.length || 0);
+        const peopleList = [
+            `${data.customer.fullName} (Trưởng đoàn)`,
+            ...(data.companions?.map((c) => `${c.name} (Người đi cùng)`) || [])
+        ].join("\n- ");
+
+        const confirmMessage = `Bạn có chắc chắn muốn phê duyệt hồ sơ đặt chỗ này?\n\n` +
+            `Số lượng người sẽ được phê duyệt: ${totalPeople} người\n` +
+            `Danh sách:\n- ${peopleList}`;
+
+        if (!window.confirm(confirmMessage)) return;
         try {
             await approveBooking(id);
             showToast("approve");
