@@ -302,8 +302,8 @@ const OperatorNewTourPage = () => {
                 }
                 const diffTime = Math.abs(ret - dep);
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays !== days - 1) {
-                    setErrorMsg(`Ngày đi và ngày về ở lịch khởi hành thứ ${i + 1} không khớp với tổng số ngày của tour (${days} ngày).`);
+                if (diffDays !== nights) {
+                    setErrorMsg(`Ngày đi và ngày về ở lịch khởi hành thứ ${i + 1} không khớp với cấu hình số ngày đêm của tour (${days} ngày, ${nights} đêm).`);
                     focusAndScroll(`schedule-ret-${i}`);
                     return;
                 }

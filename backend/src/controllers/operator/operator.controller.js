@@ -82,6 +82,23 @@ class OperatorController {
     }
 
     /**
+     * GET /api/operator/tours/export
+     * Xuất báo cáo CSV các tour do operator quản lý với toàn bộ thông tin chi tiết
+     */
+    async exportToursCSV(req, res) {
+        try {
+            const csvData = await operatorService.exportToursCSV(req.user.id);
+            res.setHeader("Content-Type", "text/csv; charset=utf-8");
+            res.setHeader("Content-Disposition", "attachment; filename=tours_report.csv");
+            res.write("\ufeff");
+            res.end(csvData);
+        } catch (err) {
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    /**
      * GET /api/operator/tours/:id
      * Chi tiết một tour cùng các bảng liên quan
      */

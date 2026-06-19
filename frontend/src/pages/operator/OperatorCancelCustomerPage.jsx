@@ -226,7 +226,7 @@ const OperatorCancelCustomerPage = () => {
                                             <p className="text-xs text-on-surface-variant">Đang tính toán hoàn tiền...</p>
                                         ) : refundEstimate ? (
                                             <>
-                                                <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 leading-relaxed font-medium">
+                                                <div className="p-3 bg-amber-50 rounded-lg text-xs text-amber-700 leading-relaxed font-medium whitespace-pre-line">
                                                     {refundEstimate.refundPolicy}
                                                 </div>
                                                 <div className="space-y-2 text-sm">

@@ -1,5 +1,5 @@
 // Path: frontend/src/pages/operator/OperatorTourDetailPage.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
@@ -17,6 +17,17 @@ const STATUS_CONFIG = {
 const OperatorTourDetailPage = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
+    const galleryRef = useRef(null);
+
+    const handleScrollGallery = (direction) => {
+        if (galleryRef.current) {
+            const scrollAmount = 320; // Scroll by roughly 2 items width
+            galleryRef.current.scrollBy({
+                left: direction === "left" ? -scrollAmount : scrollAmount,
+                behavior: "smooth"
+            });
+        }
+    };
 
     const [user, setUser] = useState(null);
     const [tour, setTour] = useState(null);
@@ -272,7 +283,7 @@ const OperatorTourDetailPage = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-s-lg items-start">
                     {/* Left: Main Details / Edit Form */}
-                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg space-y-6">
+                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg space-y-6 min-w-0">
                         <h2 className="text-lg font-bold text-primary flex items-center gap-2">
                             <span className="material-symbols-outlined">info</span>
                             Thông tin chung
@@ -464,27 +475,56 @@ const OperatorTourDetailPage = () => {
                                 )}
                             </div>
                             
-                            <div className="flex gap-3 overflow-x-auto pb-4 snap-x scroll-smooth" style={{ scrollbarWidth: 'thin' }}>
-                                {tour.images && tour.images.length > 0 ? (
-                                    tour.images.map((img) => (
-                                        <div key={img.id} className="relative w-40 h-32 flex-shrink-0 snap-start rounded-lg overflow-hidden border border-outline-variant/30 group shadow-sm">
-                                            <img src={img.imageUrl} alt="Tour gallery" className="w-full h-full object-cover" />
-                                            {isDraft && (
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                                                    <button
-                                                        onClick={() => handleDeleteGalleryImage(img.id)}
-                                                        className="p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition shadow"
-                                                        title="Xóa ảnh này"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-xs italic text-on-surface-variant w-full">Chưa có ảnh nào trong thư viện.</p>
+                            <div className="relative group/gallery">
+                                {tour.images && tour.images.length > 0 && (
+                                    <>
+                                        {/* Left Arrow Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleScrollGallery("left")}
+                                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 border border-outline-variant/30 shadow-md text-on-surface hover:bg-primary hover:text-white transition-all duration-300 opacity-0 group-hover/gallery:opacity-100 focus:opacity-100"
+                                            title="Ảnh trước"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                                        </button>
+
+                                        {/* Right Arrow Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleScrollGallery("right")}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 border border-outline-variant/30 shadow-md text-on-surface hover:bg-primary hover:text-white transition-all duration-300 opacity-0 group-hover/gallery:opacity-100 focus:opacity-100"
+                                            title="Ảnh tiếp theo"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                                        </button>
+                                    </>
                                 )}
+
+                                <div
+                                    ref={galleryRef}
+                                    className="flex gap-3 overflow-x-auto pb-4 snap-x scroll-smooth no-scrollbar"
+                                >
+                                    {tour.images && tour.images.length > 0 ? (
+                                        tour.images.map((img) => (
+                                            <div key={img.id} className="relative w-40 h-32 flex-shrink-0 snap-start rounded-lg overflow-hidden border border-outline-variant/30 group shadow-sm">
+                                                <img src={img.imageUrl} alt="Tour gallery" className="w-full h-full object-cover" />
+                                                {isDraft && (
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                                        <button
+                                                            onClick={() => handleDeleteGalleryImage(img.id)}
+                                                            className="p-2 bg-rose-500 text-white rounded-full hover:bg-rose-600 transition shadow"
+                                                            title="Xóa ảnh này"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs italic text-on-surface-variant w-full">Chưa có ảnh nào trong thư viện.</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

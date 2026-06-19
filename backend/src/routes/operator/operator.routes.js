@@ -26,6 +26,7 @@ router.post("/api/operator/tours", tourValidation.validateCreateTour, operatorCo
 router.post("/api/operator/tours/:id/images", upload.any(), operatorController.uploadTourImages);
 router.delete("/api/operator/tours/:id/images/:imageId", operatorController.deleteTourImage);
 router.get("/api/operator/tours/by-slug/:slug", operatorController.getTourBySlug);
+router.get("/api/operator/tours/export", operatorController.exportToursCSV);
 router.get("/api/operator/tours/:id", operatorController.getTourDetail);
 router.patch("/api/operator/tours/:id", operatorController.updateTour);
 

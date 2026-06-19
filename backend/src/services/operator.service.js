@@ -419,7 +419,7 @@ class OperatorService {
                 status:
                     booking.status === "pending_approval"
                         ? "pending"
-                        : booking.status === "paid"
+                        : ["pending_payment", "paid", "refunded"].includes(booking.status)
                           ? "approved"
                           : "rejected",
                 frontImage:
@@ -456,7 +456,7 @@ class OperatorService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
-        booking.status = "paid";
+        booking.status = "pending_payment";
         await booking.save();
         return booking;
     }
@@ -559,27 +559,39 @@ class OperatorService {
         const timeDiff = depDate.getTime() - today.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-        const originalAmount = parseFloat(booking.finalPrice);
+        let originalAmount = parseFloat(booking.finalPrice);
         let refundAmount = 0;
         let cancelFee = 0;
-        let refundPolicy = "";
+        let calcDetails = "";
 
-        if (daysDiff > 15) {
-            refundAmount = originalAmount;
-            cancelFee = 0;
-            refundPolicy =
-                "Hủy trước ngày khởi hành > 15 ngày: Hoàn tiền 100% (Phí hủy 0%)";
-        } else if (daysDiff >= 7 && daysDiff <= 15) {
-            refundAmount = originalAmount * 0.5;
-            cancelFee = originalAmount * 0.5;
-            refundPolicy =
-                "Hủy trước ngày khởi hành từ 7 đến 15 ngày: Hoàn tiền 50% (Phí hủy 50%)";
-        } else {
+        if (booking.status !== "paid") {
+            originalAmount = 0;
             refundAmount = 0;
-            cancelFee = originalAmount;
-            refundPolicy =
-                "Hủy trước ngày khởi hành dưới 7 ngày: Không hoàn tiền (Phí hủy 100%)";
+            cancelFee = 0;
+            calcDetails = "Booking chưa thanh toán: Không áp dụng hoàn tiền.";
+        } else {
+            if (daysDiff > 15) {
+                refundAmount = originalAmount;
+                cancelFee = 0;
+                calcDetails = `Số ngày còn lại: ${daysDiff} ngày (> 15 ngày).\n• Áp dụng: Hoàn tiền 100% (Phí hủy 0%).`;
+            } else if (daysDiff >= 7 && daysDiff <= 15) {
+                refundAmount = originalAmount * 0.5;
+                cancelFee = originalAmount * 0.5;
+                calcDetails = `Số ngày còn lại: ${daysDiff} ngày (từ 7 đến 15 ngày).\n• Áp dụng: Hoàn tiền 50% (Phí hủy 50%).`;
+            } else {
+                refundAmount = 0;
+                cancelFee = originalAmount;
+                calcDetails = `Số ngày còn lại: ${daysDiff} ngày (< 7 ngày).\n• Áp dụng: Không hoàn tiền (Phí hủy 100%).`;
+            }
         }
+
+        const refundPolicy = `CHÍNH SÁCH HOÀN TIỀN CHUNG:
+• Hủy trước ngày khởi hành > 15 ngày: Hoàn tiền 100% (Phí hủy 0%)
+• Hủy trước ngày khởi hành từ 7 đến 15 ngày: Hoàn tiền 50% (Phí hủy 50%)
+• Hủy trước ngày khởi hành dưới 7 ngày: Không hoàn tiền (Phí hủy 100%)
+
+ÁP DỤNG CHO ĐƠN NÀY:
+• ${calcDetails}`;
 
         return {
             bookingId,
@@ -607,15 +619,18 @@ class OperatorService {
         const originalAmount = parseFloat(booking.finalPrice);
         let refundAmount = 0;
 
-        if (daysDiff > 15) {
-            refundAmount = originalAmount;
-        } else if (daysDiff >= 7 && daysDiff <= 15) {
-            refundAmount = originalAmount * 0.5;
-        } else {
-            refundAmount = 0;
+        if (booking.status === "paid") {
+            if (daysDiff > 15) {
+                refundAmount = originalAmount;
+            } else if (daysDiff >= 7 && daysDiff <= 15) {
+                refundAmount = originalAmount * 0.5;
+            } else {
+                refundAmount = 0;
+            }
         }
 
-        booking.status = "cancelled";
+        // Cập nhật trạng thái và thông tin hủy/hoàn tiền
+        booking.status = (booking.status === "paid" && refundAmount > 0) ? "refunded" : "cancelled";
         booking.cancellationReason = reason || "Hủy bởi điều hành viên.";
         booking.refundAmount = refundAmount;
         await booking.save();
@@ -990,6 +1005,99 @@ class OperatorService {
         }
 
         await image.destroy();
+    }
+
+    async exportToursCSV(operatorId) {
+        const tours = await operatorRepository.findAllToursWithAllDetails(operatorId);
+
+        const escapeCSV = (val) => {
+            if (val === undefined || val === null) return "";
+            const str = String(val);
+            if (str.includes(",") || str.includes("\n") || str.includes("\r") || str.includes('"')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        const headers = [
+            "Mã Tour",
+            "Tiêu đề Tour",
+            "Slug",
+            "Mô tả",
+            "Điểm nổi bật",
+            "Điểm khởi hành",
+            "Điểm đến",
+            "Độ khó",
+            "Trạng thái",
+            "Thời gian (Ngày)",
+            "Thời gian (Đêm)",
+            "Giá cơ bản (VNĐ)",
+            "Đã phát hành",
+            "Ảnh đại diện (URL)",
+            "Ngày tạo",
+            "Lịch trình chi tiết",
+            "Lịch khởi hành",
+            "Thông tin bổ sung",
+            "Thư viện ảnh (URLs)"
+        ];
+
+        let csvContent = headers.map(escapeCSV).join(",") + "\n";
+
+        for (const tour of tours) {
+            const itineraryStr = (tour.itineraryDays || [])
+                .map(d => `Ngày ${d.dayNumber}: ${d.title || ""} | Bữa ăn: ${d.meals || "Không có"} | Mô tả: ${d.description || ""}`)
+                .join("\n");
+                
+            const schedulesStr = (tour.schedules || [])
+                .map(s => `${s.scheduleCode} | Đi: ${s.departureDate ? new Date(s.departureDate).toLocaleDateString("vi-VN") : ""} | Về: ${s.returnDate ? new Date(s.returnDate).toLocaleDateString("vi-VN") : ""} | Giá: ${s.price}đ | Chỗ: ${s.maxCapacity} | Đăng ký: ${s.registered} | Trạng thái: ${s.status}`)
+                .join("\n");
+                
+            const infoStr = (tour.information || [])
+                .map(i => `[${i.categoryCode}]: ${i.content || ""}`)
+                .join("\n");
+                
+            const imagesStr = (tour.images || [])
+                .map(img => img.imageUrl)
+                .join("; ");
+
+            const difficultyLabel = tour.difficulty === "hard" ? "Khó" : "Thông thường";
+            
+            const statusLabels = {
+                draft: "Bản nháp",
+                pending: "Chờ duyệt",
+                open: "Đang đăng ký",
+                closed: "Đã đóng",
+                upcoming: "Chưa mở",
+                cancelled: "Đã hủy"
+            };
+            const statusLabel = statusLabels[tour.status] || tour.status;
+
+            const row = [
+                tour.tourCode,
+                tour.title,
+                tour.slug,
+                tour.description,
+                tour.highlights,
+                tour.departureLocation,
+                tour.destination,
+                difficultyLabel,
+                statusLabel,
+                tour.durationDays,
+                tour.durationNights,
+                tour.basePrice,
+                tour.isPublished ? "Có" : "Không",
+                tour.thumbnailUrl,
+                tour.createdAt ? new Date(tour.createdAt).toLocaleString("vi-VN") : "",
+                itineraryStr,
+                schedulesStr,
+                infoStr,
+                imagesStr
+            ];
+            
+            csvContent += row.map(escapeCSV).join(",") + "\n";
+        }
+
+        return csvContent;
     }
 }
 

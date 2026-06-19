@@ -24,6 +24,13 @@ export const getOperatorTours = async (params) => {
   return response.data;
 };
 
+export const exportOperatorToursCSV = async () => {
+  const response = await axiosInstance.get("/api/operator/tours/export", {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
 export const getOperatorTourDetail = async (id) => {
   const response = await axiosInstance.get(`/api/operator/tours/${id}`);
   return response.data;
