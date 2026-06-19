@@ -8,16 +8,14 @@ async function run() {
         
         const [updatedRows] = await db.User.update(
             { passwordHash: hash },
-            { where: { role: 'customer' } }
+            { where: {} }
         );
-        console.log(`Successfully updated ${updatedRows} customer users' passwords to 123456!`);
+        console.log(`Successfully updated ${updatedRows} users' passwords to 123456!`);
         
-        // Check and output details of trung@gmail.com
-        const user = await db.User.findOne({ where: { email: 'trung@gmail.com' } });
-        if (user) {
-            console.log(`Verified customer: ${user.fullName} (${user.email}) exists with role '${user.role}' and password hash updated.`);
-        } else {
-            console.log('Warning: customer trung@gmail.com was not found in the database!');
+        // Check and output details of all users
+        const users = await db.User.findAll();
+        for (const user of users) {
+            console.log(`User: ${user.fullName} (${user.email}), Active: ${user.isActive}, Role: ${user.role}`);
         }
     } catch (err) {
         console.error('Error during password update:', err);

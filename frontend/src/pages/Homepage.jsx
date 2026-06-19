@@ -31,6 +31,7 @@ const Homepage = () => {
 
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalTours, setTotalTours] = useState(0);
     const itemsPerPage = 2;
 
     // Reset pagination to page 1 when search filters change
@@ -57,20 +58,25 @@ const Homepage = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    const fetchTours = async () => {
+        setLoading(true);
+        try {
+            const response = await axiosInstance.get(
+                `/api/tours?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}&priceRange=${priceRange}&date=${searchDate}`
+            );
+            setTours(response.data.tours || []);
+            setTotalTours(response.data.total || 0);
+        } catch (err) {
+            setError("Không thể tải danh sách tour. Vui lòng thử lại sau.");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTours = async () => {
-            try {
-                const response = await axiosInstance.get("/api/tours");
-                setTours(response.data.tours || []);
-            } catch (err) {
-                setError("Không thể tải danh sách tour. Vui lòng thử lại sau.");
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchTours();
-    }, []);
+    }, [currentPage, searchTerm, searchDate, priceRange]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -254,34 +260,8 @@ const Homepage = () => {
         });
     };
 
-    // Filters logic
-    const filteredTours = tours.filter((tour) => {
-        const matchesSearch = tour.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tour.destination.toLowerCase().includes(searchTerm.toLowerCase());
-
-        let matchesPrice = true;
-        const price = parseFloat(tour.basePrice);
-        if (priceRange === "under2") {
-            matchesPrice = price < 2000000;
-        } else if (priceRange === "2to5") {
-            matchesPrice = price >= 2000000 && price <= 5000000;
-        } else if (priceRange === "5to10") {
-            matchesPrice = price >= 5000000 && price <= 10000000;
-        } else if (priceRange === "over10") {
-            matchesPrice = price > 10000000;
-        }
-
-        let matchesDate = true;
-        if (searchDate) {
-            matchesDate = tour.schedules && tour.schedules.some(sch => {
-                const depDate = new Date(sch.departureDate).setHours(0,0,0,0);
-                const selDate = new Date(searchDate).setHours(0,0,0,0);
-                return depDate >= selDate;
-            });
-        }
-
-        return matchesSearch && matchesPrice && matchesDate;
-    });
+    // Filters logic (handled by backend now)
+    const filteredTours = tours;
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col font-sans overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
@@ -327,34 +307,30 @@ const Homepage = () => {
             {/* TopNavBar */}
             <TopNavBar />
 
-            {/* Hero Slider Section */}
-            <section className="relative h-[620px] w-full overflow-hidden">
-                <div className="absolute inset-0">
-                    <img 
-                        className="w-full h-full object-cover" 
-                        alt="Sunset view over Ha Long Bay"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoboEtJ_8RrDK4Znk1S_YIUPGVuukaQw1rCooN1LShdSM0gsh1YiCq7XRp6a5YfDmWV0_C7m7JOTim5cVqiLsOVnKIL8mMWJAMzLILuzLHma9Nw3Li4pdAhGTKam09ITHbPllnqIVfh2ZbaF65j8ByPCqxR88TEjKvAaRfvhpnnXl5FDTgXsxWq9arH93eqTHb757EdeNevM-9-speg8rlocTmKLUzWuWEZ1vuEEsOayWTvhphiOcP-VRBpKAWMUoY_ro4kOipaGyJ"
-                    />
-                    <div className="absolute inset-0 bg-black/45"></div>
+            {/* Hero Section with dark premium gradient instead of background image */}
+            <section className="relative h-[400px] w-full overflow-hidden bg-gradient-to-br from-neutral-950 via-slate-900 to-zinc-950 text-white flex flex-col justify-center items-center">
+                <div className="absolute inset-0 opacity-60">
+                    <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl" />
                 </div>
-                <div className="relative h-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop flex flex-col justify-center items-center text-center pb-20">
-                    <h1 className="text-on-primary font-display-lg text-display-lg mb-md max-w-4xl tracking-tight leading-tight animate-fade-in-up">
+                <div className="relative h-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop flex flex-col justify-center items-center text-center pb-16 z-10">
+                    <h1 className="text-white text-2xl md:text-4xl font-black tracking-tight leading-tight animate-fade-in-up">
                         Khám Phá Thế Giới Cùng GlobalExplore
                     </h1>
-                    <p className="text-on-primary/95 font-body-lg text-body-lg mb-xl max-w-2xl animate-fade-in-up stagger-1">
+                    <p className="text-neutral-300 text-xs md:text-sm mt-2 max-w-xl animate-fade-in-up stagger-1">
                         Hành trình trải nghiệm đẳng cấp dành cho gia đình và chuyên gia du lịch.
                     </p>
                 </div>
 
-                {/* Advanced Search Bar */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-6xl z-20">
-                    <div className="bg-white rounded-xl shadow-2xl p-4 md:p-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end border border-neutral-200/50">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Địa điểm đến</label>
+                {/* Advanced Search Bar - Compact version */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl z-20">
+                    <div className="bg-white rounded-2xl shadow-[0_16px_36px_-8px_rgba(0,0,0,0.12)] p-4 md:p-5 grid grid-cols-1 md:grid-cols-4 gap-4 items-end border border-neutral-200/80 transition-all duration-300 hover:shadow-[0_24px_48px_-8px_rgba(0,0,0,0.18)]">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Địa điểm đến</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">location_on</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-[18px]">location_on</span>
                                 <input 
-                                    className="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none font-semibold text-neutral-800" 
+                                    className="w-full pl-9 pr-3 py-1.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-primary outline-none font-semibold text-neutral-800" 
                                     placeholder="Bạn muốn đi đâu?" 
                                     type="text"
                                     value={searchTerm}
@@ -362,24 +338,24 @@ const Homepage = () => {
                                 />
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Ngày khởi hành</label>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Ngày khởi hành</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">calendar_month</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-[18px]">calendar_month</span>
                                 <input 
-                                    className="w-full pl-10 pr-4 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none font-semibold text-neutral-700" 
+                                    className="w-full pl-9 pr-3 py-1.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-primary outline-none font-semibold text-neutral-700" 
                                     type="date"
                                     value={searchDate}
                                     onChange={(e) => setSearchDate(e.target.value)}
                                 />
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Khoảng giá</label>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Khoảng giá</label>
                             <div className="relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">payments</span>
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-[18px]">payments</span>
                                 <select 
-                                    className="w-full pl-10 pr-4 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none appearance-none bg-white font-semibold text-neutral-700 cursor-pointer"
+                                    className="w-full pl-9 pr-3 py-1.5 border border-neutral-200 rounded-xl text-xs focus:ring-2 focus:ring-primary outline-none appearance-none bg-white font-semibold text-neutral-700 cursor-pointer"
                                     value={priceRange}
                                     onChange={(e) => setPriceRange(e.target.value)}
                                 >
@@ -393,9 +369,9 @@ const Homepage = () => {
                         </div>
                         <button 
                             onClick={handleSearchClick}
-                            className="bg-secondary text-on-secondary font-bold py-3.5 px-6 rounded-lg hover:bg-secondary-container transition-colors flex items-center justify-center gap-2 active:scale-95 cursor-pointer shadow-sm"
+                            className="bg-secondary text-on-secondary font-extrabold py-2 px-5 rounded-xl hover:bg-secondary-container transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm text-xs"
                         >
-                            <span className="material-symbols-outlined">search</span>
+                            <span className="material-symbols-outlined text-[16px]">search</span>
                             Tìm kiếm
                         </button>
                     </div>
@@ -434,12 +410,12 @@ const Homepage = () => {
                         </div>
                     ) : (
                         (() => {
-                            const totalPages = Math.ceil(filteredTours.length / itemsPerPage);
-                            const paginatedTours = filteredTours.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+                            const totalPages = Math.ceil(totalTours / itemsPerPage);
+                            const paginatedTours = tours;
 
                             return (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                         {paginatedTours.map((tour, index) => {
                                             const currentSelectedSchedule = selectedSchedules[tour.id] || (tour.schedules && tour.schedules[0]?.id);
                                             const animationDelayClass = `stagger-${(index % 4) + 1}`;
@@ -523,13 +499,12 @@ const Homepage = () => {
                                                                     >
                                                                         Chi tiết
                                                                     </Link>
-                                                                    <button 
-                                                                        onClick={() => handleBookTour(tour)}
-                                                                        disabled={!tour.schedules || tour.schedules.length === 0}
-                                                                        className="bg-primary hover:bg-primary-container text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-primary/10"
+                                                                    <Link 
+                                                                        to={`/tours/${tour.id}`}
+                                                                        className="bg-primary hover:bg-primary-container text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl active:scale-95 transition-all text-center flex items-center justify-center shadow-md shadow-primary/10 cursor-pointer"
                                                                     >
                                                                         Đặt Tour
-                                                                    </button>
+                                                                    </Link>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -592,33 +567,33 @@ const Homepage = () => {
             </section>
 
             {/* About Us Section */}
-            <section id="about-us-section" className="py-20 bg-surface-container-low border-t border-outline-variant/20">
-                <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-2 gap-xl items-center">
-                    <div className="rounded-xl overflow-hidden shadow-lg h-[400px]">
-                        <img 
-                            className="w-full h-full object-cover" 
-                            alt="GlobalExplore Team and travellers"
-                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmk1hUeiWnnm6queQE-SjwNw7rf4R2cRdire3OXpo5NMivRI7wf069KDjLdUrSk9WBMWSrLcxfq8LNssYsqfFMignRYJjqWYYc9fKRCS0Ms6ktxao6ZyGFMZGMYTZI8mujG3zKrIwV9Q64_WFtF5wJ9rrhFvTYteHdgxK1dDO41m2TdJFf0ymiJQIc5sJh5v5gOfhv9OXoqGtndsleFdWXOL-jAmpnb2e9_0A7Vw72ygH2kP7ryBobzBFnSk58sLzNL2pGsRmW2TTb"
-                        />
-                    </div>
-                    <div>
-                        <h2 className="font-headline-lg text-headline-lg text-primary mb-md">Về GlobalExplore</h2>
-                        <p className="text-on-surface-variant font-body-lg text-body-lg mb-lg leading-relaxed">
+            <section id="about-us-section" className="py-24 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
+                <div className="max-w-[1200px] mx-auto px-6 text-center">
+                    <div className="max-w-3xl mx-auto space-y-6">
+                        <span className="text-primary font-bold text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
+                            Về Chúng Tôi
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Về GlobalExplore</h2>
+                        <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                             Với hơn 15 năm kinh nghiệm trong ngành du lịch, GlobalExplore tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
                         </p>
-                        <div className="grid grid-cols-2 gap-lg pt-4 border-t border-outline-variant/30">
-                            <div className="flex items-start gap-sm">
-                                <span className="material-symbols-outlined text-secondary text-[32px]">verified</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 max-w-xl mx-auto text-left">
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
+                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-[28px]">verified</span>
+                                </div>
                                 <div>
-                                    <div className="font-headline-sm text-headline-sm">Uy tín</div>
-                                    <p className="text-body-sm font-body-sm text-on-surface-variant">Hơn 1 triệu lượt khách hài lòng.</p>
+                                    <div className="font-bold text-slate-800 text-sm">Uy tín hàng đầu</div>
+                                    <p className="text-xs text-slate-500 mt-1">Hơn 1 triệu lượt khách hàng hài lòng và quay lại.</p>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-sm">
-                                <span className="material-symbols-outlined text-secondary text-[32px]">support_agent</span>
+                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
+                                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-[28px]">support_agent</span>
+                                </div>
                                 <div>
-                                    <div className="font-headline-sm text-headline-sm">24/7</div>
-                                    <p className="text-body-sm font-body-sm text-on-surface-variant">Hỗ trợ khách hàng mọi lúc.</p>
+                                    <div className="font-bold text-slate-800 text-sm">Hỗ trợ 24/7</div>
+                                    <p className="text-xs text-slate-500 mt-1">Hỗ trợ khách hàng mọi lúc, mọi nơi trên toàn cầu.</p>
                                 </div>
                             </div>
                         </div>
@@ -627,53 +602,55 @@ const Homepage = () => {
             </section>
 
             {/* Testimonials Section */}
-            <section className="py-20 bg-white">
-                <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop">
-                    <div className="text-center max-w-2xl mx-auto mb-16">
-                        <span className="text-secondary font-black text-xs uppercase tracking-widest bg-secondary-fixed/30 px-3 py-1 rounded-full border border-secondary-fixed/50">Cảm nhận khách hàng</span>
-                        <h2 className="font-headline-lg text-headline-lg text-center mt-2.5">Đánh giá từ khách hàng</h2>
+            <section className="py-24 bg-white border-t border-b border-slate-100">
+                <div className="max-w-[1200px] mx-auto px-6">
+                    <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+                        <span className="text-secondary font-bold text-xs uppercase tracking-widest bg-secondary/10 px-4 py-1.5 rounded-full border border-secondary/20">
+                            Cảm nhận khách hàng
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Đánh giá từ khách hàng</h2>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Testimonial 1 */}
-                        <div className="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant/40 flex flex-col justify-between">
-                            <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed mb-6 italic">
+                        <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                            <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
                                 "Dịch vụ tuyệt vời! Tour Sapa của GlobalExplore tổ chức rất chu đáo, hướng dẫn viên nhiệt tình và khách sạn 5 sao cực kỳ đẳng cấp. Gia đình tôi rất hài lòng."
                             </p>
-                            <div className="flex items-center gap-md border-t border-outline-variant/20 pt-4">
+                            <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Nguyễn Văn Nam avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyYDTaLlcjUSexakPA_46fM-8-WdqU_dtNwTlsfsT1iO7aFkPUpj_wsFjnQgBJPN8P74-7Ut_swk6zZ73sWAb-kToL8HPg3XRLzfbr5X-jd78naVcp8O6-fq5doWfJ854C-s4vlxxEfZY2IfH4pmVbdsyPtxjrv35xaA2CN9Yhjl6d_U-jNDPR3VyOeGEQ0ksQjr5OjYGcQlyw-ggX0QFoUwqKCfYGlje8fyylJoMH8zreDud10K5znyU_ZTF17UqQnwF0iPrQCnpK" />
                                 <div>
-                                    <div className="font-label-md text-label-md font-bold text-neutral-800">Nguyễn Văn Nam</div>
-                                    <div className="flex text-secondary mt-0.5">
+                                    <div className="font-bold text-xs text-slate-800">Nguyễn Văn Nam</div>
+                                    <div className="flex text-amber-500 mt-1">
                                         {[1,2,3,4,5].map(star => <span key={star} className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>)}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         {/* Testimonial 2 */}
-                        <div className="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant/40 flex flex-col justify-between">
-                            <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed mb-6 italic">
+                        <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                            <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
                                 "Tôi đã đặt tour Phú Quốc qua ứng dụng, thao tác rất nhanh và tiện lợi. Giá cả cạnh tranh so với các bên khác. Chắc chắn sẽ quay lại!"
                             </p>
-                            <div className="flex items-center gap-md border-t border-outline-variant/20 pt-4">
+                            <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Trần Thị Lan avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe4c7PZCMoftBFS93iygVzLAHuYGa-Zmz04MSnUt3Yj5K6nm2sEFdLpw2v9G8Z7X-tXp_9kmXFpwdzcU1vyZNw3kP8QViDNeLliy1w47USIFzjWdmuP5BPhVlOhLJWaxVFA8sEvbxzVPNTpNtk8HE4VdWUCmUiwg0HWBr4uCAnA8wHA-eLfgAttedVYgUjEFH824tM0LgstjBKo7AXdt5RjpHJDP17lYcfVJj-QGKk-EXvGz8X3eIXQ8rxebIJgikFXSd0cFefNGcy" />
                                 <div>
-                                    <div className="font-label-md text-label-md font-bold text-neutral-800">Trần Thị Lan</div>
-                                    <div className="flex text-secondary mt-0.5">
+                                    <div className="font-bold text-xs text-slate-800">Trần Thị Lan</div>
+                                    <div className="flex text-amber-500 mt-1">
                                         {[1,2,3,4,5].map(star => <span key={star} className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>)}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         {/* Testimonial 3 */}
-                        <div className="bg-surface-container-lowest p-lg rounded-xl shadow-sm border border-outline-variant/40 flex flex-col justify-between">
-                            <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed mb-6 italic">
+                        <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                            <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
                                 "Sự an tâm là điều tôi tìm kiếm và GlobalExplore đã đáp ứng hoàn hảo. Lịch trình hợp lý cho người lớn tuổi, không quá dồn dập."
                             </p>
-                            <div className="flex items-center gap-md border-t border-outline-variant/20 pt-4">
+                            <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Phạm Minh Đức avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc1JW0LzjP55KRD_9x-zl9Qz8QvYS05IxZ_F-SCS6DwXKYXD0Dc_xVnvxKwPASEjONZSq7L_nGf-nJXO0424cS5MjruxwEbYa_G8vu0m4JVdAnU_n_wG9LH6BriFxBCBnEz7XVqIWTCSx-ba6g9nJJhM41yAc5cSaOkxQJoWsURtuctf8pkc13ZfuJe5pZqxmNTko_57oiH3r-5vfPSkY4i8EE_E3kkwCgIiNTEoyVxlSTBk0VpqZemKK8aUOytEK1vj500k7Hgax2" />
                                 <div>
-                                    <div className="font-label-md text-label-md font-bold text-neutral-800">Phạm Minh Đức</div>
-                                    <div className="flex text-secondary mt-0.5">
+                                    <div className="font-bold text-xs text-slate-800">Phạm Minh Đức</div>
+                                    <div className="flex text-amber-500 mt-1">
                                         {[1,2,3,4,5].map(star => <span key={star} className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>)}
                                     </div>
                                 </div>
@@ -683,74 +660,79 @@ const Homepage = () => {
                 </div>
             </section>
 
-            {/* Contact Section */}
-            <section id="contact-section" className="py-20 bg-primary text-on-primary">
-                <div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-2 gap-xl">
-                    <div className="flex flex-col justify-center">
-                        <h2 className="font-headline-lg text-headline-lg mb-md text-white">Liên Hệ Với Chúng Tôi</h2>
-                        <p className="text-on-primary/80 font-body-lg text-body-lg mb-lg">Đừng ngần ngại liên hệ nếu bạn có bất kỳ thắc mắc nào về chuyến đi sắp tới.</p>
-                        <div className="space-y-md">
-                            <div className="flex items-center gap-md">
-                                <div className="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-white">call</span>
+            {/* Contact Section - Bright premium background */}
+            <section id="contact-section" className="py-24 bg-slate-50 text-slate-800">
+                <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                    <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
+                        <div>
+                            <span className="text-primary font-bold text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
+                                Kết nối ngay
+                            </span>
+                            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-4 tracking-tight">Liên Hệ Với Chúng Tôi</h2>
+                            <p className="text-slate-500 text-sm mt-3 leading-relaxed">Đừng ngần ngại liên hệ nếu bạn có bất kỳ thắc mắc nào về chuyến đi sắp tới.</p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">call</span>
                                 </div>
-                                <span className="font-body-md text-body-md">Hotline: 1900 6789 (24/7)</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Hotline: 1900 6789 (24/7)</span>
                             </div>
-                            <div className="flex items-center gap-md">
-                                <div className="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-white">location_on</span>
+                            <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">location_on</span>
                                 </div>
-                                <span className="font-body-md text-body-md">Địa chỉ: 123 Đường Lê Lợi, Quận 1, TP. HCM</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Địa chỉ: 123 Đường Lê Lợi, Quận 1, TP. HCM</span>
                             </div>
-                            <div className="flex items-center gap-md">
-                                <div className="w-10 h-10 rounded-full bg-on-primary/10 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-white">mail</span>
+                            <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md">
+                                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-[20px]">mail</span>
                                 </div>
-                                <span className="font-body-md text-body-md">Email: contact@globalexplore.com</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Email: contact@globalexplore.com</span>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-surface-container-lowest p-lg rounded-xl text-on-surface shadow-lg border border-outline-variant/10">
-                        <form onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất."); e.target.reset(); }} className="space-y-md text-neutral-800">
-                            <div className="grid grid-cols-2 gap-md">
-                                <input required className="w-full px-md py-3 border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Họ và tên" type="text" />
-                                <input required className="w-full px-md py-3 border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Email" type="email" />
+                    <div className="lg:col-span-7 bg-white p-8 rounded-[32px] text-slate-800 shadow-xl border border-slate-100">
+                        <form onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất."); e.target.reset(); }} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Họ và tên" type="text" />
+                                <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Email" type="email" />
                             </div>
-                            <input required className="w-full px-md py-3 border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary outline-none" placeholder="Số điện thoại" type="text" />
-                            <textarea required className="w-full px-md py-3 border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Lời nhắn của bạn" rows="4"></textarea>
-                            <button className="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3.5 rounded-lg active:scale-95 hover:bg-secondary-container transition-all cursor-pointer font-bold shadow-sm">Gửi yêu cầu tư vấn</button>
+                            <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Số điện thoại" type="text" />
+                            <textarea required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all" placeholder="Lời nhắn của bạn" rows="4"></textarea>
+                            <button className="w-full bg-primary hover:bg-primary-container text-white font-extrabold text-xs uppercase tracking-wider py-4 rounded-xl active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-primary/10">Gửi yêu cầu tư vấn</button>
                         </form>
                     </div>
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className="w-full py-16 px-margin-mobile md:px-margin-desktop bg-surface-container-highest dark:bg-surface-dim grid grid-cols-1 md:grid-cols-4 gap-gutter border-t border-outline-variant/40">
-                <div className="flex flex-col gap-md">
-                    <div className="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">GlobalExplore</div>
-                    <p className="text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+            {/* Footer - Clean light style */}
+            <footer className="w-full py-16 px-6 bg-slate-50 grid grid-cols-1 md:grid-cols-4 gap-8 border-t border-slate-200">
+                <div className="flex flex-col gap-4">
+                    <div className="text-xl font-black text-primary tracking-tight">GlobalExplore</div>
+                    <p className="text-slate-500 font-semibold text-xs leading-relaxed">
                         Đồng hành cùng bạn trên mọi nẻo đường thế giới. Chất lượng và uy tín là kim chỉ nam của chúng tôi.
                     </p>
                 </div>
-                <div className="flex flex-col gap-sm">
-                    <h4 className="font-label-md text-label-md text-primary mb-xs">Công Ty</h4>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#about-us-section">Về chúng tôi</a>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#featured-tours-section">Đội ngũ chuyên gia</a>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#contact-section">Tuyển dụng</a>
+                <div className="flex flex-col gap-3">
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-1">Công Ty</h4>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#about-us-section">Về chúng tôi</a>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#featured-tours-section">Đội ngũ chuyên gia</a>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#contact-section">Tuyển dụng</a>
                 </div>
-                <div className="flex flex-col gap-sm">
-                    <h4 className="font-label-md text-label-md text-primary mb-xs">Hỗ Trợ</h4>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#contact-section">Trung tâm trợ giúp</a>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#contact-section">Chính sách bảo mật</a>
-                    <a className="text-on-surface-variant hover:text-primary hover:underline decoration-secondary transition-all font-body-sm text-body-sm" href="#contact-section">Điều khoản dịch vụ</a>
+                <div className="flex flex-col gap-3">
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-1">Hỗ Trợ</h4>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#contact-section">Trung tâm trợ giúp</a>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#contact-section">Chính sách bảo mật</a>
+                    <a className="text-slate-500 hover:text-primary transition-all font-semibold text-xs" href="#contact-section">Điều khoản dịch vụ</a>
                 </div>
-                <div className="flex flex-col gap-sm">
-                    <h4 className="font-label-md text-label-md text-primary mb-xs">Kết Nối</h4>
-                    <div className="flex gap-md">
-                        <span className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary hover:scale-105 cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">public</span></span>
-                        <span className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary hover:scale-105 cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">share</span></span>
+                <div className="flex flex-col gap-3">
+                    <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-1">Kết Nối</h4>
+                    <div className="flex gap-3">
+                        <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:scale-105 transition cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">public</span></span>
+                        <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:scale-105 transition cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">share</span></span>
                     </div>
-                    <div className="mt-md text-on-surface-variant font-body-sm text-body-sm">
+                    <div className="mt-3 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
                         © 2026 Hệ sinh thái du lịch GlobalExplore. Bảo lưu mọi quyền.
                     </div>
                 </div>

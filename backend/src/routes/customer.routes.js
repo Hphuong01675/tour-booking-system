@@ -7,6 +7,7 @@ const router = express.Router();
 router.use("/api/customer", verifyAccessToken, authorizeRoles("customer"));
 
 router.get("/api/customer/bookings", customerController.getBookings);
+router.get("/api/customer/vouchers/available", customerController.getAvailableVouchers);
 router.post("/api/customer/bookings", customerController.createBooking);
 router.put("/api/customer/profile", customerController.updateProfile);
 router.put("/api/customer/password", customerController.updatePassword);

@@ -16,9 +16,31 @@ class CustomerController {
         }
     }
 
+    async getAvailableVouchers(req, res) {
+        try {
+            const { scheduleId } = req.query;
+            if (!scheduleId) {
+                return res.status(400).json({
+                    success: false,
+                    error: "scheduleId là bắt buộc."
+                });
+            }
+            const vouchers = await customerService.getAvailableVouchersForTour(req.user.id, scheduleId);
+            return res.status(200).json({
+                success: true,
+                vouchers
+            });
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
     async createBooking(req, res) {
         try {
-            const { scheduleId, participants, status } = req.body;
+            const { scheduleId, participants, status, voucherId } = req.body;
             if (!scheduleId) {
                 return res.status(400).json({
                     success: false,
@@ -26,7 +48,7 @@ class CustomerController {
                 });
             }
 
-            const booking = await customerService.createBooking(req.user.id, { scheduleId, participants, status });
+            const booking = await customerService.createBooking(req.user.id, { scheduleId, participants, status, voucherId });
             return res.status(201).json({
                 success: true,
                 message: "Đặt tour thành công.",
@@ -43,6 +65,17 @@ class CustomerController {
                 return res.status(400).json({
                     success: false,
                     error: "Lịch trình khởi hành này hiện tại đã hết chỗ trống."
+                });
+            }
+            if (
+                error.message === "HARD_TOUR_ONLY_ADULTS" ||
+                error.message === "HARD_TOUR_REQUIRED_CCCD" ||
+                error.message === "NORMAL_TOUR_ADULT_REQUIRED_CCCD" ||
+                error.message.startsWith("VOUCHER_")
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    error: error.message
                 });
             }
             return res.status(500).json({
@@ -190,7 +223,7 @@ class CustomerController {
             const booking = await customerService.cancelBooking(req.user.id, bookingId, reason);
             return res.status(200).json({
                 success: true,
-                message: "Hủy đặt tour thành công.",
+                message: booking.destroyed ? "Đã xóa hẳn đơn đặt tour thành công." : "Yêu cầu hủy tour thành công, đang chờ điều hành duyệt.",
                 booking
             });
         } catch (error) {

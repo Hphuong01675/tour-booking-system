@@ -28,6 +28,25 @@ const TourDetailPage = () => {
     const [showPaymentSimulator, setShowPaymentSimulator] = useState(null);
     const [bookingSuccessModal, setBookingSuccessModal] = useState(null);
 
+    // Sandbox payment flow states
+    const [sandboxStep, setSandboxStep] = useState("card_info"); // 'card_info', 'otp', 'momo_qr', 'momo_login'
+    const [cardNumber, setCardNumber] = useState("9704198526191432119");
+    const [cardHolder, setCardHolder] = useState("NGUYEN VAN A");
+    const [cardDate, setCardDate] = useState("07/15");
+    const [otpCode, setOtpCode] = useState("123456");
+    const [momoPhone, setMomoPhone] = useState("0901234567");
+    const [momoOtp, setMomoOtp] = useState("123456");
+
+    // New states for Vouchers and Multiple Participants
+    const [vouchers, setVouchers] = useState([]);
+    const [selectedVoucherId, setSelectedVoucherId] = useState("");
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [participantsList, setParticipantsList] = useState([
+        { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: true }
+    ]);
+    const [currentBooking, setCurrentBooking] = useState(null);
+    const [serverIp, setServerIp] = useState("localhost");
+
     // Chat Bubble States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([
@@ -67,6 +86,34 @@ const TourDetailPage = () => {
             fetchTourDetail();
         }
     }, [id]);
+
+    // Tự động kiểm tra trạng thái đơn hàng MoMo từ điện thoại
+    useEffect(() => {
+        let intervalId;
+        if (showPaymentSimulator === 'momo' && currentBooking) {
+            intervalId = setInterval(async () => {
+                try {
+                    const response = await axiosInstance.get("/api/customer/bookings");
+                    if (response.data.success) {
+                        const booking = response.data.bookings.find(b => b.id === currentBooking.id);
+                        if (booking && booking.status === "paid") {
+                            clearInterval(intervalId);
+                            setShowPaymentSimulator(null);
+                            setBookingSuccessModal({
+                                tourTitle: booking.schedule?.tour?.title || tour.title,
+                                bookingCode: booking.bookingCode
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Lỗi polling trạng thái đơn hàng:", err);
+                }
+            }, 1500);
+        }
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [showPaymentSimulator, currentBooking]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -125,6 +172,60 @@ const TourDetailPage = () => {
         }, 3000);
     };
 
+    const fetchAvailableVouchers = async (scheduleId) => {
+        try {
+            const response = await axiosInstance.get(`/api/customer/vouchers/available?scheduleId=${scheduleId}`);
+            if (response.data.success) {
+                setVouchers(response.data.vouchers);
+            }
+        } catch (err) {
+            console.error("Lỗi khi tải danh sách Voucher:", err);
+        }
+    };
+
+    const handleAddParticipant = () => {
+        setParticipantsList([
+            ...participantsList,
+            { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: false }
+        ]);
+    };
+
+    const handleRemoveParticipant = (index) => {
+        const list = [...participantsList];
+        list.splice(index, 1);
+        setParticipantsList(list);
+    };
+
+    const handleParticipantChange = (index, field, value) => {
+        const list = [...participantsList];
+        list[index] = { ...list[index], [field]: value };
+        setParticipantsList(list);
+    };
+
+    const handleCccdUpload = async (index, side, file) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const response = await axiosInstance.post("/api/upload", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            if (response.data.success) {
+                const list = [...participantsList];
+                const baseUrl = axiosInstance.defaults.baseURL || "http://localhost:8080";
+                list[index][side === 'front' ? 'cccdFrontUrl' : 'cccdBackUrl'] = `${baseUrl}${response.data.url}`;
+                setParticipantsList(list);
+            } else {
+                alert("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định"));
+            }
+        } catch (err) {
+            console.error("Lỗi upload file:", err);
+            alert("Lỗi kết nối khi tải lên file.");
+        }
+    };
+
     const handleBookTour = () => {
         if (!selectedScheduleId) {
             alert("Hiện tại chưa có lịch khởi hành mở đăng ký cho tour này.");
@@ -152,51 +253,156 @@ const TourDetailPage = () => {
             }
 
             setBookingConfigTour(tour);
+            setParticipantsList([
+                {
+                    fullName: user.fullName || "",
+                    participantType: "adult",
+                    dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "1995-01-01",
+                    address: user.address || "",
+                    cccdFrontUrl: "",
+                    cccdBackUrl: "",
+                    isLead: true
+                }
+            ]);
             setTravelerInfo({
                 fullName: user.fullName || "",
                 phone: user.phone || "",
                 idNumber: ""
             });
+            setSelectedVoucherId("");
+            setDiscountAmount(0);
             setPaymentMethod("vnpay");
+            fetchAvailableVouchers(selectedScheduleId);
         }
     };
 
     const handleConfirmBooking = (event) => {
         event.preventDefault();
-        const submitBtn = document.getElementById("confirm-booking-btn-submit");
-        const startRect = submitBtn ? submitBtn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 200, height: 50 };
-        const targetEl = document.getElementById("my-tours-nav-btn");
-        const targetRect = targetEl ? targetEl.getBoundingClientRect() : { left: window.innerWidth - 180, top: 20, width: 100, height: 40 };
 
-        setMascotAnimation({
-            startX: startRect.left + startRect.width / 2,
-            startY: startRect.top + startRect.height / 2,
-            endX: targetRect.left + targetRect.width / 2,
-            endY: targetRect.top + targetRect.height / 2
+        // Kiểm tra tính hợp lệ của tất cả hành khách
+        for (let i = 0; i < participantsList.length; i++) {
+            const p = participantsList[i];
+            if (!p.fullName || !p.fullName.trim()) {
+                alert(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+            if (!p.dateOfBirth) {
+                alert(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+            if (!p.address || !p.address.trim()) {
+                alert(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+
+            // Tính tuổi hành khách
+            const birthDate = new Date(p.dateOfBirth);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            // Xác định loại hành khách thực tế (ép về adult nếu là tour hard)
+            const type = tour.difficulty === "hard" ? "adult" : p.participantType;
+
+            if (type === "adult") {
+                if (age < 18) {
+                    alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                    return;
+                }
+                if (!p.cccdFrontUrl || !p.cccdBackUrl) {
+                    alert(`Hành khách người lớn ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc).`);
+                    return;
+                }
+            } else if (type === "child") {
+                if (age >= 18 || age < 2) {
+                    alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
+                    return;
+                }
+            } else if (type === "infant") {
+                if (age >= 2) {
+                    alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
+                    return;
+                }
+            }
+        }
+
+        // Tính toán lại tiền giảm giá phía Client để hiển thị simulator chính xác
+        const basePrice = parseFloat(tour.basePrice);
+        const totalPrice = basePrice * participantsList.length;
+        let discount = 0;
+
+        if (selectedVoucherId) {
+            const v = vouchers.find(x => x.id === selectedVoucherId);
+            if (v) {
+                if (v.discountType === "percent") {
+                    discount = totalPrice * (parseFloat(v.discountValue) / 100);
+                    if (v.maxDiscountAmount && discount > parseFloat(v.maxDiscountAmount)) {
+                        discount = parseFloat(v.maxDiscountAmount);
+                    }
+                } else if (v.discountType === "fixed") {
+                    discount = parseFloat(v.discountValue);
+                }
+                if (discount > totalPrice) discount = totalPrice;
+            }
+        }
+        setDiscountAmount(discount);
+
+        // Pre-create the booking with status pending_payment
+        axiosInstance.post("/api/customer/bookings", {
+            scheduleId: selectedScheduleId,
+            status: "pending_payment",
+            voucherId: selectedVoucherId || undefined,
+            participants: participantsList.map(p => ({
+                ...p,
+                participantType: tour.difficulty === "hard" ? "adult" : p.participantType
+            }))
+        }).then(async (response) => {
+            if (response.data.success) {
+                const createdBooking = response.data.booking;
+                setCurrentBooking(createdBooking);
+
+                // Fetch server local IP
+                try {
+                    const ipRes = await axiosInstance.get("/api/server-ip");
+                    if (ipRes.data.ip) {
+                        setServerIp(ipRes.data.ip);
+                    }
+                } catch (ipErr) {
+                    console.error("Lỗi lấy IP máy chủ:", ipErr);
+                }
+
+                const submitBtn = document.getElementById("confirm-booking-btn-submit");
+                const startRect = submitBtn ? submitBtn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 200, height: 50 };
+                const targetEl = document.getElementById("my-tours-nav-btn");
+                const targetRect = targetEl ? targetEl.getBoundingClientRect() : { left: window.innerWidth - 180, top: 20, width: 100, height: 40 };
+
+                setMascotAnimation({
+                    startX: startRect.left + startRect.width / 2,
+                    startY: startRect.top + startRect.height / 2,
+                    endX: targetRect.left + targetRect.width / 2,
+                    endY: targetRect.top + targetRect.height / 2
+                });
+
+                setTimeout(() => {
+                    setMascotAnimation(null);
+                    setBookingConfigTour(null);
+                    setSandboxStep(paymentMethod === "vnpay" ? "card_info" : "momo_qr");
+                    setShowPaymentSimulator(paymentMethod);
+                }, 3000);
+            }
+        }).catch((err) => {
+            console.error("Lỗi tạo đơn đặt tour:", err);
+            alert(err.response?.data?.error || "Không thể thực hiện đặt tour.");
         });
-
-        setTimeout(() => {
-            setMascotAnimation(null);
-            setBookingConfigTour(null);
-            setShowPaymentSimulator(paymentMethod);
-        }, 3000);
     };
 
     const handleSimulatorPaymentSuccess = async () => {
+        if (!currentBooking) return;
         try {
-            const response = await axiosInstance.post("/api/customer/bookings", {
-                scheduleId: selectedScheduleId,
-                status: "paid",
-                participants: [
-                    {
-                        fullName: travelerInfo.fullName,
-                        isLead: true,
-                        address: "",
-                        dateOfBirth: new Date("1995-01-01")
-                    }
-                ]
-            });
-
+            const response = await axiosInstance.put(`/api/customer/bookings/${currentBooking.id}/pay`);
             if (response.data.success) {
                 setShowPaymentSimulator(null);
                 setBookingSuccessModal({
@@ -205,7 +411,7 @@ const TourDetailPage = () => {
                 });
             }
         } catch (err) {
-            console.error("Lỗi tạo booking:", err);
+            console.error("Lỗi thanh toán:", err);
             alert(err.response?.data?.error || "Không thể hoàn tất giao dịch.");
         }
     };
@@ -616,8 +822,8 @@ const TourDetailPage = () => {
             {/* Interactive Booking Config Modal */}
             {bookingConfigTour && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[32px] max-w-lg w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-white rounded-[32px] max-w-2xl w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8 flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center mb-4 shrink-0">
                             <h3 className="text-2xl font-black text-neutral-900">Thông Tin Đặt Tour</h3>
                             <button
                                 onClick={() => setBookingConfigTour(null)}
@@ -627,7 +833,7 @@ const TourDetailPage = () => {
                             </button>
                         </div>
 
-                        <div className="bg-orange-50/60 border border-orange-100 p-4 rounded-2xl mb-6 flex items-start gap-4 text-neutral-800">
+                        <div className="bg-orange-50/60 border border-orange-100 p-4 rounded-2xl mb-4 flex items-start gap-4 text-neutral-800 shrink-0">
                             <img
                                 src={bookingConfigTour.thumbnailUrl || "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=120&h=80&fit=crop"}
                                 alt=""
@@ -635,49 +841,250 @@ const TourDetailPage = () => {
                             />
                             <div>
                                 <h4 className="font-black text-neutral-900 text-sm leading-snug">{bookingConfigTour.title}</h4>
-                                <p className="text-rose-600 text-xs font-bold mt-1">{formatPrice(bookingConfigTour.basePrice)}</p>
-                                <span className="text-[10px] text-neutral-500 font-medium block mt-0.5">Thời lượng: {bookingConfigTour.durationDays}N{bookingConfigTour.durationNights}Đ</span>
+                                <p className="text-rose-600 text-xs font-bold mt-1">Đơn giá: {formatPrice(bookingConfigTour.basePrice)} / khách</p>
+                                <span className="text-[10px] text-neutral-500 font-medium block mt-0.5">Độ khó: <strong className="capitalize text-rose-500">{bookingConfigTour.difficulty || "normal"}</strong></span>
                             </div>
                         </div>
 
-                        <form onSubmit={handleConfirmBooking} className="space-y-5 text-neutral-800">
-                            <div>
-                                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1.5">Họ tên hành khách trưởng đoàn</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all"
-                                    value={travelerInfo.fullName}
-                                    onChange={(e) => setTravelerInfo(prev => ({ ...prev, fullName: e.target.value }))}
-                                />
+                        <form onSubmit={handleConfirmBooking} className="space-y-5 text-neutral-800 overflow-y-auto flex-grow pr-2">
+                            {/* Danh sách hành khách */}
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b border-neutral-100 pb-2">
+                                    <h4 className="text-sm font-black text-neutral-900 uppercase tracking-wide flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-rose-500">groups</span>
+                                        Danh sách hành khách tham gia
+                                    </h4>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddParticipant}
+                                        className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">add</span>Thêm hành khách
+                                    </button>
+                                </div>
+
+                                {participantsList.map((p, idx) => (
+                                    <div key={idx} className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/60 relative space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs font-black text-rose-500 uppercase tracking-wider">Hành khách #{idx + 1} {p.isLead && "(Trưởng đoàn)"}</span>
+                                            {participantsList.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveParticipant(idx)}
+                                                    className="text-neutral-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">delete</span>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Họ và tên *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 transition-all"
+                                                    value={p.fullName}
+                                                    onChange={(e) => handleParticipantChange(idx, "fullName", e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Loại hành khách *</label>
+                                                <select
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-bold text-neutral-700 outline-none focus:border-rose-500 transition-all disabled:bg-neutral-100 disabled:text-neutral-900 disabled:font-black disabled:opacity-100"
+                                                    value={bookingConfigTour.difficulty === 'hard' ? 'adult' : p.participantType}
+                                                    onChange={(e) => handleParticipantChange(idx, "participantType", e.target.value)}
+                                                    disabled={bookingConfigTour.difficulty === 'hard'}
+                                                >
+                                                    <option value="adult">Người lớn</option>
+                                                    {bookingConfigTour.difficulty !== 'hard' && (
+                                                        <>
+                                                            <option value="child">Trẻ em</option>
+                                                            <option value="infant">Em bé</option>
+                                                        </>
+                                                    )}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Ngày sinh *</label>
+                                                <input
+                                                    type="date"
+                                                    required
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 transition-all"
+                                                    value={p.dateOfBirth}
+                                                    onChange={(e) => handleParticipantChange(idx, "dateOfBirth", e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Địa chỉ *</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 transition-all"
+                                                    value={p.address}
+                                                    onChange={(e) => handleParticipantChange(idx, "address", e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Phần chụp ảnh CCCD */}
+                                        {(p.participantType === 'adult' || bookingConfigTour.difficulty === 'hard') && (
+                                            <div className="border-t border-dashed border-neutral-200 pt-3">
+                                                <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-2">Ảnh CCCD xác minh (Yêu cầu bắt buộc cho người lớn)</span>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col items-center gap-1.5">
+                                                        <label
+                                                            className={`w-full py-2 px-3 border rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer ${p.cccdFrontUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-100'}`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">add_a_photo</span>
+                                                            {p.cccdFrontUrl ? "Đã chọn mặt trước" : "Chọn CCCD mặt trước"}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => handleCccdUpload(idx, "front", e.target.files[0])}
+                                                            />
+                                                        </label>
+                                                        {p.cccdFrontUrl && (
+                                                            <img src={p.cccdFrontUrl} alt="Front CCCD" className="w-20 h-12 object-cover rounded-md border" />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex flex-col items-center gap-1.5">
+                                                        <label
+                                                            className={`w-full py-2 px-3 border rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1 cursor-pointer ${p.cccdBackUrl ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-100'}`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-xs">add_a_photo</span>
+                                                            {p.cccdBackUrl ? "Đã chọn mặt sau" : "Chọn CCCD mặt sau"}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => handleCccdUpload(idx, "back", e.target.files[0])}
+                                                            />
+                                                        </label>
+                                                        {p.cccdBackUrl && (
+                                                            <img src={p.cccdBackUrl} alt="Back CCCD" className="w-20 h-12 object-cover rounded-md border" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1.5">Số điện thoại liên hệ</label>
-                                    <input
-                                        type="tel"
-                                        required
-                                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all"
-                                        value={travelerInfo.phone}
-                                        onChange={(e) => setTravelerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1.5">Số CCCD / Hộ chiếu</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="Ví dụ: 030095123456"
-                                        className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all"
-                                        value={travelerInfo.idNumber}
-                                        onChange={(e) => setTravelerInfo(prev => ({ ...prev, idNumber: e.target.value }))}
-                                    />
+                            {/* Chọn Voucher khả dụng */}
+                            <div className="space-y-2 border-t border-neutral-100 pt-4">
+                                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-rose-500 text-sm">confirmation_number</span>
+                                    Mã giảm giá khả dụng của tour:
+                                </label>
+                                {vouchers.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-2">
+                                        {vouchers.map((v) => (
+                                            <label
+                                                key={v.id}
+                                                className={`border rounded-xl p-3 flex justify-between items-center cursor-pointer transition ${selectedVoucherId === v.id ? 'border-rose-500 bg-rose-50/20 text-rose-900 font-bold' : 'border-neutral-200 hover:bg-neutral-50 text-neutral-600'}`}
+                                            >
+                                                <div className="flex items-start gap-2.5">
+                                                    <input
+                                                        type="radio"
+                                                        name="voucherSelection"
+                                                        className="mt-1"
+                                                        checked={selectedVoucherId === v.id}
+                                                        onChange={() => setSelectedVoucherId(v.id)}
+                                                    />
+                                                    <div>
+                                                        <span className="text-xs font-black uppercase text-rose-600">{v.code}</span>
+                                                        <p className="text-[10px] text-neutral-400 leading-normal">{v.description}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <span className="text-xs font-black text-rose-500">
+                                                        {v.discountType === 'percent' ? `-${v.discountValue}%` : `-${formatPrice(v.discountValue)}`}
+                                                    </span>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-[11px] text-neutral-400 italic">Không tìm thấy mã giảm giá khả dụng cho bạn tại chuyến đi này.</p>
+                                )}
+                                {selectedVoucherId && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedVoucherId("")}
+                                        className="text-[10px] font-bold text-neutral-500 hover:text-rose-500 flex items-center gap-0.5 mt-1"
+                                    >
+                                        <span className="material-symbols-outlined text-xs">close</span> Hủy áp dụng Voucher
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Bảng giá phân rã */}
+                            <div className="border-t border-neutral-100 pt-4 space-y-2">
+                                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block">Chi tiết thanh toán:</label>
+                                <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/60 text-xs font-semibold text-neutral-600 space-y-2">
+                                    <div className="flex justify-between">
+                                        <span>Tổng giá vé gốc ({participantsList.length} khách):</span>
+                                        <span>{formatPrice(parseFloat(tour.basePrice) * participantsList.length)}</span>
+                                    </div>
+                                    {selectedVoucherId && (
+                                        <div className="flex justify-between text-rose-600 font-bold">
+                                            <span>Mã giảm giá đã áp dụng:</span>
+                                            <span>-{formatPrice(
+                                                // Calculate preview discount amount
+                                                (() => {
+                                                    const total = parseFloat(tour.basePrice) * participantsList.length;
+                                                    const v = vouchers.find(x => x.id === selectedVoucherId);
+                                                    if (!v) return 0;
+                                                    let discount = 0;
+                                                    if (v.discountType === "percent") {
+                                                        discount = total * (parseFloat(v.discountValue) / 100);
+                                                        if (v.maxDiscountAmount && discount > parseFloat(v.maxDiscountAmount)) {
+                                                            discount = parseFloat(v.maxDiscountAmount);
+                                                        }
+                                                    } else if (v.discountType === "fixed") {
+                                                        discount = parseFloat(v.discountValue);
+                                                    }
+                                                    return discount > total ? total : discount;
+                                                })()
+                                            )}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-sm font-black text-neutral-900 border-t border-dashed border-neutral-200 pt-2">
+                                        <span>Tổng tiền cần thanh toán:</span>
+                                        <span className="text-rose-600">
+                                            {formatPrice(
+                                                (() => {
+                                                    const total = parseFloat(tour.basePrice) * participantsList.length;
+                                                    const v = vouchers.find(x => x.id === selectedVoucherId);
+                                                    if (!v) return total;
+                                                    let discount = 0;
+                                                    if (v.discountType === "percent") {
+                                                        discount = total * (parseFloat(v.discountValue) / 100);
+                                                        if (v.maxDiscountAmount && discount > parseFloat(v.maxDiscountAmount)) {
+                                                            discount = parseFloat(v.maxDiscountAmount);
+                                                        }
+                                                    } else if (v.discountType === "fixed") {
+                                                        discount = parseFloat(v.discountValue);
+                                                    }
+                                                    return total - (discount > total ? total : discount);
+                                                })()
+                                            )}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-2.5">Phương thức thanh toán mô phỏng</label>
+                            {/* Phương thức thanh toán */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-2">Phương thức thanh toán mô phỏng</label>
                                 <div className="grid grid-cols-2 gap-4">
                                     <label className={`border rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all ${paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50/20 text-blue-700 font-black' : 'border-neutral-200 hover:bg-neutral-50 text-neutral-500'}`}>
                                         <input
@@ -710,10 +1117,10 @@ const TourDetailPage = () => {
                             <button
                                 type="submit"
                                 id="confirm-booking-btn-submit"
-                                className="w-full fiery-button text-white font-black py-4 rounded-2xl shadow-lg mt-6 hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                className="w-full fiery-button text-white font-black py-4 rounded-2xl shadow-lg mt-4 hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
                             >
                                 <span className="material-symbols-outlined">shopping_cart_checkout</span>
-                                Đặt đơn hàng
+                                Đi tới thanh toán
                             </button>
                         </form>
                     </div>
@@ -744,59 +1151,130 @@ const TourDetailPage = () => {
             {showPaymentSimulator === 'vnpay' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-blue-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
-                        <div className="bg-blue-600 text-white p-6 flex items-center justify-between">
+                        <div className="bg-[#005ba1] text-white p-6 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-3xl">account_balance</span>
                                 <div>
-                                    <h3 className="font-extrabold text-md tracking-tight uppercase">CỔNG THANH TOÁN MÔ PHỎNG VNPAY</h3>
-                                    <p className="text-[10px] text-blue-200 font-medium uppercase tracking-wider">VNPay Sandbox Environment</p>
+                                    <h3 className="font-extrabold text-md tracking-tight uppercase">CỔNG THANH TOÁN VNPAY SANDBOX</h3>
+                                    <p className="text-[10px] text-blue-200 font-medium uppercase tracking-wider">Đơn hàng: {tour.title.substring(0, 30)}...</p>
                                 </div>
                             </div>
-                            <span className="bg-white text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">MOCKUP</span>
+                            <span className="bg-[#e06f14] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">SANDBOX</span>
                         </div>
 
                         <div className="p-6 space-y-6">
-                            <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-3.5 text-sm">
+                            {/* Merchant/Amount Summary */}
+                            <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-2 text-xs">
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Đơn vị thụ hưởng:</span>
-                                    <span className="font-black text-neutral-800">GLOBALEXPLORE TRAVELS CO.</span>
+                                    <span className="font-black text-neutral-850">GLOBALEXPLORE CO.</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-neutral-500 font-semibold">Khách hàng:</span>
-                                    <span className="font-black text-neutral-800">{travelerInfo.fullName}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-neutral-500 font-semibold">Số điện thoại:</span>
-                                    <span className="font-black text-neutral-800">{travelerInfo.phone}</span>
-                                </div>
-                                <div className="flex justify-between items-center pt-3 border-t border-dashed border-neutral-200">
-                                    <span className="text-neutral-500 font-bold">Số tiền giao dịch:</span>
-                                    <span className="text-lg font-black text-blue-600">{formatPrice(tour.basePrice)}</span>
+                                    <span className="text-neutral-500 font-bold">Số tiền thanh toán:</span>
+                                    <span className="text-sm font-black text-blue-600">{formatPrice(parseFloat(tour.basePrice) * participantsList.length - discountAmount)}</span>
                                 </div>
                             </div>
 
-                            <div className="border border-amber-200 bg-amber-50 p-4 rounded-xl text-xs text-amber-800 leading-relaxed">
-                                <strong>⚠️ Lưu ý:</strong> Đây là cổng thanh toán mô phỏng sandbox giúp hoàn thành nhanh quy trình đặt tour và cấp vé QR Code tự động tức thì.
-                            </div>
+                            {sandboxStep === "card_info" ? (
+                                <div className="space-y-4">
+                                    <div className="border border-blue-100 bg-blue-50/55 p-4 rounded-xl text-xs space-y-1">
+                                        <p className="font-bold text-blue-800">Thông tin thẻ test ngân hàng NCB Sandbox:</p>
+                                        <p className="text-blue-700 font-semibold">• Số thẻ: <strong className="font-bold text-neutral-900 select-all">9704198526191432119</strong></p>
+                                        <p className="text-blue-700 font-semibold">• Tên chủ thẻ: <strong className="font-bold text-neutral-900">NGUYEN VAN A</strong></p>
+                                        <p className="text-blue-700 font-semibold">• Ngày phát hành: <strong className="font-bold text-neutral-900">07/15</strong></p>
+                                        <p className="text-blue-700 font-semibold">• Mã OTP mặc định: <strong className="font-bold text-neutral-900">123456</strong></p>
+                                    </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={handleSimulatorPaymentSuccess}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 text-sm"
-                                >
-                                    <span className="material-symbols-outlined text-sm">check_circle</span>
-                                    Thanh toán thành công
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowPaymentSimulator(null);
-                                        alert("Giao dịch thanh toán mô phỏng đã bị hủy.");
-                                    }}
-                                    className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
-                                >
-                                    Hủy giao dịch
-                                </button>
-                            </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Số thẻ ATM *</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all"
+                                                value={cardNumber}
+                                                onChange={(e) => setCardNumber(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Tên chủ thẻ *</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all uppercase"
+                                                value={cardHolder}
+                                                onChange={(e) => setCardHolder(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Ngày phát hành (MM/YY) *</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all"
+                                                value={cardDate}
+                                                onChange={(e) => setCardDate(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-neutral-100">
+                                        <button
+                                            onClick={() => {
+                                                if (cardNumber !== "9704198526191432119") {
+                                                    alert("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)");
+                                                    return;
+                                                }
+                                                setSandboxStep("otp");
+                                            }}
+                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer text-xs uppercase"
+                                        >
+                                            Tiếp tục thanh toán
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPaymentSimulator(null)}
+                                            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                        >
+                                            Hủy giao dịch
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="text-center py-2">
+                                        <p className="text-sm font-black text-neutral-850">XÁC THỰC MÃ OTP</p>
+                                        <p className="text-[11px] text-neutral-500 mt-1">Một mã OTP đã được gửi về số điện thoại đăng ký tài khoản ngân hàng của bạn.</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1 text-center">Nhập mã OTP (Test: 123456)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-3 text-center text-sm font-black tracking-widest outline-none focus:border-blue-500 transition-all max-w-[180px] mx-auto block"
+                                            value={otpCode}
+                                            onChange={(e) => setOtpCode(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-neutral-100">
+                                        <button
+                                            onClick={() => {
+                                                if (otpCode !== "123456") {
+                                                    alert("Mã OTP không chính xác. Vui lòng nhập mã OTP test 123456.");
+                                                    return;
+                                                }
+                                                handleSimulatorPaymentSuccess();
+                                            }}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer text-xs uppercase"
+                                        >
+                                            Xác nhận thanh toán
+                                        </button>
+                                        <button
+                                            onClick={() => setSandboxStep("card_info")}
+                                            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                        >
+                                            Quay lại
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -805,40 +1283,130 @@ const TourDetailPage = () => {
             {showPaymentSimulator === 'momo' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-pink-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
-                        <div className="bg-pink-600 text-white p-6 text-center relative">
+                        <div className="bg-[#a50064] text-white p-6 text-center relative flex flex-col items-center">
                             <span className="material-symbols-outlined text-4xl animate-pulse">qr_code_2</span>
-                            <h3 className="font-extrabold text-lg tracking-tight mt-1">THANH TOÁN QUA VÍ MOMO</h3>
-                            <p className="text-pink-200 text-[10px] uppercase font-bold tracking-wider">MoMo Sandbox Simulated</p>
+                            <h3 className="font-extrabold text-lg tracking-tight mt-1">MOMO SANDBOX</h3>
+                            <p className="text-pink-200 text-[10px] uppercase font-bold tracking-wider">Mã đặt tour: {tour.tourCode}</p>
                         </div>
 
-                        <div className="p-6 flex flex-col items-center">
-                            <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col items-center mb-6">
-                                <div className="w-36 h-36 border-4 border-pink-600 flex items-center justify-center relative p-1">
-                                    <span className="material-symbols-outlined text-[100px] text-pink-600">qr_code_2</span>
+                        <div className="p-6 flex flex-col items-center space-y-4">
+                            {sandboxStep === "momo_qr" ? (
+                                <>
+                                    <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col items-center cursor-pointer hover:border-pink-300 transition-all"
+                                        onClick={() => handleSimulatorPaymentSuccess()}
+                                        title="Click vào QR Code để thanh toán nhanh"
+                                    >
+                                        <div className="w-36 h-36 border-4 border-[#a50064] flex items-center justify-center relative p-1">
+                                            <img
+                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                                                    serverIp.startsWith("http")
+                                                        ? `${serverIp}/mock-momo-pay/${currentBooking?.id}`
+                                                        : `http://${serverIp}:8080/mock-momo-pay/${currentBooking?.id}`
+                                                )}`}
+                                                alt="Momo QR Code"
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] text-pink-600 font-bold mt-2 uppercase tracking-wide">Ấn vào QR để giả lập quét app</span>
+                                    </div>
+
+                                    <div className="text-center w-full bg-neutral-50 py-3 px-4 rounded-xl border border-neutral-200/50">
+                                        <span className="text-xs text-neutral-400 font-bold block uppercase tracking-wider">Số tiền cần thanh toán</span>
+                                        <span className="text-xl font-black text-pink-650">{formatPrice(parseFloat(tour.basePrice) * participantsList.length - discountAmount)}</span>
+                                    </div>
+
+                                    <div className="w-full grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => setSandboxStep("momo_login")}
+                                            className="w-full bg-[#a50064] hover:bg-[#850050] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase cursor-pointer"
+                                        >
+                                            Đăng nhập MoMo
+                                        </button>
+                                        <button
+                                            onClick={() => setShowPaymentSimulator(null)}
+                                            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                        >
+                                            Đóng
+                                        </button>
+                                    </div>
+                                </>
+                            ) : sandboxStep === "momo_login" ? (
+                                <div className="w-full space-y-4">
+                                    <div className="text-center">
+                                        <p className="text-sm font-black text-neutral-850">ĐĂNG NHẬP VÍ MOMO TEST</p>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Số điện thoại test *</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-pink-500 transition-all"
+                                                value={momoPhone}
+                                                onChange={(e) => setMomoPhone(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Mật khẩu MoMo (6 chữ số) *</label>
+                                            <input
+                                                type="password"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-pink-500 transition-all"
+                                                defaultValue="123456"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3 pt-3">
+                                        <button
+                                            onClick={() => setSandboxStep("otp")}
+                                            className="w-full bg-[#a50064] hover:bg-[#850050] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase cursor-pointer"
+                                        >
+                                            Tiếp tục
+                                        </button>
+                                        <button
+                                            onClick={() => setSandboxStep("momo_qr")}
+                                            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                        >
+                                            Quay lại
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="w-full space-y-4">
+                                    <div className="text-center">
+                                        <p className="text-sm font-black text-neutral-850">NHẬP MÃ XÁC THỰC OTP</p>
+                                        <p className="text-[10px] text-neutral-500 mt-1">Sử dụng mã OTP mặc định: 123456</p>
+                                    </div>
 
-                            <div className="text-center w-full mb-6 bg-neutral-50 py-3 px-4 rounded-xl border border-neutral-200/50">
-                                <span className="text-xs text-neutral-400 font-bold block uppercase tracking-wider">Số tiền cần thanh toán</span>
-                                <span className="text-xl font-black text-pink-600">{formatPrice(tour.basePrice)}</span>
-                            </div>
+                                    <div>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-3 text-center text-sm font-black tracking-widest outline-none focus:border-pink-500 transition-all max-w-[150px] mx-auto block"
+                                            value={momoOtp}
+                                            onChange={(e) => setMomoOtp(e.target.value)}
+                                        />
+                                    </div>
 
-                            <button
-                                onClick={handleSimulatorPaymentSuccess}
-                                className="w-full bg-pink-600 hover:bg-pink-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 text-sm mb-3"
-                            >
-                                <span className="material-symbols-outlined text-sm">check_circle</span>
-                                Xác nhận đã chuyển tiền
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowPaymentSimulator(null);
-                                    alert("Giao dịch thanh toán MoMo mô phỏng đã hủy.");
-                                }}
-                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
-                            >
-                                Quay lại
-                            </button>
+                                    <div className="grid grid-cols-2 gap-3 pt-3">
+                                        <button
+                                            onClick={() => {
+                                                if (momoOtp !== "123456") {
+                                                    alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                    return;
+                                                }
+                                                handleSimulatorPaymentSuccess();
+                                            }}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase cursor-pointer"
+                                        >
+                                            Xác nhận OTP
+                                        </button>
+                                        <button
+                                            onClick={() => setSandboxStep(momoPhone ? "momo_login" : "momo_qr")}
+                                            className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                        >
+                                            Quay lại
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -912,11 +1480,10 @@ const TourDetailPage = () => {
                                     key={msg.id}
                                     className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'ml-auto items-end' : 'items-start'}`}
                                 >
-                                    <div className={`px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${
-                                        msg.sender === 'user'
+                                    <div className={`px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${msg.sender === 'user'
                                             ? 'bg-rose-500 text-white rounded-tr-none'
                                             : 'bg-white border border-neutral-200 text-neutral-800 rounded-tl-none'
-                                    }`}>
+                                        }`}>
                                         {msg.text}
                                     </div>
                                     <span className="text-[9px] text-neutral-400 font-bold mt-1 px-1">

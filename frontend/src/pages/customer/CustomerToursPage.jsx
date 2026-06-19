@@ -55,9 +55,56 @@ const CustomerToursPage = () => {
     const [simulatedPaymentBooking, setSimulatedPaymentBooking] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState("vnpay");
 
+    // Sandbox payment flow states
+    const [sandboxStep, setSandboxStep] = useState("card_info"); // 'card_info', 'otp', 'momo_qr', 'momo_login'
+    const [cardNumber, setCardNumber] = useState("9704198526191432119");
+    const [cardHolder, setCardHolder] = useState("NGUYEN VAN A");
+    const [cardDate, setCardDate] = useState("07/15");
+    const [otpCode, setOtpCode] = useState("123456");
+    const [momoPhone, setMomoPhone] = useState("0901234567");
+    const [momoOtp, setMomoOtp] = useState("123456");
+
+    // Cancellation request states
+    const [selectedCancelBooking, setSelectedCancelBooking] = useState(null);
+    const [cancelReason, setCancelReason] = useState("");
+    const [serverIp, setServerIp] = useState("localhost");
+
     useEffect(() => {
         dispatch(fetchCurrentUser());
     }, [dispatch]);
+
+    // Tự động kiểm tra trạng thái đơn hàng MoMo từ điện thoại
+    useEffect(() => {
+        let intervalId;
+        if (simulatedPaymentBooking && paymentMethod === 'momo') {
+            // Lấy IP máy chủ trước
+            axiosInstance.get("/api/server-ip")
+                .then(res => {
+                    if (res.data.ip) setServerIp(res.data.ip);
+                })
+                .catch(err => console.error("Lỗi lấy IP máy chủ:", err));
+
+            intervalId = setInterval(async () => {
+                try {
+                    const response = await axiosInstance.get("/api/customer/bookings");
+                    if (response.data.success) {
+                        const booking = response.data.bookings.find(b => b.id === simulatedPaymentBooking.id);
+                        if (booking && booking.status === "paid") {
+                            clearInterval(intervalId);
+                            alert("Thanh toán thành công! Vé QR Code đã được cập nhật.");
+                            setSimulatedPaymentBooking(null);
+                            fetchBookings();
+                        }
+                    }
+                } catch (err) {
+                    console.error("Lỗi polling trạng thái đơn hàng:", err);
+                }
+            }, 1500);
+        }
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [simulatedPaymentBooking, paymentMethod]);
 
     const fetchBookings = async () => {
         try {
@@ -174,6 +221,44 @@ const CustomerToursPage = () => {
         } catch (err) {
             console.error(err);
             alert(err.response?.data?.error || "Lỗi khi gửi đánh giá.");
+        }
+    };
+
+    const handleDeleteBooking = async (bookingId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa đơn đặt tour chưa thanh toán này? Hành động này sẽ xóa vĩnh viễn đơn hàng và hoàn trả chỗ.")) {
+            return;
+        }
+        try {
+            const response = await axiosInstance.put(`/api/customer/bookings/${bookingId}/cancel`);
+            if (response.data.success) {
+                alert("Đã xóa đơn đặt tour thành công!");
+                fetchBookings();
+            }
+        } catch (err) {
+            console.error("Lỗi khi xóa đơn đặt:", err);
+            alert(err.response?.data?.error || "Không thể xóa đơn hàng. Vui lòng thử lại.");
+        }
+    };
+
+    const handleCancelRequestSubmit = async (e) => {
+        e.preventDefault();
+        if (!cancelReason.trim()) {
+            alert("Vui lòng nhập lý do yêu cầu hủy.");
+            return;
+        }
+        try {
+            const response = await axiosInstance.put(`/api/customer/bookings/${selectedCancelBooking.id}/cancel`, {
+                reason: cancelReason
+            });
+            if (response.data.success) {
+                alert("Gửi yêu cầu hủy thành công, vui lòng chờ Operator phê duyệt.");
+                setSelectedCancelBooking(null);
+                setCancelReason("");
+                fetchBookings();
+            }
+        } catch (err) {
+            console.error("Lỗi khi gửi yêu cầu hủy:", err);
+            alert(err.response?.data?.error || "Không thể gửi yêu cầu hủy. Vui lòng thử lại.");
         }
     };
 
@@ -451,14 +536,18 @@ const CustomerToursPage = () => {
                                                         </p>
 
                                                         <div className="grid grid-cols-2 gap-3 mt-4 bg-neutral-50 p-3.5 rounded-2xl border border-neutral-200/40">
-                                                            <div>
-                                                                <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Ngày khởi hành</span>
-                                                                <span className="text-xs font-extrabold text-neutral-700">{formatDate(schedule.departureDate)}</span>
-                                                            </div>
-                                                            <div>
-                                                                <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Ngày kết thúc</span>
-                                                                <span className="text-xs font-extrabold text-neutral-700">{formatDate(schedule.returnDate)}</span>
-                                                            </div>
+                                                             <div>
+                                                                 <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Trưởng đoàn 👑</span>
+                                                                 <span className="text-xs font-black text-rose-600 block leading-tight">{leadParticipant?.fullName || "Chưa cập nhật"}</span>
+                                                             </div>
+                                                             <div>
+                                                                 <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Số lượng khách</span>
+                                                                 <span className="text-xs font-bold text-neutral-700 block leading-tight">{booking.participants?.length || 1} khách</span>
+                                                             </div>
+                                                             <div className="col-span-2 border-t border-dashed border-neutral-200 pt-2">
+                                                                 <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Lịch trình</span>
+                                                                 <span className="text-xs font-semibold text-neutral-600">{formatDate(schedule.departureDate)} - {formatDate(schedule.returnDate)}</span>
+                                                             </div>
                                                         </div>
                                                     </div>
 
@@ -499,6 +588,7 @@ const CustomerToursPage = () => {
                                                                     onClick={() => {
                                                                         setSimulatedPaymentBooking(booking);
                                                                         setPaymentMethod("vnpay");
+                                                                        setSandboxStep("card_info");
                                                                     }}
                                                                     className="px-3.5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md transition-all active:scale-[0.97] cursor-pointer flex-1 text-center"
                                                                 >
@@ -540,7 +630,22 @@ const CustomerToursPage = () => {
                                                                     >
                                                                         Hóa đơn
                                                                     </button>
+                                                                    <button
+                                                                        onClick={() => setSelectedCancelBooking(booking)}
+                                                                        className="px-3.5 py-2 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                    >
+                                                                        Yêu cầu hủy
+                                                                    </button>
                                                                 </>
+                                                            )}
+
+                                                            {booking.status !== "paid" && booking.status !== "cancelled" && booking.status !== "pending_approval" && (
+                                                                <button
+                                                                    onClick={() => handleDeleteBooking(booking.id)}
+                                                                    className="px-3.5 py-2 text-xs font-bold text-red-650 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                >
+                                                                    Xóa đơn
+                                                                </button>
                                                             )}
                                                         </div>
                                                     </div>
@@ -682,7 +787,11 @@ const CustomerToursPage = () => {
                                     <div className="absolute top-0 right-0 w-8 h-8 border-t-8 border-r-8 border-neutral-900" />
                                     <div className="absolute bottom-0 left-0 w-8 h-8 border-b-8 border-l-8 border-neutral-900" />
                                     <div className="absolute bottom-0 right-0 w-8 h-8 border-b-8 border-r-8 border-neutral-900" />
-                                    <span className="material-symbols-outlined text-6xl text-neutral-300">qr_code_2</span>
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${selectedTicket.checkinCode}`}
+                                        alt="QR Code"
+                                        className="w-full h-full object-contain"
+                                    />
                                 </div>
                                 <span className="text-xs font-mono font-black mt-2.5 text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded">{selectedTicket.checkinCode}</span>
                             </div>
@@ -823,7 +932,14 @@ const CustomerToursPage = () => {
                                 <div className="space-y-2 max-h-32 overflow-y-auto">
                                     {selectedDetailBooking.participants && selectedDetailBooking.participants.map((p, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs border-b border-neutral-100 pb-1.5 last:border-none last:pb-0">
-                                            <span className="font-bold text-neutral-700">{p.fullName} {p.isLead && "(Trưởng đoàn)"}</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-bold text-neutral-700">{p.fullName}</span>
+                                                {p.isLead && (
+                                                    <span className="px-1.5 py-0.5 text-[9px] font-black bg-rose-500 text-white rounded uppercase tracking-wider scale-90">
+                                                        Trưởng đoàn
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="text-neutral-400 font-semibold uppercase">{p.participantType || "Người lớn"}</span>
                                         </div>
                                     ))}
@@ -881,38 +997,309 @@ const CustomerToursPage = () => {
 
             {/* Mock Payment Simulator Modal */}
             {simulatedPaymentBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="bg-gradient-to-r from-orange-500 to-rose-500 text-white p-6 text-center">
-                            <h3 className="font-extrabold text-md uppercase">Thanh toán hóa đơn còn thiếu</h3>
-                            <p className="text-orange-100 text-[10px] uppercase font-bold tracking-wider">Mã Booking: {simulatedPaymentBooking.bookingCode}</p>
-                        </div>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8">
                         
-                        <div className="p-6 space-y-4">
-                            <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200/50 text-sm">
-                                <div className="flex justify-between mb-2">
-                                    <span className="text-neutral-500 font-semibold">Tên tour:</span>
-                                    <span className="font-extrabold text-neutral-800 text-right max-w-[200px]">{simulatedPaymentBooking.schedule?.tour?.title}</span>
+                        {/* Header */}
+                        {paymentMethod === 'vnpay' ? (
+                            <div className="bg-[#005ba1] text-white p-6 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-3xl">account_balance</span>
+                                    <div>
+                                        <h3 className="font-extrabold text-md tracking-tight uppercase">VNPAY SANDBOX PAYMENTS</h3>
+                                        <p className="text-[10px] text-blue-200 font-medium uppercase tracking-wider">Mã Booking: {simulatedPaymentBooking.bookingCode}</p>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-neutral-500 font-bold">Số tiền cần trả:</span>
-                                    <span className="font-black text-rose-600">{formatPrice(simulatedPaymentBooking.finalPrice)}</span>
+                                <span className="bg-[#e06f14] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">SANDBOX</span>
+                            </div>
+                        ) : (
+                            <div className="bg-[#a50064] text-white p-6 text-center relative flex flex-col items-center">
+                                <span className="material-symbols-outlined text-4xl animate-pulse">qr_code_2</span>
+                                <h3 className="font-extrabold text-lg tracking-tight mt-1">MOMO SANDBOX PAYMENTS</h3>
+                                <p className="text-pink-200 text-[10px] uppercase font-bold tracking-wider">Mã Booking: {simulatedPaymentBooking.bookingCode}</p>
+                            </div>
+                        )}
+                        
+                        <div className="p-6 space-y-6">
+                            {/* Selector */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-neutral-400 uppercase tracking-wider block">Chọn phương thức thanh toán:</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button 
+                                        onClick={() => { setPaymentMethod('vnpay'); setSandboxStep('card_info'); }}
+                                        className={`py-3 px-4 border rounded-xl text-xs font-black uppercase tracking-wider transition ${paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50/20 text-blue-700' : 'border-neutral-250 text-neutral-500'}`}
+                                    >
+                                        VNPay ATM
+                                    </button>
+                                    <button 
+                                        onClick={() => { setPaymentMethod('momo'); setSandboxStep('momo_qr'); }}
+                                        className={`py-3 px-4 border rounded-xl text-xs font-black uppercase tracking-wider transition ${paymentMethod === 'momo' ? 'border-pink-500 bg-pink-50/20 text-pink-700' : 'border-neutral-250 text-neutral-500'}`}
+                                    >
+                                        MoMo Wallet
+                                    </button>
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handlePayPendingBooking}
-                                className="w-full py-3.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-[0.98] cursor-pointer"
-                            >
-                                Xác nhận thanh toán thành công
-                            </button>
-                            <button
-                                onClick={() => setSimulatedPaymentBooking(null)}
-                                className="w-full py-3.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
-                            >
-                                Đóng
-                            </button>
+                            {/* Summary */}
+                            <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200/50 text-xs space-y-2 text-neutral-700">
+                                <div className="flex justify-between">
+                                    <span className="font-semibold text-neutral-500">Tên tour:</span>
+                                    <span className="font-extrabold text-neutral-850 text-right max-w-[220px]">{simulatedPaymentBooking.schedule?.tour?.title}</span>
+                                </div>
+                                <div className="flex justify-between border-t border-dashed border-neutral-200 pt-2">
+                                    <span className="font-bold text-neutral-500">Số tiền cần thanh toán:</span>
+                                    <span className="font-black text-rose-600 text-sm">{formatPrice(simulatedPaymentBooking.finalPrice)}</span>
+                                </div>
+                            </div>
+
+                            {/* VNPay Sandbox Wizard */}
+                            {paymentMethod === 'vnpay' && (
+                                sandboxStep === "card_info" ? (
+                                    <div className="space-y-4">
+                                        <div className="border border-blue-100 bg-blue-50/55 p-4 rounded-xl text-xs space-y-1">
+                                            <p className="font-bold text-blue-800">Thông tin thẻ ATM test ngân hàng NCB Sandbox:</p>
+                                            <p className="text-blue-700">• Số thẻ: <strong className="font-bold text-neutral-900 select-all">9704198526191432119</strong></p>
+                                            <p className="text-blue-700">• Tên chủ thẻ: <strong className="font-bold text-neutral-900">NGUYEN VAN A</strong></p>
+                                            <p className="text-blue-700">• Ngày phát hành: <strong className="font-bold text-neutral-900">07/15</strong></p>
+                                            <p className="text-blue-700">• Mã OTP mặc định: <strong className="font-bold text-neutral-900">123456</strong></p>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Số thẻ ATM *</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all"
+                                                    value={cardNumber}
+                                                    onChange={(e) => setCardNumber(e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Tên chủ thẻ *</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all uppercase"
+                                                    value={cardHolder}
+                                                    onChange={(e) => setCardHolder(e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Ngày phát hành *</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-500 transition-all"
+                                                    value={cardDate}
+                                                    onChange={(e) => setCardDate(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-neutral-100">
+                                            <button
+                                                onClick={() => {
+                                                    if (cardNumber !== "9704198526191432119") {
+                                                        alert("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)");
+                                                        return;
+                                                    }
+                                                    setSandboxStep("otp");
+                                                }}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase"
+                                            >
+                                                Tiếp tục
+                                            </button>
+                                            <button
+                                                onClick={() => setSimulatedPaymentBooking(null)}
+                                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                            >
+                                                Đóng
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="text-center py-2">
+                                            <p className="text-sm font-black text-neutral-850">XÁC THỰC MÃ OTP</p>
+                                            <p className="text-[10px] text-neutral-500 mt-1">Vui lòng nhập mã OTP test 123456</p>
+                                        </div>
+
+                                        <div>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-3 text-center text-sm font-black tracking-widest outline-none focus:border-blue-500 transition-all max-w-[150px] mx-auto block"
+                                                value={otpCode}
+                                                onChange={(e) => setOtpCode(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 pt-3">
+                                            <button
+                                                onClick={() => {
+                                                    if (otpCode !== "123456") {
+                                                        alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                        return;
+                                                    }
+                                                    handlePayPendingBooking();
+                                                }}
+                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase"
+                                            >
+                                                Xác nhận OTP
+                                            </button>
+                                            <button
+                                                onClick={() => setSandboxStep("card_info")}
+                                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                            >
+                                                Quay lại
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            )}
+
+                            {/* MoMo Sandbox Wizard */}
+                            {paymentMethod === 'momo' && (
+                                sandboxStep === "momo_qr" ? (
+                                    <div className="flex flex-col items-center space-y-4">
+                                        <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col items-center cursor-pointer hover:border-pink-300 transition-all"
+                                            onClick={() => handlePayPendingBooking()}
+                                            title="Click vào QR Code để thanh toán nhanh"
+                                        >
+                                            <div className="w-36 h-36 border-4 border-[#a50064] flex items-center justify-center relative p-1">
+                                                <img
+                                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
+                                                        serverIp.startsWith("http")
+                                                            ? `${serverIp}/mock-momo-pay/${simulatedPaymentBooking.id}`
+                                                            : `http://${serverIp}:8080/mock-momo-pay/${simulatedPaymentBooking.id}`
+                                                    )}`}
+                                                    alt="Momo QR Code"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+                                            <span className="text-[10px] text-pink-600 font-bold mt-2 uppercase tracking-wide">Ấn vào QR để giả lập quét app</span>
+                                        </div>
+
+                                        <div className="w-full grid grid-cols-2 gap-3 pt-3">
+                                            <button
+                                                onClick={() => setSandboxStep("momo_login")}
+                                                className="w-full bg-[#a50064] hover:bg-[#850050] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase cursor-pointer"
+                                            >
+                                                Đăng nhập ví MoMo
+                                            </button>
+                                            <button
+                                                onClick={() => setSimulatedPaymentBooking(null)}
+                                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                            >
+                                                Đóng
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : sandboxStep === "momo_login" ? (
+                                    <div className="space-y-4">
+                                        <div className="text-center">
+                                            <p className="text-sm font-black text-neutral-850">ĐĂNG NHẬP VÍ MOMO TEST</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Số điện thoại test *</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-pink-500 transition-all"
+                                                    value={momoPhone}
+                                                    onChange={(e) => setMomoPhone(e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Mật khẩu (6 chữ số) *</label>
+                                                <input
+                                                    type="password"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-pink-500 transition-all"
+                                                    defaultValue="123456"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 pt-3">
+                                            <button
+                                                onClick={() => setSandboxStep("otp")}
+                                                className="w-full bg-[#a50064] hover:bg-[#850050] text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase cursor-pointer"
+                                            >
+                                                Tiếp tục
+                                            </button>
+                                            <button
+                                                onClick={() => setSandboxStep("momo_qr")}
+                                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                            >
+                                                Quay lại
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="text-center">
+                                            <p className="text-sm font-black text-neutral-850">NHẬP MÃ XÁC THỰC OTP</p>
+                                            <p className="text-[10px] text-neutral-500 mt-1">Sử dụng mã OTP mặc định: 123456</p>
+                                        </div>
+
+                                        <div>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-3 text-center text-sm font-black tracking-widest outline-none focus:border-pink-500 transition-all max-w-[150px] mx-auto block"
+                                                value={momoOtp}
+                                                onChange={(e) => setMomoOtp(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3 pt-3">
+                                            <button
+                                                onClick={() => {
+                                                    if (momoOtp !== "123456") {
+                                                        alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                        return;
+                                                    }
+                                                    handlePayPendingBooking();
+                                                }}
+                                                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 rounded-xl transition-all shadow-md text-xs uppercase"
+                                            >
+                                                Xác nhận OTP
+                                            </button>
+                                            <button
+                                                onClick={() => setSandboxStep(momoPhone ? "momo_login" : "momo_qr")}
+                                                className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs"
+                                            >
+                                                Quay lại
+                                            </button>
+                                        </div>
+                                    </div>
+                                )
+                            )}
+
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Cancellation Request Modal */}
+            {selectedCancelBooking && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-[32px] max-w-md w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200">
+                        <h3 className="text-xl font-black text-neutral-900 mb-2">Yêu cầu hủy đặt tour</h3>
+                        <p className="text-neutral-500 text-xs mb-6">Đơn đặt tour: <strong>{selectedCancelBooking.bookingCode}</strong>. Gửi yêu cầu hủy tour đến Operator để xử lý.</p>
+
+                        <form onSubmit={handleCancelRequestSubmit} className="space-y-4">
+                            <div>
+                                <label className="text-xs font-black text-neutral-600 uppercase tracking-wider block mb-1.5">Lý do hủy tour *</label>
+                                <textarea
+                                    required
+                                    rows={4}
+                                    placeholder="Nhập lý do chi tiết để hủy tour..."
+                                    className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all resize-none"
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-neutral-100">
+                                <button type="submit" className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow transition-all cursor-pointer">Gửi yêu cầu</button>
+                                <button type="button" onClick={() => { setSelectedCancelBooking(null); setCancelReason(""); }} className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">Hủy</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
