@@ -339,7 +339,10 @@ class OperatorService {
             companions: companions.map(c => ({
                 name: c.fullName,
                 dateOfBirth: c.dateOfBirth ? new Date(c.dateOfBirth).toLocaleDateString("vi-VN") : "N/A",
-                type: c.participantType === "adult" ? "Người lớn" : c.participantType === "child" ? "Trẻ em" : "Em bé"
+                type: c.participantType === "adult" ? "Người lớn" : c.participantType === "child" ? "Trẻ em" : "Em bé",
+                phone: c.phone || "N/A",
+                cccdFrontUrl: c.cccdFrontUrl || null,
+                cccdBackUrl: c.cccdBackUrl || null
             })),
             customerNote: booking.cancellationReason || "Đăng ký tham gia tour trekking độ khó Hard. Hồ sơ CCCD đã được đính kèm."
         };
@@ -351,7 +354,12 @@ class OperatorService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
-        booking.status = "paid";
+        if (booking.status === "pending_approval") {
+            booking.status = "pending_payment";
+        } else {
+            booking.status = "paid";
+        }
+        booking.updatedAt = new Date();
         await booking.save();
         return booking;
     }
@@ -364,6 +372,7 @@ class OperatorService {
 
         booking.status = "cancelled";
         booking.cancellationReason = reason || "Giấy tờ xác minh không hợp lệ.";
+        booking.updatedAt = new Date();
         await booking.save();
 
         const schedule = await db.TourSchedule.findByPk(booking.scheduleId);
@@ -485,6 +494,7 @@ class OperatorService {
         booking.status = "cancelled";
         booking.cancellationReason = reason || "Hủy bởi operator điều hành.";
         booking.refundAmount = refundAmount;
+        booking.updatedAt = new Date();
         await booking.save();
 
         const schedule = await db.TourSchedule.findByPk(booking.scheduleId);

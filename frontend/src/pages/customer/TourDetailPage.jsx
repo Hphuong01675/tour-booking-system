@@ -42,7 +42,7 @@ const TourDetailPage = () => {
     const [selectedVoucherId, setSelectedVoucherId] = useState("");
     const [discountAmount, setDiscountAmount] = useState(0);
     const [participantsList, setParticipantsList] = useState([
-        { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: true }
+        { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", phone: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: true }
     ]);
     const [currentBooking, setCurrentBooking] = useState(null);
     const [serverIp, setServerIp] = useState("localhost");
@@ -124,6 +124,18 @@ const TourDetailPage = () => {
         return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
     };
 
+    const getBaseTotalPrice = () => {
+        if (!tour) return 0;
+        const base = parseFloat(tour.basePrice);
+        return participantsList.reduce((sum, p) => {
+            const type = tour.difficulty === "hard" ? "adult" : p.participantType;
+            if (type === "adult") return sum + base;
+            if (type === "child") return sum + base * 0.7;
+            if (type === "infant") return sum + 0;
+            return sum + base;
+        }, 0);
+    };
+
     const formatDate = (dateStr) => {
         return new Date(dateStr).toLocaleDateString("vi-VN", {
             day: "2-digit",
@@ -186,7 +198,7 @@ const TourDetailPage = () => {
     const handleAddParticipant = () => {
         setParticipantsList([
             ...participantsList,
-            { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: false }
+            { fullName: "", participantType: "adult", dateOfBirth: "1995-01-01", address: "", phone: "", cccdFrontUrl: "", cccdBackUrl: "", isLead: false }
         ]);
     };
 
@@ -232,6 +244,13 @@ const TourDetailPage = () => {
             return;
         }
 
+        const selectedSchedule = tour?.schedules?.find(sch => String(sch.id) === String(selectedScheduleId));
+        const isSoldOut = selectedSchedule ? (selectedSchedule.maxCapacity - selectedSchedule.registered <= 0) : false;
+        if (isSoldOut) {
+            alert("Lịch khởi hành này đã hết chỗ.");
+            return;
+        }
+
         if (!isAuthenticated) {
             // Guest pending flow
             axiosInstance.post("/api/bookings/pending-guest", {
@@ -259,6 +278,7 @@ const TourDetailPage = () => {
                     participantType: "adult",
                     dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split("T")[0] : "1995-01-01",
                     address: user.address || "",
+                    phone: user.phone || "",
                     cccdFrontUrl: "",
                     cccdBackUrl: "",
                     isLead: true
@@ -307,31 +327,46 @@ const TourDetailPage = () => {
             // Xác định loại hành khách thực tế (ép về adult nếu là tour hard)
             const type = tour.difficulty === "hard" ? "adult" : p.participantType;
 
-            if (type === "adult") {
+            if (tour.difficulty === "hard") {
+                if (type !== "adult") {
+                    alert(`Tour thám hiểm (Hard) chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của hành khách thứ ${i + 1}.`);
+                    return;
+                }
                 if (age < 18) {
-                    alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                    alert(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard) phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
+                    return;
+                }
+                if (!p.phone || !p.phone.trim()) {
+                    alert(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard).`);
                     return;
                 }
                 if (!p.cccdFrontUrl || !p.cccdBackUrl) {
-                    alert(`Hành khách người lớn ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc).`);
+                    alert(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard).`);
                     return;
                 }
-            } else if (type === "child") {
-                if (age >= 18 || age < 2) {
-                    alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
-                    return;
-                }
-            } else if (type === "infant") {
-                if (age >= 2) {
-                    alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
-                    return;
+            } else {
+                // Tour Normal
+                if (type === "adult") {
+                    if (age < 18) {
+                        alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                        return;
+                    }
+                } else if (type === "child") {
+                    if (age >= 18 || age < 2) {
+                        alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
+                        return;
+                    }
+                } else if (type === "infant") {
+                    if (age >= 2) {
+                        alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
+                        return;
+                    }
                 }
             }
         }
 
         // Tính toán lại tiền giảm giá phía Client để hiển thị simulator chính xác
-        const basePrice = parseFloat(tour.basePrice);
-        const totalPrice = basePrice * participantsList.length;
+        const totalPrice = getBaseTotalPrice();
         let discount = 0;
 
         if (selectedVoucherId) {
@@ -350,7 +385,7 @@ const TourDetailPage = () => {
         }
         setDiscountAmount(discount);
 
-        // Pre-create the booking with status pending_payment
+        // Pre-create the booking with status pending_payment (backend overrides to pending_approval for Hard tour)
         axiosInstance.post("/api/customer/bookings", {
             scheduleId: selectedScheduleId,
             status: "pending_payment",
@@ -386,12 +421,24 @@ const TourDetailPage = () => {
                     endY: targetRect.top + targetRect.height / 2
                 });
 
-                setTimeout(() => {
-                    setMascotAnimation(null);
-                    setBookingConfigTour(null);
-                    setSandboxStep(paymentMethod === "vnpay" ? "card_info" : "momo_qr");
-                    setShowPaymentSimulator(paymentMethod);
-                }, 3000);
+                if (tour.difficulty === "hard") {
+                    setTimeout(() => {
+                        setMascotAnimation(null);
+                        setBookingConfigTour(null);
+                        setBookingSuccessModal({
+                            tourTitle: createdBooking.schedule?.tour?.title || tour.title,
+                            bookingCode: createdBooking.bookingCode,
+                            isPendingApproval: true
+                        });
+                    }, 3000);
+                } else {
+                    setTimeout(() => {
+                        setMascotAnimation(null);
+                        setBookingConfigTour(null);
+                        setSandboxStep(paymentMethod === "vnpay" ? "card_info" : "momo_qr");
+                        setShowPaymentSimulator(paymentMethod);
+                    }, 3000);
+                }
             }
         }).catch((err) => {
             console.error("Lỗi tạo đơn đặt tour:", err);
@@ -489,6 +536,9 @@ const TourDetailPage = () => {
     const highlightList = tour.highlights
         ? tour.highlights.split(/[,\n]/).map(h => h.trim()).filter(Boolean)
         : ["Hành trình chất lượng cao, chuẩn 4-5 sao.", "Hướng dẫn viên giàu kinh nghiệm, chu đáo.", "Hỗ trợ bảo hiểm du lịch trọn gói."];
+
+    const selectedSchedule = tour?.schedules?.find(sch => String(sch.id) === String(selectedScheduleId));
+    const isSoldOut = selectedSchedule ? (selectedSchedule.maxCapacity - selectedSchedule.registered <= 0) : false;
 
     return (
         <div className="min-h-screen bg-neutral-50 text-neutral-800 flex flex-col font-sans overflow-x-hidden selection:bg-rose-500 selection:text-white">
@@ -737,11 +787,17 @@ const TourDetailPage = () => {
 
                             <button
                                 onClick={handleBookTour}
-                                disabled={!tour.schedules || tour.schedules.length === 0}
-                                className="w-full py-4 text-sm font-black text-white fiery-button rounded-2xl shadow-md transform active:scale-95 disabled:from-neutral-200 disabled:to-neutral-300 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:transform-none cursor-pointer flex items-center justify-center gap-2"
+                                disabled={!tour.schedules || tour.schedules.length === 0 || isSoldOut}
+                                className={`w-full py-4 text-sm font-black text-white rounded-2xl shadow-md transform active:scale-95 flex items-center justify-center gap-2 ${
+                                    (!tour.schedules || tour.schedules.length === 0 || isSoldOut)
+                                        ? "bg-neutral-300 text-neutral-400 cursor-not-allowed"
+                                        : "fiery-button cursor-pointer"
+                                }`}
                             >
-                                <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
-                                Đặt Tour Ngay
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {isSoldOut ? "block" : "shopping_cart"}
+                                </span>
+                                {isSoldOut ? "Đã hết chỗ" : "Đặt Tour Ngay"}
                             </button>
 
                             {/* Wishlist toggle */}
@@ -908,7 +964,7 @@ const TourDetailPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                             <div>
                                                 <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">Ngày sinh *</label>
                                                 <input
@@ -929,12 +985,27 @@ const TourDetailPage = () => {
                                                     onChange={(e) => handleParticipantChange(idx, "address", e.target.value)}
                                                 />
                                             </div>
+                                            <div>
+                                                <label className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-1">
+                                                    Số điện thoại {bookingConfigTour.difficulty === 'hard' ? '*' : ''}
+                                                </label>
+                                                <input
+                                                    type="tel"
+                                                    required={bookingConfigTour.difficulty === 'hard'}
+                                                    placeholder="Ví dụ: 0912345678"
+                                                    className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 transition-all"
+                                                    value={p.phone || ""}
+                                                    onChange={(e) => handleParticipantChange(idx, "phone", e.target.value)}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Phần chụp ảnh CCCD */}
                                         {(p.participantType === 'adult' || bookingConfigTour.difficulty === 'hard') && (
                                             <div className="border-t border-dashed border-neutral-200 pt-3">
-                                                <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-2">Ảnh CCCD xác minh (Yêu cầu bắt buộc cho người lớn)</span>
+                                                <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider block mb-2">
+                                                    Ảnh CCCD xác minh {bookingConfigTour.difficulty === 'hard' ? '(Yêu cầu bắt buộc cho Tour Hard)' : '(Tùy chọn cho Tour Normal - có thể bổ sung sau)'}
+                                                </span>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col items-center gap-1.5">
                                                         <label
@@ -1032,15 +1103,14 @@ const TourDetailPage = () => {
                                 <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/60 text-xs font-semibold text-neutral-600 space-y-2">
                                     <div className="flex justify-between">
                                         <span>Tổng giá vé gốc ({participantsList.length} khách):</span>
-                                        <span>{formatPrice(parseFloat(tour.basePrice) * participantsList.length)}</span>
+                                        <span>{formatPrice(getBaseTotalPrice())}</span>
                                     </div>
                                     {selectedVoucherId && (
                                         <div className="flex justify-between text-rose-600 font-bold">
                                             <span>Mã giảm giá đã áp dụng:</span>
                                             <span>-{formatPrice(
-                                                // Calculate preview discount amount
                                                 (() => {
-                                                    const total = parseFloat(tour.basePrice) * participantsList.length;
+                                                    const total = getBaseTotalPrice();
                                                     const v = vouchers.find(x => x.id === selectedVoucherId);
                                                     if (!v) return 0;
                                                     let discount = 0;
@@ -1062,7 +1132,7 @@ const TourDetailPage = () => {
                                         <span className="text-rose-600">
                                             {formatPrice(
                                                 (() => {
-                                                    const total = parseFloat(tour.basePrice) * participantsList.length;
+                                                    const total = getBaseTotalPrice();
                                                     const v = vouchers.find(x => x.id === selectedVoucherId);
                                                     if (!v) return total;
                                                     let discount = 0;
@@ -1171,7 +1241,7 @@ const TourDetailPage = () => {
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-bold">Số tiền thanh toán:</span>
-                                    <span className="text-sm font-black text-blue-600">{formatPrice(parseFloat(tour.basePrice) * participantsList.length - discountAmount)}</span>
+                                    <span className="text-sm font-black text-blue-600">{formatPrice(getBaseTotalPrice() - discountAmount)}</span>
                                 </div>
                             </div>
 
@@ -1312,7 +1382,7 @@ const TourDetailPage = () => {
 
                                     <div className="text-center w-full bg-neutral-50 py-3 px-4 rounded-xl border border-neutral-200/50">
                                         <span className="text-xs text-neutral-400 font-bold block uppercase tracking-wider">Số tiền cần thanh toán</span>
-                                        <span className="text-xl font-black text-pink-650">{formatPrice(parseFloat(tour.basePrice) * participantsList.length - discountAmount)}</span>
+                                        <span className="text-xl font-black text-pink-650">{formatPrice(getBaseTotalPrice() - discountAmount)}</span>
                                     </div>
 
                                     <div className="w-full grid grid-cols-2 gap-3">
@@ -1419,16 +1489,20 @@ const TourDetailPage = () => {
                         <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-100 animate-bounce">
                             <span className="material-symbols-outlined text-3xl">check_circle</span>
                         </div>
-                        <h3 className="text-2xl font-black text-neutral-900 tracking-tight">Đặt Tour Thành Công!</h3>
+                        <h3 className="text-2xl font-black text-neutral-900 tracking-tight">
+                            {bookingSuccessModal.isPendingApproval ? "Đã Gửi Yêu Cầu Đặt Tour!" : "Đặt Tour Thành Công!"}
+                        </h3>
                         <p className="text-neutral-500 text-xs mt-2 px-4 leading-relaxed">
-                            Mã đặt chỗ: <strong className="text-teal-600 font-black">{bookingSuccessModal.bookingCode}</strong>.
-                            Hồ sơ đã được lưu trữ trong danh sách chuyến đi của bạn.
+                            Mã đặt chỗ: <strong className="text-teal-600 font-black">{bookingSuccessModal.bookingCode}</strong>.<br />
+                            {bookingSuccessModal.isPendingApproval 
+                                ? "Yêu cầu đã được gửi đến Operator để duyệt hồ sơ du khách. Vui lòng thanh toán sau khi duyệt thành công." 
+                                : "Thanh toán giả lập thành công! Hồ sơ đã được lưu trữ trong danh sách chuyến đi của bạn."}
                         </p>
 
                         <div className="bg-neutral-50 rounded-2xl p-4.5 border border-neutral-200/60 text-left space-y-2 mt-6 mb-8 text-xs font-semibold text-neutral-700">
                             <p>🗺️ <strong>Tour:</strong> {bookingSuccessModal.tourTitle}</p>
-                            <p>👤 <strong>Trưởng đoàn:</strong> {travelerInfo.fullName}</p>
-                            <p>📞 <strong>SĐT:</strong> {travelerInfo.phone}</p>
+                            <p>👤 <strong>Trưởng đoàn:</strong> {participantsList[0]?.fullName || travelerInfo.fullName}</p>
+                            <p>📞 <strong>SĐT:</strong> {participantsList[0]?.phone || travelerInfo.phone}</p>
                         </div>
 
                         <div className="space-y-3">

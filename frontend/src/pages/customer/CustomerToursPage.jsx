@@ -45,6 +45,9 @@ const CustomerToursPage = () => {
 
     // Details Modal States
     const [selectedDetailBooking, setSelectedDetailBooking] = useState(null);
+    const [detailModalTab, setDetailModalTab] = useState("member"); // 'member' or 'payment'
+    const [isDetailEditMode, setIsDetailEditMode] = useState(false);
+    const [detailEditParticipants, setDetailEditParticipants] = useState([]);
 
     // Update Traveler Modal States
     const [selectedUpdateBooking, setSelectedUpdateBooking] = useState(null);
@@ -72,6 +75,143 @@ const CustomerToursPage = () => {
     useEffect(() => {
         dispatch(fetchCurrentUser());
     }, [dispatch]);
+
+    // Set up edit state when selecting detail booking
+    useEffect(() => {
+        if (selectedDetailBooking) {
+            setDetailModalTab("member");
+            setIsDetailEditMode(false);
+            setDetailEditParticipants(selectedDetailBooking.participants || []);
+        } else {
+            setDetailEditParticipants([]);
+        }
+    }, [selectedDetailBooking]);
+
+    const handleDetailParticipantChange = (id, field, value) => {
+        setDetailEditParticipants(prev => prev.map(p => {
+            if (p.id === id) {
+                return { ...p, [field]: value };
+            }
+            return p;
+        }));
+    };
+
+    const handleCccdUploadForDetail = async (participantId, side, file) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            const response = await axiosInstance.post("/api/upload", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+            if (response.data.success) {
+                const baseUrl = axiosInstance.defaults.baseURL || "http://localhost:8080";
+                const uploadedUrl = `${baseUrl}${response.data.url}`;
+                
+                // Update the edited participant state
+                setDetailEditParticipants(prev => prev.map(p => {
+                    if (p.id === participantId) {
+                        return { ...p, [side === 'front' ? 'cccdFrontUrl' : 'cccdBackUrl']: uploadedUrl };
+                    }
+                    return p;
+                }));
+            } else {
+                alert("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định"));
+            }
+        } catch (err) {
+            console.error("Lỗi upload file:", err);
+            alert("Lỗi kết nối khi tải lên file.");
+        }
+    };
+
+    const handleSaveDetailEdits = async (e) => {
+        e.preventDefault();
+        
+        // Let's validate the fields for the edited participants
+        const tour = selectedDetailBooking.schedule?.tour || {};
+        for (let i = 0; i < detailEditParticipants.length; i++) {
+            const p = detailEditParticipants[i];
+            if (!p.fullName || !p.fullName.trim()) {
+                alert(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+            if (!p.dateOfBirth) {
+                alert(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+            if (!p.address || !p.address.trim()) {
+                alert(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`);
+                return;
+            }
+
+            // Age calculations
+            const birthDate = new Date(p.dateOfBirth);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            const type = tour.difficulty === "hard" ? "adult" : p.participantType;
+
+            if (tour.difficulty === "hard") {
+                if (type !== "adult") {
+                    alert(`Tour thám hiểm (Hard) chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của ${p.fullName}.`);
+                    return;
+                }
+                if (age < 18) {
+                    alert(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard) phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
+                    return;
+                }
+                if (!p.phone || !p.phone.trim()) {
+                    alert(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard).`);
+                    return;
+                }
+                if (!p.cccdFrontUrl || !p.cccdBackUrl) {
+                    alert(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard).`);
+                    return;
+                }
+            } else {
+                // Tour Normal
+                if (type === "adult") {
+                    if (age < 18) {
+                        alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                        return;
+                    }
+                } else if (type === "child") {
+                    if (age >= 18 || age < 2) {
+                        alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
+                        return;
+                    }
+                } else if (type === "infant") {
+                    if (age >= 2) {
+                        alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
+                        return;
+                    }
+                }
+            }
+        }
+
+        try {
+            const response = await axiosInstance.put(`/api/customer/bookings/${selectedDetailBooking.id}/participants`, {
+                participants: detailEditParticipants
+            });
+            if (response.data.success) {
+                alert("Cập nhật thông tin hành khách thành công!");
+                setIsDetailEditMode(false);
+                setSelectedDetailBooking(response.data.booking);
+                fetchBookings();
+            } else {
+                alert(response.data.error || "Lỗi khi cập nhật.");
+            }
+        } catch (err) {
+            console.error("Lỗi cập nhật hành khách:", err);
+            alert(err.response?.data?.error || "Lỗi kết nối khi cập nhật thông tin.");
+        }
+    };
 
     // Tự động kiểm tra trạng thái đơn hàng MoMo từ điện thoại
     useEffect(() => {
@@ -259,6 +399,22 @@ const CustomerToursPage = () => {
         } catch (err) {
             console.error("Lỗi khi gửi yêu cầu hủy:", err);
             alert(err.response?.data?.error || "Không thể gửi yêu cầu hủy. Vui lòng thử lại.");
+        }
+    };
+
+    const handleWithdrawCancel = async (bookingId) => {
+        if (!window.confirm("Bạn có chắc chắn muốn thu hồi yêu cầu hủy tour này không?")) {
+            return;
+        }
+        try {
+            const response = await axiosInstance.put(`/api/customer/bookings/${bookingId}/withdraw-cancel`);
+            if (response.data.success) {
+                alert("Đã thu hồi yêu cầu hủy tour thành công!");
+                fetchBookings();
+            }
+        } catch (err) {
+            console.error("Lỗi khi thu hồi yêu cầu hủy:", err);
+            alert(err.response?.data?.error || "Không thể thu hồi yêu cầu hủy. Vui lòng thử lại.");
         }
     };
 
@@ -546,9 +702,30 @@ const CustomerToursPage = () => {
                                                              </div>
                                                              <div className="col-span-2 border-t border-dashed border-neutral-200 pt-2">
                                                                  <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Lịch trình</span>
-                                                                 <span className="text-xs font-semibold text-neutral-600">{formatDate(schedule.departureDate)} - {formatDate(schedule.returnDate)}</span>
+                                                                 <span className="text-xs font-semibold text-neutral-600 block mb-2">{formatDate(schedule.departureDate)} - {formatDate(schedule.returnDate)}</span>
                                                              </div>
+                                                             <div className="col-span-2 border-t border-dashed border-neutral-200 pt-2 grid grid-cols-2 gap-2">
+                                                                  <div>
+                                                                      <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Thời gian đặt</span>
+                                                                      <span className="text-[11px] font-bold text-neutral-700 block mt-0.5">
+                                                                          {booking.bookedAt ? new Date(booking.bookedAt).toLocaleString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "N/A"}
+                                                                      </span>
+                                                                  </div>
+                                                                  <div>
+                                                                      <span className="text-[9px] font-black text-neutral-400 block uppercase tracking-wider">Cập nhật gần nhất</span>
+                                                                      <span className="text-[11px] font-semibold text-neutral-600 block mt-0.5">
+                                                                          {booking.updatedAt ? new Date(booking.updatedAt).toLocaleString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "N/A"}
+                                                                      </span>
+                                                                  </div>
+                                                              </div>
                                                         </div>
+
+                                                     {booking.status === "cancelled" && booking.cancellationReason && (
+                                                         <div className="mt-4 bg-red-50/40 p-3.5 rounded-2xl border border-red-100/50 text-xs text-red-750 font-medium">
+                                                             <span className="font-extrabold text-[10px] uppercase text-red-650 block tracking-wider mb-1">Lý do hủy / Nội dung từ chối:</span>
+                                                             {booking.cancellationReason}
+                                                         </div>
+                                                     )}
                                                     </div>
 
                                                     <div className="mt-6 pt-4 border-t border-neutral-100 flex flex-col gap-4">
@@ -596,7 +773,7 @@ const CustomerToursPage = () => {
                                                                 </button>
                                                             )}
 
-                                                            {(booking.status === "cancelled" || booking.status === "rejected") && (
+                                                            {(booking.status === "rejected") && (
                                                                 <button
                                                                     onClick={() => {
                                                                         setSelectedUpdateBooking(booking);
@@ -637,6 +814,15 @@ const CustomerToursPage = () => {
                                                                         Yêu cầu hủy
                                                                     </button>
                                                                 </>
+                                                            )}
+
+                                                            {booking.status === "pending_approval" && booking.cancellationReason && (
+                                                                <button
+                                                                    onClick={() => handleWithdrawCancel(booking.id)}
+                                                                    className="px-3.5 py-2 text-xs font-bold text-orange-650 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                >
+                                                                    Thu hồi yêu cầu hủy
+                                                                </button>
                                                             )}
 
                                                             {booking.status !== "paid" && booking.status !== "cancelled" && booking.status !== "pending_approval" && (
@@ -901,61 +1087,369 @@ const CustomerToursPage = () => {
                 </div>
             )}
 
-            {/* Detail Inspection Modal */}
-            {selectedDetailBooking && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] max-w-lg w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black text-neutral-900">Chi Tiết Lịch Trình & Đặt Chỗ</h3>
-                            <button onClick={() => setSelectedDetailBooking(null)} className="text-neutral-400 hover:text-rose-500 cursor-pointer">
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
+             {/* Detail Inspection Modal */}
+             {selectedDetailBooking && (
+                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                     <div className="bg-white rounded-[32px] max-w-xl w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200">
+                         <div className="flex justify-between items-center mb-4">
+                             <h3 className="text-xl font-black text-neutral-900">Chi Tiết Lịch Trình & Đặt Chỗ</h3>
+                             <button onClick={() => setSelectedDetailBooking(null)} className="text-neutral-400 hover:text-rose-500 cursor-pointer">
+                                 <span className="material-symbols-outlined">close</span>
+                             </button>
+                         </div>
 
-                        <div className="space-y-4 text-sm">
-                            <div className="bg-neutral-50 p-4.5 rounded-2xl border border-neutral-200/50">
-                                <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Tên hành trình</span>
-                                <span className="font-extrabold text-neutral-850">{selectedDetailBooking.schedule?.tour?.title}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
-                                    <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Ngày khởi hành</span>
-                                    <span className="font-extrabold text-neutral-800">{formatDate(selectedDetailBooking.schedule?.departureDate)}</span>
-                                </div>
-                                <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
-                                    <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Ngày kết thúc</span>
-                                    <span className="font-extrabold text-neutral-800">{formatDate(selectedDetailBooking.schedule?.returnDate)}</span>
-                                </div>
-                            </div>
-                            <div className="bg-neutral-50 p-4.5 rounded-2xl border border-neutral-200/50">
-                                <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-2">Thông tin hành khách</span>
-                                <div className="space-y-2 max-h-32 overflow-y-auto">
-                                    {selectedDetailBooking.participants && selectedDetailBooking.participants.map((p, idx) => (
-                                        <div key={idx} className="flex justify-between items-center text-xs border-b border-neutral-100 pb-1.5 last:border-none last:pb-0">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="font-bold text-neutral-700">{p.fullName}</span>
-                                                {p.isLead && (
-                                                    <span className="px-1.5 py-0.5 text-[9px] font-black bg-rose-500 text-white rounded uppercase tracking-wider scale-90">
-                                                        Trưởng đoàn
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-neutral-400 font-semibold uppercase">{p.participantType || "Người lớn"}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                         {/* Tabs */}
+                         <div className="flex border-b border-neutral-200 mb-6 shrink-0">
+                             <button
+                                 onClick={() => setDetailModalTab("member")}
+                                 className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border-b-2 text-center transition-all ${detailModalTab === 'member' ? 'border-rose-500 text-rose-600' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                             >
+                                 Chi tiết & Thành viên
+                             </button>
+                             <button
+                                 onClick={() => setDetailModalTab("payment")}
+                                 className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border-b-2 text-center transition-all ${detailModalTab === 'payment' ? 'border-rose-500 text-rose-600' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                             >
+                                 Thanh toán
+                             </button>
+                         </div>
 
-                        <button
-                            onClick={() => setSelectedDetailBooking(null)}
-                            className="w-full mt-6 py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
-                        >
-                            Quay lại
-                        </button>
-                    </div>
-                </div>
-            )}
+                         {detailModalTab === "member" ? (
+                             <div className="space-y-4">
+                                 <div className="bg-neutral-50 p-4.5 rounded-2xl border border-neutral-200/50">
+                                     <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Tên hành trình</span>
+                                     <span className="font-extrabold text-neutral-850">{selectedDetailBooking.schedule?.tour?.title}</span>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
+                                         <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Ngày khởi hành</span>
+                                         <span className="font-extrabold text-neutral-800">{formatDate(selectedDetailBooking.schedule?.departureDate)}</span>
+                                     </div>
+                                     <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
+                                         <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Ngày kết thúc</span>
+                                         <span className="font-extrabold text-neutral-800">{formatDate(selectedDetailBooking.schedule?.returnDate)}</span>
+                                     </div>
+                                 </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                      <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
+                                          <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Thời gian đặt tour</span>
+                                          <span className="text-xs font-bold text-neutral-800 block">
+                                              {selectedDetailBooking.bookedAt ? new Date(selectedDetailBooking.bookedAt).toLocaleString("vi-VN") : "N/A"}
+                                          </span>
+                                      </div>
+                                      <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
+                                          <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider mb-1">Cập nhật lần cuối</span>
+                                          <span className="text-xs font-semibold text-neutral-600 block">
+                                              {selectedDetailBooking.updatedAt ? new Date(selectedDetailBooking.updatedAt).toLocaleString("vi-VN") : "N/A"}
+                                          </span>
+                                      </div>
+                                  </div>
+                                 
+                                 <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200/50">
+                                     <div className="flex justify-between items-center mb-3">
+                                         <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider">Thông tin hành khách</span>
+                                          {selectedDetailBooking.status !== 'cancelled' && !(selectedDetailBooking.status === 'pending_approval' && selectedDetailBooking.cancellationReason) && (
+                                             <button
+                                                 type="button"
+                                                 onClick={() => {
+                                                     if (isDetailEditMode) {
+                                                         setDetailEditParticipants(selectedDetailBooking.participants || []);
+                                                         setIsDetailEditMode(false);
+                                                     } else {
+                                                         setIsDetailEditMode(true);
+                                                     }
+                                                 }}
+                                                 className="text-xs font-black text-rose-500 hover:text-rose-600 cursor-pointer"
+                                             >
+                                                 {isDetailEditMode ? "Hủy sửa" : "Chỉnh sửa hồ sơ"}
+                                             </button>
+                                         )}
+                                     </div>
+
+                                     {isDetailEditMode ? (
+                                         <form onSubmit={handleSaveDetailEdits} className="space-y-4 max-h-[30vh] overflow-y-auto pr-1">
+                                             {detailEditParticipants.map((p, idx) => (
+                                                 <div key={p.id} className="bg-white p-3.5 rounded-xl border border-neutral-200 space-y-3">
+                                                     <div className="text-[10px] font-black text-rose-500 uppercase tracking-wider">Hành khách #{idx + 1} {p.isLead && "(Trưởng đoàn)"}</div>
+                                                     
+                                                     <div className="grid grid-cols-2 gap-2">
+                                                         <div>
+                                                             <label className="text-[9px] font-black text-neutral-400 block uppercase mb-1">Họ tên *</label>
+                                                             <input
+                                                                 type="text"
+                                                                 required
+                                                                 className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                                                 value={p.fullName}
+                                                                 onChange={(e) => handleDetailParticipantChange(p.id, "fullName", e.target.value)}
+                                                             />
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-[9px] font-black text-neutral-400 block uppercase mb-1">Loại *</label>
+                                                             <select
+                                                                 className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                                                 value={selectedDetailBooking.schedule?.tour?.difficulty === 'hard' ? 'adult' : p.participantType}
+                                                                 onChange={(e) => handleDetailParticipantChange(p.id, "participantType", e.target.value)}
+                                                                 disabled={selectedDetailBooking.schedule?.tour?.difficulty === 'hard'}
+                                                             >
+                                                                 <option value="adult">Người lớn</option>
+                                                                 {selectedDetailBooking.schedule?.tour?.difficulty !== 'hard' && (
+                                                                     <>
+                                                                         <option value="child">Trẻ em</option>
+                                                                         <option value="infant">Em bé</option>
+                                                                     </>
+                                                                 )}
+                                                             </select>
+                                                         </div>
+                                                     </div>
+
+                                                     <div className="grid grid-cols-2 gap-2">
+                                                         <div>
+                                                             <label className="text-[9px] font-black text-neutral-400 block uppercase mb-1">Ngày sinh *</label>
+                                                             <input
+                                                                 type="date"
+                                                                 required
+                                                                 className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                                                 value={p.dateOfBirth ? p.dateOfBirth.split("T")[0] : ""}
+                                                                 onChange={(e) => handleDetailParticipantChange(p.id, "dateOfBirth", e.target.value)}
+                                                             />
+                                                         </div>
+                                                         <div>
+                                                             <label className="text-[9px] font-black text-neutral-400 block uppercase mb-1">Địa chỉ *</label>
+                                                             <input
+                                                                 type="text"
+                                                                 required
+                                                                 className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                                                 value={p.address}
+                                                                 onChange={(e) => handleDetailParticipantChange(p.id, "address", e.target.value)}
+                                                             />
+                                                         </div>
+                                                     </div>
+
+                                                     <div>
+                                                         <label className="text-[9px] font-black text-neutral-400 block uppercase mb-1">
+                                                             Số điện thoại {selectedDetailBooking.schedule?.tour?.difficulty === 'hard' ? '*' : ''}
+                                                         </label>
+                                                         <input
+                                                             type="tel"
+                                                             required={selectedDetailBooking.schedule?.tour?.difficulty === 'hard'}
+                                                             className="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold"
+                                                             value={p.phone || ""}
+                                                             onChange={(e) => handleDetailParticipantChange(p.id, "phone", e.target.value)}
+                                                         />
+                                                     </div>
+
+                                                     {(p.participantType === 'adult' || selectedDetailBooking.schedule?.tour?.difficulty === 'hard') && (
+                                                         <div className="border-t border-dashed border-neutral-100 pt-2 space-y-2">
+                                                             <span className="text-[9px] font-black text-neutral-400 block uppercase">CCCD (Yêu cầu xác minh)</span>
+                                                             <div className="grid grid-cols-2 gap-2">
+                                                                 <div className="flex flex-col items-center gap-1">
+                                                                     <label className="w-full text-center py-1.5 border border-dashed rounded-lg text-[9px] font-bold cursor-pointer hover:bg-neutral-100 transition">
+                                                                         {p.cccdFrontUrl ? "Mặt trước đã chọn" : "Tải lên mặt trước"}
+                                                                         <input
+                                                                             type="file"
+                                                                             accept="image/*"
+                                                                             className="hidden"
+                                                                             onChange={(e) => handleCccdUploadForDetail(p.id, "front", e.target.files[0])}
+                                                                         />
+                                                                     </label>
+                                                                     {p.cccdFrontUrl && (
+                                                                         <img src={p.cccdFrontUrl} alt="Mặt trước" className="w-16 h-10 object-cover rounded border" />
+                                                                     )}
+                                                                 </div>
+                                                                 <div className="flex flex-col items-center gap-1">
+                                                                     <label className="w-full text-center py-1.5 border border-dashed rounded-lg text-[9px] font-bold cursor-pointer hover:bg-neutral-100 transition">
+                                                                         {p.cccdBackUrl ? "Mặt sau đã chọn" : "Tải lên mặt sau"}
+                                                                         <input
+                                                                             type="file"
+                                                                             accept="image/*"
+                                                                             className="hidden"
+                                                                             onChange={(e) => handleCccdUploadForDetail(p.id, "back", e.target.files[0])}
+                                                                         />
+                                                                     </label>
+                                                                     {p.cccdBackUrl && (
+                                                                         <img src={p.cccdBackUrl} alt="Mặt sau" className="w-16 h-10 object-cover rounded border" />
+                                                                     )}
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     )}
+                                                 </div>
+                                             ))}
+                                             <button
+                                                 type="submit"
+                                                 className="w-full py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition cursor-pointer"
+                                             >
+                                                 Lưu thay đổi hồ sơ
+                                             </button>
+                                         </form>
+                                     ) : (
+                                         <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-1">
+                                             {selectedDetailBooking.participants && selectedDetailBooking.participants.map((p, idx) => (
+                                                 <div key={idx} className="bg-white p-3.5 rounded-xl border border-neutral-200 space-y-2 text-xs">
+                                                     <div className="flex justify-between items-center">
+                                                         <div className="flex items-center gap-1.5">
+                                                             <span className="font-extrabold text-neutral-800">{p.fullName}</span>
+                                                             {p.isLead && (
+                                                                 <span className="px-1.5 py-0.5 text-[9px] font-black bg-rose-500 text-white rounded uppercase tracking-wider scale-90">
+                                                                     Trưởng đoàn
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                         <span className="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100 uppercase">
+                                                             {p.participantType === 'adult' ? 'Người lớn' : (p.participantType === 'child' ? 'Trẻ em' : 'Em bé')}
+                                                         </span>
+                                                     </div>
+                                                     
+                                                     <div className="grid grid-cols-2 gap-2 text-neutral-600 font-semibold text-[11px] pt-1">
+                                                         <div>📅 Ngày sinh: {formatDate(p.dateOfBirth)}</div>
+                                                         <div>🏠 Địa chỉ: {p.address}</div>
+                                                         <div>📞 SĐT: {p.phone || "Chưa cập nhật"}</div>
+                                                         <div>🆔 Trạng thái: {p.status === 'active' ? 'Đang tham gia' : 'Đã hủy'}</div>
+                                                     </div>
+
+                                                     {(p.cccdFrontUrl || p.cccdBackUrl) && (
+                                                         <div className="border-t border-dashed border-neutral-105 pt-2 space-y-1.5">
+                                                             <span className="text-[9px] font-black text-neutral-400 block uppercase">Ảnh CCCD đã tải lên:</span>
+                                                             <div className="flex gap-4">
+                                                                 {p.cccdFrontUrl && (
+                                                                     <div className="flex flex-col items-center gap-1">
+                                                                         <a href={p.cccdFrontUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-90">
+                                                                             <img src={p.cccdFrontUrl} alt="Mặt trước" className="w-20 h-12 object-cover rounded border hover:border-rose-300 transition" />
+                                                                         </a>
+                                                                         <span className="text-[9px] font-bold text-neutral-400">Mặt trước (Click xem)</span>
+                                                                     </div>
+                                                                 )}
+                                                                 {p.cccdBackUrl && (
+                                                                     <div className="flex flex-col items-center gap-1">
+                                                                         <a href={p.cccdBackUrl} target="_blank" rel="noopener noreferrer" className="hover:opacity-90">
+                                                                             <img src={p.cccdBackUrl} alt="Mặt sau" className="w-20 h-12 object-cover rounded border hover:border-rose-300 transition" />
+                                                                         </a>
+                                                                         <span className="text-[9px] font-bold text-neutral-400">Mặt sau (Click xem)</span>
+                                                                     </div>
+                                                                 )}
+                                                             </div>
+                                                         </div>
+                                                     )}
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     )}
+                                 </div>
+                             </div>
+                         ) : (
+                             /* Tab 2: Thanh toán */
+                             <div className="space-y-4">
+                                 <div className="bg-neutral-50 p-4.5 rounded-2xl border border-neutral-200/50 text-xs space-y-3">
+                                     <div className="flex justify-between">
+                                         <span className="font-semibold text-neutral-500">Mã đặt chỗ:</span>
+                                         <span className="font-extrabold text-neutral-900">{selectedDetailBooking.bookingCode}</span>
+                                     </div>
+                                     <div className="flex justify-between">
+                                         <span className="font-semibold text-neutral-500">Tổng giá trị:</span>
+                                         <span className="font-extrabold text-neutral-900">{formatPrice(selectedDetailBooking.totalPrice)}</span>
+                                     </div>
+                                     <div className="flex justify-between text-rose-600">
+                                         <span className="font-semibold">Mã giảm giá đã áp dụng:</span>
+                                         <span className="font-bold">-{formatPrice(selectedDetailBooking.discountAmount || 0)}</span>
+                                     </div>
+                                     <div className="flex justify-between border-t border-dashed border-neutral-200 pt-3 text-sm">
+                                         <span className="font-bold text-neutral-800">Tổng tiền cần thanh toán:</span>
+                                         <span className="font-black text-rose-600">{formatPrice(selectedDetailBooking.finalPrice)}</span>
+                                     </div>
+                                 </div>
+
+                                  <div className="bg-neutral-50 p-4.5 rounded-2xl border border-neutral-200/50 flex flex-col items-center justify-center gap-2">
+                                      <span className="text-[10px] font-black text-neutral-400 block uppercase tracking-wider">Trạng thái phê duyệt hồ sơ</span>
+                                      {selectedDetailBooking.status === "pending_approval" ? (
+                                          selectedDetailBooking.cancellationReason ? (
+                                              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 px-3.5 py-1.5 rounded-full text-xs font-black border border-orange-100 uppercase animate-pulse">
+                                                  <span className="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                                                  Đang chờ duyệt hủy đơn
+                                              </span>
+                                          ) : (
+                                              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3.5 py-1.5 rounded-full text-xs font-black border border-blue-100 uppercase animate-pulse">
+                                                  <span className="material-symbols-outlined text-[16px]">hourglass_empty</span>
+                                                  Đang chờ duyệt hồ sơ
+                                              </span>
+                                          )
+                                      ) : selectedDetailBooking.status === "pending_payment" ? (
+                                          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-3.5 py-1.5 rounded-full text-xs font-black border border-amber-100 uppercase">
+                                              <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                              Đã duyệt - Sẵn sàng thanh toán
+                                          </span>
+                                      ) : selectedDetailBooking.status === "paid" ? (
+                                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3.5 py-1.5 rounded-full text-xs font-black border border-emerald-100 uppercase">
+                                              <span className="material-symbols-outlined text-[16px]">done_all</span>
+                                              Đã thanh toán thành công
+                                          </span>
+                                      ) : (
+                                          <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 px-3.5 py-1.5 rounded-full text-xs font-black border border-red-100 uppercase">
+                                              <span className="material-symbols-outlined text-[16px]">cancel</span>
+                                              Đã hủy / Bị từ chối
+                                          </span>
+                                      )}
+                                  </div>
+
+                                  {selectedDetailBooking.status === "cancelled" && selectedDetailBooking.cancellationReason && (
+                                      <div className="bg-red-50/40 p-4.5 rounded-2xl border border-red-100 text-xs text-red-750 font-medium space-y-1 mt-4">
+                                          <span className="font-extrabold text-[10px] uppercase text-red-650 block tracking-wider">Lý do hủy / Nội dung từ chối:</span>
+                                          <p className="leading-relaxed">{selectedDetailBooking.cancellationReason}</p>
+                                      </div>
+                                  )}
+
+                                  {selectedDetailBooking.status === "pending_approval" && (
+                                      selectedDetailBooking.cancellationReason ? (
+                                          <button
+                                              onClick={() => {
+                                                  handleWithdrawCancel(selectedDetailBooking.id);
+                                                  setSelectedDetailBooking(null);
+                                              }}
+                                              className="w-full py-4 text-xs font-black uppercase text-white bg-orange-500 hover:bg-orange-600 rounded-xl cursor-pointer text-center transition-all shadow-md flex items-center justify-center gap-1.5"
+                                          >
+                                              <span className="material-symbols-outlined text-[16px]">undo</span>
+                                              Thu hồi yêu cầu hủy
+                                          </button>
+                                      ) : (
+                                          <button
+                                              disabled
+                                              className="w-full py-4 text-xs font-black uppercase text-neutral-400 bg-neutral-200 rounded-xl cursor-not-allowed text-center"
+                                          >
+                                              Chờ duyệt hồ sơ - Chưa thể thanh toán
+                                          </button>
+                                      )
+                                  )}
+
+                                 {selectedDetailBooking.status === "pending_payment" && (
+                                     <button
+                                         onClick={() => {
+                                             setSelectedDetailBooking(null);
+                                             setSimulatedPaymentBooking(selectedDetailBooking);
+                                             setPaymentMethod("vnpay");
+                                             setSandboxStep("card_info");
+                                         }}
+                                         className="w-full py-4 text-xs font-black uppercase text-white fiery-button rounded-xl shadow-md cursor-pointer text-center"
+                                     >
+                                         Tiến hành thanh toán ngay
+                                     </button>
+                                 )}
+
+                                 {selectedDetailBooking.status === "paid" && (
+                                     <div className="w-full py-4 text-xs font-black uppercase text-emerald-750 bg-emerald-50 border border-emerald-100 rounded-xl text-center select-none">
+                                         Đơn hàng đã được thanh toán
+                                     </div>
+                                 )}
+                             </div>
+                         )}
+
+                         <button
+                             onClick={() => setSelectedDetailBooking(null)}
+                             className="w-full mt-6 py-3.5 bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                         >
+                             Quay lại
+                         </button>
+                     </div>
+                 </div>
+             )}
 
             {/* Update Traveler Info Modal */}
             {selectedUpdateBooking && (

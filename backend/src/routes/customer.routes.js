@@ -13,6 +13,7 @@ router.put("/api/customer/profile", customerController.updateProfile);
 router.put("/api/customer/password", customerController.updatePassword);
 router.put("/api/customer/bookings/:bookingId/pay", customerController.payBooking);
 router.put("/api/customer/bookings/:bookingId/cancel", customerController.cancelBooking);
+router.put("/api/customer/bookings/:bookingId/withdraw-cancel", customerController.withdrawCancelBooking);
 router.put("/api/customer/bookings/:bookingId/participants", customerController.updateBookingTraveler);
 router.post("/api/customer/bookings/:bookingId/reviews", customerController.createBookingReview);
 

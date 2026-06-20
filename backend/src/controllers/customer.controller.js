@@ -237,18 +237,12 @@ class CustomerController {
     async updateBookingTraveler(req, res) {
         try {
             const { bookingId } = req.params;
-            const { fullName, phone } = req.body;
-            if (!fullName || !phone) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Họ tên trưởng đoàn và số điện thoại liên hệ là bắt buộc."
-                });
-            }
+            const { fullName, phone, participants } = req.body;
 
-            const booking = await customerService.updateBookingTraveler(req.user.id, bookingId, { fullName, phone });
+            const booking = await customerService.updateBookingTraveler(req.user.id, bookingId, { fullName, phone, participants });
             return res.status(200).json({
                 success: true,
-                message: "Cập nhật thông tin trưởng đoàn thành công.",
+                message: "Cập nhật thông tin thành công.",
                 booking
             });
         } catch (error) {
@@ -299,6 +293,35 @@ class CustomerController {
                 return res.status(400).json({
                     success: false,
                     error: "Đơn đặt tour này đã được đánh giá trước đó."
+                });
+            }
+            return res.status(500).json({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    async withdrawCancelBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const booking = await customerService.withdrawCancelBooking(req.user.id, bookingId);
+            return res.status(200).json({
+                success: true,
+                message: "Thu hồi yêu cầu hủy tour thành công.",
+                booking
+            });
+        } catch (error) {
+            if (error.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({
+                    success: false,
+                    error: "Đơn đặt tour không tồn tại hoặc bạn không có quyền truy cập."
+                });
+            }
+            if (error.message === "CANNOT_WITHDRAW_CANCELLATION") {
+                return res.status(400).json({
+                    success: false,
+                    error: "Không thể thu hồi yêu cầu hủy. Trạng thái không hợp lệ."
                 });
             }
             return res.status(500).json({

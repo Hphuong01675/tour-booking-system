@@ -58,6 +58,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         field: 'checkin_at',
       },
+      phone: {
+        type: DataTypes.STRING(20),
+        field: 'phone',
+      },
+      status: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'active',
+        field: 'status',
+      },
     },
     {
       sequelize,

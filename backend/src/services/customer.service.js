@@ -140,26 +140,40 @@ class CustomerService {
                     if (!p.cccdFrontUrl || !p.cccdBackUrl) {
                         throw new Error("HARD_TOUR_REQUIRED_CCCD");
                     }
-                } else {
-                    // Tour normal: người lớn bắt buộc có CCCD
-                    if (p.participantType === "adult" || !p.participantType) {
-                        if (!p.cccdFrontUrl || !p.cccdBackUrl) {
-                            throw new Error("NORMAL_TOUR_ADULT_REQUIRED_CCCD");
-                        }
+                    if (!p.phone || !p.phone.trim()) {
+                        throw new Error("HARD_TOUR_REQUIRED_PHONE");
                     }
+                } else {
+                    // Tour normal: CCCD có thể upload liền hoặc để sau cũng được, không ném lỗi
                 }
             }
         } else {
             // Nếu không gửi hành khách, mặc định lấy user chính đặt tour
             const user = await db.User.findByPk(customerId);
             if (tour.difficulty === "hard") {
-                // Cần có CCCD trong tài khoản hoặc ném lỗi yêu cầu nhập
+                if (!user.phone || !user.phone.trim()) {
+                    throw new Error("HARD_TOUR_REQUIRED_PHONE");
+                }
                 throw new Error("HARD_TOUR_REQUIRED_CCCD");
             }
         }
 
         const basePrice = parseFloat(schedule.price);
-        const totalPrice = basePrice * guestCount;
+        let totalPrice = 0;
+        if (participants && participants.length > 0) {
+            for (const p of participants) {
+                const type = tour.difficulty === "hard" ? "adult" : (p.participantType || "adult");
+                if (type === "adult") {
+                    totalPrice += basePrice;
+                } else if (type === "child") {
+                    totalPrice += basePrice * 0.7;
+                } else if (type === "infant") {
+                    totalPrice += 0;
+                }
+            }
+        } else {
+            totalPrice = basePrice;
+        }
         let discountAmount = 0;
         let finalVoucher = null;
 
@@ -242,7 +256,7 @@ class CustomerService {
             customerId,
             scheduleId,
             bookingCode,
-            status: status || "pending_payment",
+            status: tour.difficulty === "hard" ? "pending_approval" : (status || "pending_payment"),
             totalPrice,
             discountAmount,
             finalPrice,
@@ -263,6 +277,8 @@ class CustomerService {
                 isLead: p.isLead || false,
                 cccdFrontUrl: p.cccdFrontUrl || null,
                 cccdBackUrl: p.cccdBackUrl || null,
+                phone: p.phone || null,
+                status: "active",
                 checkinCode: `QR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`
             }));
             await Participant.bulkCreate(participantData);
@@ -275,6 +291,8 @@ class CustomerService {
                 participantType: "adult",
                 address: user.address || "",
                 isLead: true,
+                phone: user.phone || null,
+                status: "active",
                 checkinCode: `QR-${Math.random().toString(36).substr(2, 7).toUpperCase()}`
             });
         }
@@ -380,7 +398,7 @@ class CustomerService {
         if (!booking) {
             throw new Error("BOOKING_NOT_FOUND");
         }
-        await booking.update({ status: "paid" });
+        await booking.update({ status: "paid", updatedAt: new Date() });
         return booking;
     }
 
@@ -396,7 +414,8 @@ class CustomerService {
             // Đã thanh toán: chuyển thành yêu cầu hủy (chờ operator duyệt/hủy)
             await booking.update({
                 status: "pending_approval",
-                cancellationReason: reason || "Yêu cầu hủy tour từ khách hàng."
+                cancellationReason: reason || "Yêu cầu hủy tour từ khách hàng.",
+                updatedAt: new Date()
             });
             return booking;
         } else {
@@ -414,7 +433,7 @@ class CustomerService {
         }
     }
 
-    async updateBookingTraveler(userId, bookingId, { fullName, phone }) {
+    async updateBookingTraveler(userId, bookingId, { fullName, phone, participants }) {
         const booking = await Booking.findOne({
             where: { id: bookingId, customerId: userId },
             include: [{ model: Participant, as: "participants" }]
@@ -423,8 +442,26 @@ class CustomerService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
+        if (participants && participants.length > 0) {
+            for (const p of participants) {
+                const ep = booking.participants?.find((part) => part.id === p.id);
+                if (ep) {
+                    await ep.update({
+                        fullName: p.fullName !== undefined ? p.fullName : ep.fullName,
+                        dateOfBirth: p.dateOfBirth !== undefined ? p.dateOfBirth : ep.dateOfBirth,
+                        address: p.address !== undefined ? p.address : ep.address,
+                        phone: p.phone !== undefined ? p.phone : ep.phone,
+                        participantType: p.participantType !== undefined ? p.participantType : ep.participantType,
+                        cccdFrontUrl: p.cccdFrontUrl !== undefined ? p.cccdFrontUrl : ep.cccdFrontUrl,
+                        cccdBackUrl: p.cccdBackUrl !== undefined ? p.cccdBackUrl : ep.cccdBackUrl,
+                        status: p.status !== undefined ? p.status : ep.status,
+                    });
+                }
+            }
+        }
+
         const leadParticipant = booking.participants?.find((p) => p.isLead) || booking.participants?.[0];
-        if (leadParticipant) {
+        if (leadParticipant && fullName) {
             await leadParticipant.update({ fullName });
         }
 
@@ -495,6 +532,27 @@ class CustomerService {
                 }
             ]
         });
+    }
+
+    async withdrawCancelBooking(userId, bookingId) {
+        const booking = await Booking.findOne({
+            where: { id: bookingId, customerId: userId }
+        });
+        if (!booking) {
+            throw new Error("BOOKING_NOT_FOUND");
+        }
+
+        if (booking.status !== "pending_approval" || !booking.cancellationReason) {
+            throw new Error("CANNOT_WITHDRAW_CANCELLATION");
+        }
+
+        await booking.update({
+            status: "paid",
+            cancellationReason: null,
+            updatedAt: new Date()
+        });
+
+        return booking;
     }
 }
 

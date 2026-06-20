@@ -493,6 +493,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-NT-101",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0901234567",
+                status: "active",
             },
             {
                 id: "participant-2",
@@ -504,6 +506,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-TM-102",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0987654321",
+                status: "active",
             },
             {
                 id: "participant-3",
@@ -515,6 +519,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-GH-103",
                 checkinAt: null,
+                phone: "0903112233",
+                status: "active",
             },
         ]);
 
@@ -539,6 +545,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-TH-104",
                 checkinAt: new Date("2026-10-15T09:12:00.000Z"),
+                phone: "0944556677",
+                status: "active",
             },
             {
                 id: "participant-5",
@@ -550,6 +558,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-MT-105",
                 checkinAt: new Date("2026-10-15T08:45:00.000Z"),
+                phone: "0977889900",
+                status: "active",
             },
         ]);
 
@@ -573,6 +583,8 @@ export const seedDatabase = async () => {
             isLead: true,
             checkinCode: "QR-VA-106",
             checkinAt: null,
+            phone: "0901112222",
+            status: "active",
         });
 
         await Booking.create({
@@ -596,6 +608,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-HP-107",
                 checkinAt: new Date("2026-10-15T08:35:00.000Z"),
+                phone: "0966777888",
+                status: "active",
             },
             {
                 id: "participant-8",
@@ -607,6 +621,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-TT-108",
                 checkinAt: null,
+                phone: "0988555666",
+                status: "active",
             },
         ]);
 
@@ -631,6 +647,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-NK-109",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0909333444",
+                status: "active",
             },
             {
                 id: "participant-10",
@@ -642,6 +660,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-MD-110",
                 checkinAt: null,
+                phone: "0912999888",
+                status: "active",
             },
         ]);
 
@@ -665,6 +685,8 @@ export const seedDatabase = async () => {
             isLead: true,
             checkinCode: "QR-MK-111",
             checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+            phone: "0908123456",
+            status: "active",
         });
 
         // Hard Approvals Seeding for Tour 2 (schedule-2)
@@ -690,6 +712,8 @@ export const seedDatabase = async () => {
                 cccdFrontUrl: "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
                 cccdBackUrl: "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
                 checkinCode: "QR-HN-701",
+                phone: "0901234123",
+                status: "active",
             },
             {
                 id: "participant-13",
@@ -700,6 +724,8 @@ export const seedDatabase = async () => {
                 address: "Quận 3, TP. HCM",
                 isLead: false,
                 checkinCode: "QR-HL-702",
+                phone: "0901234321",
+                status: "active",
             }
         ]);
 
@@ -725,6 +751,8 @@ export const seedDatabase = async () => {
             cccdFrontUrl: "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
             cccdBackUrl: "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
             checkinCode: "QR-LH-801",
+            phone: "0901234456",
+            status: "active",
         });
 
         // 7. Create Conversations

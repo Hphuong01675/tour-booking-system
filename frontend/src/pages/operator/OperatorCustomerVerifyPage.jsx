@@ -263,7 +263,8 @@ const OperatorCustomerVerifyPage = () => {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="border-b border-outline-variant/30">
-                                            <th className="pb-3 text-xs font-semibold uppercase text-outline">Họ tên</th>
+                                            <th className="pb-3 text-xs font-semibold uppercase text-outline">Hành khách</th>
+                                            <th className="pb-3 text-xs font-semibold uppercase text-outline">Liên hệ / Hồ sơ</th>
                                             <th className="pb-3 text-xs font-semibold uppercase text-outline text-center">Loại</th>
                                         </tr>
                                     </thead>
@@ -272,10 +273,31 @@ const OperatorCustomerVerifyPage = () => {
                                             <tr key={idx}>
                                                 <td className="py-4">
                                                     <p className="text-sm font-semibold text-on-surface">{c.name}</p>
-                                                    <p className="text-xs text-on-surface-variant">{c.dateOfBirth}</p>
+                                                    <p className="text-xs text-on-surface-variant">Ngày sinh: {c.dateOfBirth}</p>
+                                                </td>
+                                                <td className="py-4">
+                                                    <p className="text-xs text-on-surface-variant mb-1.5">SĐT: <strong className="text-on-surface">{c.phone || "Chưa cập nhật"}</strong></p>
+                                                    {(c.cccdFrontUrl || c.cccdBackUrl) ? (
+                                                        <div className="flex gap-2">
+                                                            {c.cccdFrontUrl && (
+                                                                <a href={c.cccdFrontUrl} target="_blank" rel="noopener noreferrer" className="inline-block relative group" title="Xem mặt trước CCCD">
+                                                                    <img src={c.cccdFrontUrl} alt="Mặt trước" className="w-12 h-8 object-cover rounded border border-outline hover:border-primary transition" />
+                                                                    <span className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded text-[8px] text-white">Xem</span>
+                                                                </a>
+                                                            )}
+                                                            {c.cccdBackUrl && (
+                                                                <a href={c.cccdBackUrl} target="_blank" rel="noopener noreferrer" className="inline-block relative group" title="Xem mặt sau CCCD">
+                                                                    <img src={c.cccdBackUrl} alt="Mặt sau" className="w-12 h-8 object-cover rounded border border-outline hover:border-primary transition" />
+                                                                    <span className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded text-[8px] text-white">Xem</span>
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-[10px] text-outline italic">Không có CCCD</span>
+                                                    )}
                                                 </td>
                                                 <td className="py-4 text-center">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                                                         c.type === "Người lớn"
                                                             ? "bg-surface-container-high text-on-surface-variant"
                                                             : "bg-primary-fixed text-on-primary-fixed"
