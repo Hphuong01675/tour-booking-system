@@ -1,4 +1,4 @@
-// Đường dẫn: frontend/src/pages/Guide/GuideAssignedToursPage.jsx
+// Đường dẫn: frontend/src/pages/guide/GuideAssignedToursPage.jsx
 /**
  * GuideAssignedToursPage Component
  * Trang chính "Danh sách Tour được phân công cho Hướng dẫn viên"
@@ -9,15 +9,15 @@
  * - useNavigate: Điều hướng tới trang chi tiết khi click nút
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Import API
-import { getAssignedTours, getGuideStats, exportToursReport } from '../../api/guideApi';
+import { getAssignedTours, getGuideStats, exportToursReport, getGuideProfile } from '../../api/guideApi';
 
 // Import Components
-import GuideStatCard from '../../components/Guide/GuideStatCard';
-import GuideStatusBadge from '../../components/Guide/GuideStatusBadge';
+import GuideStatCard from '../../components/guide/GuideStatCard';
+import GuideFooter from '../../components/guide/GuideFooter';
 
 // Import Features
 import GuideFilterGroup from '../../features/guideTours/GuideFilterGroup';
@@ -119,11 +119,15 @@ const GuideAssignedToursPage = () => {
   // ==================== EFFECTS ====================
 
   // Load stats when component mounts
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchStats();
   }, []);
 
   // Load tours when filters or pagination changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchTours();
   }, [filters, pagination.page]);
@@ -191,75 +195,80 @@ const GuideAssignedToursPage = () => {
   // ==================== RENDER ====================
 
   return (
-    <main className="flex-grow px-margin-mobile md:px-margin-desktop py-xl max-w-[1440px] mx-auto w-full">
-      {/* Error Alert */}
-      {error && (
-        <div className="mb-lg p-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-md">
-          <span className="material-symbols-outlined text-error flex-shrink-0 mt-0.5">
-            error
-          </span>
-          <div>
-            <p className="font-label-md text-error font-semibold">{error}</p>
+    <div className="flex-1 flex flex-col bg-background">
+      {/* Main Content */}
+      <main className="flex-grow px-margin-mobile md:px-margin-desktop py-xl max-w-[1440px] mx-auto w-full">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-lg p-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-md">
+            <span className="material-symbols-outlined text-error flex-shrink-0 mt-0.5">
+              error
+            </span>
+            <div>
+              <p className="font-label-md text-error font-semibold">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-error hover:opacity-75"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
-          <button
-            onClick={() => setError(null)}
-            className="ml-auto text-error hover:opacity-75"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+        )}
+
+        {/* Page Title & Stats */}
+        <div className="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
+          <div>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
+              Tour đang được phân công
+            </h2>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              Chào mừng trở lại, hãy kiểm tra lịch trình vận hành của bạn.
+            </p>
+          </div>
+
+          {/* Stat Cards */}
+          <div className="flex gap-sm">
+            <GuideStatCard
+              icon="tour"
+              title="Tổng Tour"
+              value={isLoadingStats ? '...' : stats.totalTours}
+              bgColorClass="bg-primary/10"
+              iconColor="text-primary"
+            />
+            <GuideStatCard
+              icon="pending_actions"
+              title="Sắp diễn ra"
+              value={isLoadingStats ? '...' : stats.upcomingTours}
+              bgColorClass="bg-secondary-container/10"
+              iconColor="text-secondary"
+            />
+          </div>
         </div>
-      )}
 
-      {/* Page Title & Stats */}
-      <div className="mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
-        <div>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-xs">
-            Tour đang được phân công
-          </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            Chào mừng trở lại, hãy kiểm tra lịch trình vận hành của bạn.
-          </p>
-        </div>
+        {/* Filter Bar */}
+        <GuideFilterGroup
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onExportReport={handleExportReport}
+          isLoading={isExporting}
+        />
 
-        {/* Stat Cards */}
-        <div className="flex gap-sm">
-          <GuideStatCard
-            icon="tour"
-            title="Tổng Tour"
-            value={isLoadingStats ? '...' : stats.totalTours}
-            bgColorClass="bg-primary/10"
-            iconColor="text-primary"
-          />
-          <GuideStatCard
-            icon="pending_actions"
-            title="Sắp diễn ra"
-            value={isLoadingStats ? '...' : stats.upcomingTours}
-            bgColorClass="bg-secondary-container/10"
-            iconColor="text-secondary"
-          />
-        </div>
-      </div>
+        {/* Tour List Table */}
+        <GuideTourTable
+          tours={tours}
+          isLoading={isLoadingTours}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onRowClick={handleRowClick}
+          onDetailClick={handleDetailClick}
+        />
+      </main>
 
-      {/* Filter Bar */}
-      <GuideFilterGroup
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onExportReport={handleExportReport}
-        isLoading={isExporting}
-      />
-
-      {/* Tour List Table */}
-      <GuideTourTable
-        tours={tours}
-        isLoading={isLoadingTours}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        onRowClick={handleRowClick}
-        onDetailClick={handleDetailClick}
-      />
-    </main>
+      {/* Footer */}
+      <GuideFooter />
+    </div>
   );
 };
 
 export default GuideAssignedToursPage;
-

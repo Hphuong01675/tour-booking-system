@@ -1,4 +1,4 @@
-// Path: frontend/src/pages/Auth/OTPPage.jsx
+// Path: frontend/src/pages/auth/OTPPage.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import authApi from '../../api/authApi';
@@ -97,7 +97,7 @@ function OTPPage() {
       }, 1500);
 
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Xác thực OTP thất bại.';
+      const errMsg = err.response?.data?.error || err.message || 'Xác thực OTP thất bại.';
       setMessage({ type: 'error', text: errMsg });
     } finally {
       setIsLoading(false);
@@ -115,7 +115,7 @@ function OTPPage() {
       setMessage({ type: 'success', text: 'Mã OTP mới đã được gửi thành công.' });
       setTimeInSeconds(300); // Reset timer
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Không thể gửi lại mã OTP.';
+      const errMsg = err.response?.data?.error || err.message || 'Không thể gửi lại mã OTP.';
       setMessage({ type: 'error', text: errMsg });
     }
   };

@@ -47,7 +47,8 @@ const OTPInput = ({ value, onChange, onComplete }) => {
         <input
           key={index}
           ref={(el) => (inputRefs.current[index] = el)}
-          type="number"
+          type="text"
+          inputMode="numeric"
           value={value[index] || ''}
           onChange={(e) => handleInputChange(index, e)}
           onKeyDown={(e) => handleKeyDown(index, e)}

@@ -1,5 +1,6 @@
 // Path: backend/src/services/auth.service.js
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import authRepository from '../repositories/auth.repository';
 import mailService from './mail.service';
 import redisClient from '../config/redis';
@@ -175,6 +176,75 @@ class AuthService {
       console.error('Password verification error:', err.message);
       return false;
     }
+  }
+
+  // ================= Forgot Password Methods =================
+
+  async requestForgotPassword(email) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) throw new Error("EMAIL_NOT_FOUND");
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    await authRepository.upsertOTP(email, otp);
+    await authRepository.resetOtpAttempts(email);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[AUTH SERVICE] Forgot password OTP for ${email}: ${otp}`);
+    }
+
+    await mailService.sendForgotPasswordOTPEmail(email, otp);
+  }
+
+  async verifyOTPAndGenerateToken(email, otp) {
+    if (await authRepository.isOtpBlocked(email)) {
+      throw new Error("OTP_BLOCKED");
+    }
+
+    const savedOtp = await authRepository.getOTP(email);
+    if (!savedOtp) {
+      await authRepository.resetOtpAttempts(email);
+      throw new Error("OTP_EXPIRED");
+    }
+
+    if (savedOtp !== otp) {
+      const OTP_ATTEMPT_WINDOW = parseInt(process.env.OTP_ATTEMPT_WINDOW, 10) || 10 * 60;
+      const MAX_OTP_ATTEMPTS = parseInt(process.env.OTP_MAX_ATTEMPTS, 10) || 5;
+      const OTP_BLOCK_DURATION = parseInt(process.env.OTP_BLOCK_DURATION, 10) || 15 * 60;
+
+      const attempts = await authRepository.incrementOtpAttempt(email, OTP_ATTEMPT_WINDOW);
+
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await authRepository.lockOtpVerification(email, OTP_BLOCK_DURATION);
+        await authRepository.deleteOTP(email);
+        throw new Error("OTP_BLOCKED");
+      }
+
+      throw new Error("INVALID_OTP");
+    }
+
+    await authRepository.resetOtpAttempts(email);
+
+    const resetToken = jwt.sign(
+      { email, step: "verified" },
+      process.env.JWT_OTP_SECRET || "default_otp_secret",
+      { expiresIn: "5m" }
+    );
+
+    await authRepository.deleteOTP(email);
+    await authRepository.saveResetToken(resetToken, email);
+
+    return resetToken;
+  }
+
+  async updateNewPassword(email, newPassword, token) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    await authRepository.updatePassword(email, hashedPassword);
+    await authRepository.deleteResetToken(token);
+    
+    return true;
   }
 }
 

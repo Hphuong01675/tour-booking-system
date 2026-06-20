@@ -1,229 +1,220 @@
 // Path: backend/src/validations/auth.validation.js
 
 class AuthValidation {
-  /**
-   * Kiểm tra tên theo chuẩn Việt Nam
-   * - Chỉ chứa chữ cái (tiếng Anh + tiếng Việt), số, space, dấu gạch ngang, dấu phẩy
-   * - Không có ký tự đặc biệt (@, #, !, v.v.)
-   * - Min 3, Max 100 ký tự
-   */
   isValidVietnameseName(fullName) {
-    const vietnameseNameRegex = /^[a-zA-Z0-9\s\-.,ăâêôơƯưàáảãạằắẳẵặèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵđ]+$/;
+    const value = String(fullName || '').trim().replace(/\s+/g, ' ');
+    const vietnameseNameRegex = /^[\p{L}\s'.-]+$/u;
 
-    if (!fullName || fullName.trim().length < 3 || fullName.length > 100) {
-      return false;
-    }
-
-    return vietnameseNameRegex.test(fullName.trim());
+    return value.length >= 3 && value.length <= 100 && vietnameseNameRegex.test(value);
   }
 
-  /**
-   * Kiểm tra email hợp lệ
-   */
   isValidEmail(email) {
-    const emailRegex = /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email) && email.length <= 150;
+    const value = String(email || '').trim().toLowerCase();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    return value.length <= 150 && emailRegex.test(value);
   }
 
-  /**
-   * Kiểm tra số điện thoại theo chuẩn Việt Nam
-   * - Format: 0XXXXXXXXX, +84XXXXXXXXX, hoặc (XX) XXXX XXXX
-   * - Min 9 digits, Max 20 ký tự
-   */
+  normalizePhone(phone) {
+    return String(phone || '').trim().replace(/[\s\-()]/g, '');
+  }
+
   isValidVietnamesePhone(phone) {
-    // Remove spaces, dashes, parentheses for validation
-    const cleanPhone = phone.replace(/[\s\-()]/g, '');
+    const value = this.normalizePhone(phone);
 
-    // Check if it's a valid length (9-15 digits)
-    if (!/^\d{9,15}$/.test(cleanPhone)) {
-      return false;
-    }
-
-    // Vietnamese phone formats:
-    // - Starts with 0 (domestic): 0XXXXXXXXX (10-11 digits)
-    // - Starts with +84 (international): +84XXXXXXXXX (11-13 digits after +)
-    // - Format variations allowed: 0912 345 678, (091) 2345 678
-
-    return /^[\d+\s\-()]{9,20}$/.test(phone) && cleanPhone.length >= 9;
+    return /^0\d{9}$/.test(value) || /^\+84\d{9}$/.test(value) || /^84\d{9}$/.test(value);
   }
 
-  /**
-   * Kiểm tra mật khẩu mạnh
-   * - Ít nhất 8 ký tự
-   * - Có ít nhất 1 chữ in hoa (A-Z)
-   * - Có ít nhất 1 chữ thường (a-z)
-   * - Có ít nhất 1 chữ số (0-9)
-   * - Có ít nhất 1 ký tự đặc biệt (!@#$%^&*)
-   * - Max 128 ký tự
-   */
   isValidStrongPassword(password) {
-    const minLength = 8;
-    const maxLength = 128;
+    const value = String(password || '');
 
-    if (!password || password.length < minLength || password.length > maxLength) {
-      return false;
-    }
-
-    // Check for uppercase
-    if (!/[A-Z]/.test(password)) {
-      return false;
-    }
-
-    // Check for lowercase
-    if (!/[a-z]/.test(password)) {
-      return false;
-    }
-
-    // Check for digit
-    if (!/[0-9]/.test(password)) {
-      return false;
-    }
-
-    // Check for special character
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      return false;
-    }
-
-    return true;
+    return (
+      value.length >= 8 &&
+      value.length <= 128 &&
+      /[A-Z]/.test(value) &&
+      /[a-z]/.test(value) &&
+      /\d/.test(value) &&
+      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(value)
+    );
   }
 
-  /**
-   * Main validation for register endpoint
-   */
+  calculateAge(birthDate, today = new Date()) {
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age -= 1;
+    }
+
+    return age;
+  }
+
+  sendValidationErrors(res, errors) {
+    return res.status(400).json({
+      success: false,
+      error: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin đăng ký.',
+      code: 'VALIDATION_ERROR',
+      errors,
+    });
+  }
+
   validateRegister = (req, res, next) => {
-    const { fullName, email, password, confirmPassword, phone, dateOfBirth, address } = req.body;
+    const errors = {};
+    const fullName = String(req.body.fullName || '').trim().replace(/\s+/g, ' ');
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const phone = String(req.body.phone || '').trim();
+    const password = String(req.body.password || '');
+    const confirmPassword = String(req.body.confirmPassword || '');
+    const dateOfBirth = req.body.dateOfBirth || null;
+    const address = req.body.address === undefined || req.body.address === null
+      ? null
+      : String(req.body.address).trim();
 
-    // 1. Check required fields
-    if (!fullName || !email || !password || !confirmPassword || !phone) {
-      return res.status(400).json({
-        error: 'Vui lòng điền đầy đủ các thông tin bắt buộc (họ tên, email, mật khẩu, xác nhận mật khẩu, số điện thoại).',
-        code: 'MISSING_REQUIRED_FIELDS'
-      });
+    if (!fullName) {
+      errors.fullName = 'Họ và tên là bắt buộc.';
+    } else if (!this.isValidVietnameseName(fullName)) {
+      errors.fullName = 'Họ và tên phải từ 3 đến 100 ký tự và chỉ chứa chữ cái, khoảng trắng, dấu chấm, dấu nháy hoặc dấu gạch ngang.';
     }
-
-    // 2. Validate full name (Vietnamese standard)
-    if (!this.isValidVietnameseName(fullName)) {
-      return res.status(400).json({
-        error: 'Họ và tên phải từ 3 đến 100 ký tự, chỉ chứa chữ cái, số, dấu gạch ngang và dấu phẩy. Không được chứa ký tự đặc biệt.',
-        code: 'INVALID_FULLNAME'
-      });
-    }
-
-    // 3. Validate email
-    if (!this.isValidEmail(email)) {
-      return res.status(400).json({
-        error: 'Email không hợp lệ. Vui lòng nhập email đúng định dạng (ví dụ: user@example.com).',
-        code: 'INVALID_EMAIL'
-      });
-    }
-
-    // 4. Validate phone (Vietnamese format)
-    if (!this.isValidVietnamesePhone(phone)) {
-      return res.status(400).json({
-        error: 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại theo định dạng Việt Nam (0912345678 hoặc +84912345678).',
-        code: 'INVALID_PHONE'
-      });
-    }
-
-    // 5. Validate password strength
-    if (!this.isValidStrongPassword(password)) {
-      return res.status(400).json({
-        error: 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt (!@#$%^&*).',
-        code: 'WEAK_PASSWORD'
-      });
-    }
-
-    // 6. Validate password confirmation match
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        error: 'Xác nhận mật khẩu không khớp. Vui lòng kiểm tra lại.',
-        code: 'PASSWORD_MISMATCH'
-      });
-    }
-
-    // 7. Validate dateOfBirth (optional but if provided, validate)
-    if (dateOfBirth) {
-      const birthDate = new Date(dateOfBirth);
-      if (isNaN(birthDate.getTime())) {
-        return res.status(400).json({
-          error: 'Ngày tháng năm sinh không hợp lệ.',
-          code: 'INVALID_DATE'
-        });
-      }
-
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-
-      if (age < 10 || age > 120) {
-        return res.status(400).json({
-          error: 'Tuổi không hợp lệ. Vui lòng nhập ngày sinh từ 10 đến 120 tuổi.',
-          code: 'INVALID_AGE'
-        });
-      }
-    }
-
-    // 8. Validate address (optional but if provided, validate)
-    if (address && address.length > 500) {
-      return res.status(400).json({
-        error: 'Địa chỉ không được vượt quá 500 ký tự.',
-        code: 'ADDRESS_TOO_LONG'
-      });
-    }
-
-    next();
-  }
-
-  /**
-   * Validate OTP verification
-   */
-  validateVerifyOTP = (req, res, next) => {
-    const { email, otp } = req.body;
-
-    if (!email || !otp) {
-      return res.status(400).json({
-        error: 'Email và mã OTP là bắt buộc.',
-        code: 'MISSING_OTP_FIELDS'
-      });
-    }
-
-    if (!this.isValidEmail(email)) {
-      return res.status(400).json({
-        error: 'Email không hợp lệ.',
-        code: 'INVALID_EMAIL'
-      });
-    }
-
-    if (!/^\d{4}$/.test(otp)) {
-      return res.status(400).json({
-        error: 'Mã OTP phải có chính xác 4 chữ số.',
-        code: 'INVALID_OTP_FORMAT'
-      });
-    }
-
-    next();
-  }
-
-  /**
-   * Validate resend OTP
-   */
-  validateResendOTP = (req, res, next) => {
-    const { email } = req.body;
 
     if (!email) {
-      return res.status(400).json({
-        error: 'Email là bắt buộc.',
-        code: 'MISSING_EMAIL'
-      });
+      errors.email = 'Email là bắt buộc.';
+    } else if (!this.isValidEmail(email)) {
+      errors.email = 'Email không hợp lệ. Vui lòng nhập đúng định dạng, ví dụ: user@example.com.';
     }
 
-    if (!this.isValidEmail(email)) {
-      return res.status(400).json({
-        error: 'Email không hợp lệ.',
-        code: 'INVALID_EMAIL'
-      });
+    if (!phone) {
+      errors.phone = 'Số điện thoại là bắt buộc.';
+    } else if (!this.isValidVietnamesePhone(phone)) {
+      errors.phone = 'Số điện thoại không hợp lệ. Vui lòng nhập dạng 0912345678 hoặc +84912345678.';
     }
 
-    next();
+    if (!password) {
+      errors.password = 'Mật khẩu là bắt buộc.';
+    } else if (!this.isValidStrongPassword(password)) {
+      errors.password = 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.';
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = 'Xác nhận mật khẩu là bắt buộc.';
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'Xác nhận mật khẩu không khớp.';
+    }
+
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+
+      if (Number.isNaN(birthDate.getTime())) {
+        errors.dateOfBirth = 'Ngày sinh không hợp lệ.';
+      } else if (birthDate > today) {
+        errors.dateOfBirth = 'Ngày sinh không được lớn hơn ngày hiện tại.';
+      } else {
+        const age = this.calculateAge(birthDate, today);
+        if (age < 10 || age > 120 || birthDate.getFullYear() < 1900) {
+          errors.dateOfBirth = 'Tuổi không hợp lệ. Vui lòng nhập ngày sinh từ 10 đến 120 tuổi.';
+        }
+      }
+    }
+
+    if (address && address.length > 500) {
+      errors.address = 'Địa chỉ không được vượt quá 500 ký tự.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return this.sendValidationErrors(res, errors);
+    }
+
+    req.body = {
+      ...req.body,
+      fullName,
+      email,
+      phone,
+      dateOfBirth,
+      address,
+      password,
+      confirmPassword,
+    };
+
+    return next();
+  }
+
+  validateVerifyOTP = (req, res, next) => {
+    const errors = {};
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const otp = String(req.body.otp || '').trim();
+
+    if (!email) {
+      errors.email = 'Email là bắt buộc.';
+    } else if (!this.isValidEmail(email)) {
+      errors.email = 'Email không hợp lệ.';
+    }
+
+    if (!otp) {
+      errors.otp = 'Mã OTP là bắt buộc.';
+    } else if (!/^\d{4}$/.test(otp)) {
+      errors.otp = 'Mã OTP phải có chính xác 4 chữ số.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return this.sendValidationErrors(res, errors);
+    }
+
+    req.body.email = email;
+    req.body.otp = otp;
+    return next();
+  }
+
+  validateResendOTP = (req, res, next) => {
+    const errors = {};
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      errors.email = 'Email là bắt buộc.';
+    } else if (!this.isValidEmail(email)) {
+      errors.email = 'Email không hợp lệ.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return this.sendValidationErrors(res, errors);
+    }
+
+    req.body.email = email;
+    return next();
+  }
+
+  validateForgotPassword = (req, res, next) => {
+    const errors = {};
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      errors.email = 'Email là bắt buộc.';
+    } else if (!this.isValidEmail(email)) {
+      errors.email = 'Email không hợp lệ.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return this.sendValidationErrors(res, errors);
+    }
+
+    req.body.email = email;
+    return next();
+  }
+
+  validateResetPassword = (req, res, next) => {
+    const errors = {};
+    const newPassword = String(req.body.newPassword || '');
+
+    if (!newPassword) {
+      errors.newPassword = 'Mật khẩu mới là bắt buộc.';
+    } else if (!this.isValidStrongPassword(newPassword)) {
+      errors.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return this.sendValidationErrors(res, errors);
+    }
+
+    return next();
   }
 }
 

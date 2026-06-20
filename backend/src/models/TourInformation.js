@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         field: 'category_id',
       },
       content: {
-        type: DataTypes.LONGTEXT,
+        type: DataTypes.TEXT('long'),
       },
       sortOrder: {
         type: DataTypes.INTEGER,

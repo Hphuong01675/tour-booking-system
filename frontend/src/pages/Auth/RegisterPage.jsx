@@ -1,4 +1,4 @@
-// Path: frontend/src/pages/Auth/RegisterPage.jsx
+// Path: frontend/src/pages/auth/RegisterPage.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authApi from '../../api/authApi';
@@ -19,6 +19,7 @@ function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -27,13 +28,21 @@ function RegisterPage() {
       ...prev,
       [id]: value,
     }));
+    if (fieldErrors[id]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [id]: '',
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
+    setFieldErrors({});
 
     if (formData.password !== formData.confirmPassword) {
+      setFieldErrors({ confirmPassword: 'Mật khẩu xác nhận không trùng khớp.' });
       setMessage({ type: 'error', text: 'Mật khẩu xác nhận không trùng khớp.' });
       return;
     }
@@ -64,7 +73,10 @@ function RegisterPage() {
       }, 1000);
 
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Có lỗi xảy ra trong quá trình đăng ký.';
+      if (err.response?.data?.errors) {
+        setFieldErrors(err.response.data.errors);
+      }
+      const errMsg = err.response?.data?.error || err.message || 'Có lỗi xảy ra trong quá trình đăng ký.';
       setMessage({ type: 'error', text: errMsg });
     } finally {
       setIsLoading(false);
@@ -103,7 +115,7 @@ function RegisterPage() {
           {/* Right Side: Registration Form */}
           <div className="p-6 md:p-8 flex flex-col">
             <div className="mb-6">
-              <h1 class="text-2xl font-semibold text-[#191c1e] mb-1">Tạo tài khoản mới</h1>
+              <h1 className="text-2xl font-semibold text-[#191c1e] mb-1">Tạo tài khoản mới</h1>
               <p className="text-sm text-[#434654]">Vui lòng điền thông tin chi tiết của bạn bên dưới.</p>
             </div>
 
@@ -135,6 +147,7 @@ function RegisterPage() {
                     required
                   />
                 </div>
+                {fieldErrors.fullName && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.fullName}</p>}
               </div>
 
               {/* Ngày sinh & Số điện thoại */}
@@ -151,6 +164,7 @@ function RegisterPage() {
                       onChange={handleChange}
                     />
                   </div>
+                  {fieldErrors.dateOfBirth && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.dateOfBirth}</p>}
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-[#191c1e]" htmlFor="phone">Số điện thoại</label>
@@ -166,6 +180,7 @@ function RegisterPage() {
                       required
                     />
                   </div>
+                  {fieldErrors.phone && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.phone}</p>}
                 </div>
               </div>
 
@@ -184,13 +199,14 @@ function RegisterPage() {
                     required
                   />
                 </div>
+                {fieldErrors.email && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.email}</p>}
               </div>
 
               {/* Địa chỉ */}
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-[#191c1e]" htmlFor="address">Địa chỉ</label>
                 <div className="relative">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#434654] text-[20px]">location_on</span>
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#434654] text-[20px]">location_on</span>
                   <input 
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-[#c3c6d6] focus:border-[#003d9b] focus:ring-1 focus:ring-[#003d9b] outline-none transition-all bg-[#f8f9fb]" 
                     id="address" 
@@ -200,6 +216,7 @@ function RegisterPage() {
                     onChange={handleChange}
                   />
                 </div>
+                {fieldErrors.address && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.address}</p>}
               </div>
 
               {/* Mật khẩu & Xác nhận */}
@@ -227,6 +244,7 @@ function RegisterPage() {
                       </span>
                     </button>
                   </div>
+                  {fieldErrors.password && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.password}</p>}
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-[#191c1e]" htmlFor="confirmPassword">Xác nhận mật khẩu</label>
@@ -251,6 +269,7 @@ function RegisterPage() {
                       </span>
                     </button>
                   </div>
+                  {fieldErrors.confirmPassword && <p className="text-xs font-medium text-[#ba1a1a]">{fieldErrors.confirmPassword}</p>}
                 </div>
               </div>
 

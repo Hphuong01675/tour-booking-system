@@ -1,4 +1,4 @@
-// Đường dẫn: frontend/src/components/Guide/GuideStatusBadge.jsx
+// Đường dẫn: frontend/src/components/guide/GuideStatusBadge.jsx
 /**
  * GuideStatusBadge Component
  * Hiển thị trạng thái tour với màu sắc và biểu tượng nhấp nháy

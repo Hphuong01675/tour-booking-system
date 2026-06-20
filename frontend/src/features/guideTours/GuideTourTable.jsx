@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import GuideStatusBadge from '../../components/Guide/GuideStatusBadge';
+import GuideStatusBadge from '../../components/guide/GuideStatusBadge';
 import { formatDate, calculatePercentage, getCapacityColor } from '../../utils/guideFormatters';
 
 // Skeleton Loading Row
@@ -189,7 +189,7 @@ const GuideTourTable = ({
                       hour: '2-digit',
                       minute: '2-digit',
                     })
-                  : 'N/A';
+                  : 'Chưa có dữ liệu';
 
                 return (
                   <tr
@@ -200,15 +200,16 @@ const GuideTourTable = ({
                     {/* Tour Name & Destination */}
                     <td className="px-lg py-lg">
                       <div className="flex items-center gap-md">
-                        <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                          <img
-                            alt={tour.title}
-                            src={tour.thumbnailUrl || '/placeholder.jpg'}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.src = '/placeholder.jpg';
-                            }}
-                          />
+                        <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-high flex items-center justify-center">
+                          {tour.thumbnailUrl ? (
+                            <img
+                              alt={tour.title}
+                              src={tour.thumbnailUrl}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-outline">image_not_supported</span>
+                          )}
                         </div>
                         <div>
                           <p className="font-body-md font-semibold text-on-surface">

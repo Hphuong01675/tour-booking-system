@@ -1,4 +1,4 @@
-// Đường dẫn: frontend/src/components/Guide/GuideStatCard.jsx
+// Đường dẫn: frontend/src/components/guide/GuideStatCard.jsx
 /**
  * GuideStatCard Component
  * Card hiển thị thống kê nhỏ ở đầu trang (Tổng Tour, Sắp diễn ra)
