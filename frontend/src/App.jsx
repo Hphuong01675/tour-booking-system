@@ -3,24 +3,24 @@ import { useSelector } from "react-redux";
 import CustomerChatWidget from "./components/Customer/CustomerChatWidget";
 
 // Auth Pages - Login
-import LoginPage from "./pages/auth/LoginPage";
+import LoginPage from "./pages/Auth/LoginPage";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 // Auth Pages - Register
-import RegisterPage from "./pages/auth/RegisterPage";
-import OTPPage from "./pages/auth/OTPPage";
+import RegisterPage from "./pages/Auth/RegisterPage";
+import OTPPage from "./pages/Auth/OTPPage";
 
 // Auth Pages - Forgot Password
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
+import VerifyOTPPage from "./pages/Auth/VerifyOTPPage";
+import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
 
 // Guide Pages
-import GuideDashboardPage from "./pages/guide/GuideDashboardPage";
-import GuideAssignedToursPage from "./pages/guide/GuideAssignedToursPage";
-import GuideTourDetailPage from "./pages/guide/GuideTourDetailPage";
-import GuideChatPage from "./pages/guide/GuideChatPage";
-import GuideProfilePage from "./pages/guide/GuideProfilePage";
+import GuideDashboardPage from "./pages/Guide/GuideDashboardPage";
+import GuideAssignedToursPage from "./pages/Guide/GuideAssignedToursPage";
+import GuideTourDetailPage from "./pages/Guide/GuideTourDetailPage";
+import GuideChatPage from "./pages/Guide/GuideChatPage";
+import GuideProfilePage from "./pages/Guide/GuideProfilePage";
 
 // Operator Pages
 import OperatorToursPage from "./pages/operator/OperatorToursPage";
