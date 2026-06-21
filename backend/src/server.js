@@ -577,6 +577,8 @@ app.post("/mock-momo-pay/:bookingId/confirm", async (req, res) => {
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
+});
+
 // Global error handling middleware
 app.use((err, req, res, next) => {
     console.error("Unhandled error:", err);
