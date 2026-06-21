@@ -245,8 +245,7 @@ const CustomerToursPage = () => {
             if (intervalId) clearInterval(intervalId);
         };
     }, [simulatedPaymentBooking, paymentMethod]);
-
-    const fetchBookings = async () => {
+    async function fetchBookings() {
         try {
             setFetchingBookings(true);
             const response = await axiosInstance.get("/api/customer/bookings");
@@ -257,9 +256,9 @@ const CustomerToursPage = () => {
         } finally {
             setFetchingBookings(false);
         }
-    };
+    }
 
-    const fetchWishlist = async () => {
+    async function fetchWishlist() {
         try {
             setFetchingWishlist(true);
             const response = await axiosInstance.get("/api/customer/wishlist");
@@ -270,8 +269,7 @@ const CustomerToursPage = () => {
         } finally {
             setFetchingWishlist(false);
         }
-    };
-
+    }
     useEffect(() => {
         if (user) {
             fetchBookings();

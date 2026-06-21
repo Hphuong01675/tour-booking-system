@@ -18,10 +18,9 @@ const GuideProfilePage = () => {
         dateOfBirth: "",
         address: "",
     });
-
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
-
+    const [profileError, setProfileError] = useState("");
     // Fetch actual profile from backend
     useEffect(() => {
         const fetchProfile = async () => {
@@ -87,6 +86,7 @@ const GuideProfilePage = () => {
         e.preventDefault();
         setIsSaving(true);
         setSaveSuccess(false);
+        setProfileError("");
 
         try {
             const updatedUser = await updateGuideProfile({
@@ -445,8 +445,15 @@ const GuideProfilePage = () => {
                                                 <span className="material-symbols-outlined text-[20px]">
                                                     check_circle
                                                 </span>
-                                                Đã cập nhật thông tin thành
-                                                công!
+                                                Đã cập nhật thông tin thành công!
+                                            </span>
+                                        )}
+                                        {profileError && (
+                                            <span className="text-red-600 font-label-md flex items-center gap-s-xs">
+                                                <span className="material-symbols-outlined text-[20px]">
+                                                    error
+                                                </span>
+                                                {profileError}
                                             </span>
                                         )}
                                         <button

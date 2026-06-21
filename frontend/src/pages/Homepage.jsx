@@ -857,7 +857,7 @@ const Homepage = () => {
                                 </div>
                                 <div className="flex justify-between items-center pt-3 border-t border-dashed border-neutral-200">
                                     <span className="text-neutral-500 font-bold">Số tiền giao dịch:</span>
-                                    <span className="text-lg font-black text-blue-600">{formatPrice(tour.basePrice)}</span>
+                                    <span className="text-lg font-black text-blue-600">{formatPrice(bookingConfigTour?.basePrice)}</span>
                                 </div>
                             </div>
 
@@ -904,7 +904,7 @@ const Homepage = () => {
 
                             <div className="text-center w-full mb-6 bg-neutral-50 py-3 px-4 rounded-xl border border-neutral-200/50 text-neutral-800">
                                 <span className="text-xs text-neutral-400 font-bold block uppercase tracking-wider">Số tiền cần thanh toán</span>
-                                <span className="text-xl font-black text-pink-600">{formatPrice(tour.basePrice)}</span>
+                                <span className="text-xl font-black text-pink-600">{formatPrice(bookingConfigTour?.basePrice)}</span>
                             </div>
 
                             <button
