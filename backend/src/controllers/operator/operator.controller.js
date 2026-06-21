@@ -251,8 +251,46 @@ class OperatorController {
     async approveBooking(req, res) {
         try {
             const { bookingId } = req.params;
-            const booking = await operatorService.approveBooking(bookingId, req.user.id);
+            const { approvedParticipantIds = [] } = req.body;
+            const booking = await operatorService.approveBooking(bookingId, approvedParticipantIds, req.user.id);
             res.json({ success: true, message: "Duyệt hồ sơ thành công!", booking });
+        } catch (err) {
+            if (err.message === "BOOKING_NOT_FOUND") {
+                return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    async updateParticipantCCCD(req, res) {
+        try {
+            const { id } = req.params;
+            const files = req.files || {};
+            const frontImageFile = files['frontImage'] ? files['frontImage'][0] : null;
+            const backImageFile = files['backImage'] ? files['backImage'][0] : null;
+
+            const participant = await operatorService.updateParticipantCCCD(id, frontImageFile, backImageFile, req.user.id);
+            res.json({ success: true, message: "Cập nhật ảnh CCCD thành công!", participant });
+        } catch (err) {
+            if (err.message === "PARTICIPANT_NOT_FOUND") {
+                return res.status(404).json({ error: "Hành khách không tồn tại hoặc bạn không có quyền truy cập." });
+            }
+            console.error("Internal Server Error:", err);
+            res.status(500).json({ error: "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau." });
+        }
+    }
+
+    async addParticipantToBooking(req, res) {
+        try {
+            const { bookingId } = req.params;
+            const participantData = req.body;
+            const files = req.files || {};
+            const frontImageFile = files['frontImage'] ? files['frontImage'][0] : null;
+            const backImageFile = files['backImage'] ? files['backImage'][0] : null;
+
+            const participant = await operatorService.addParticipantToBooking(bookingId, participantData, frontImageFile, backImageFile, req.user.id);
+            res.json({ success: true, message: "Thêm hành khách thành công!", participant });
         } catch (err) {
             if (err.message === "BOOKING_NOT_FOUND") {
                 return res.status(404).json({ error: "Booking không tồn tại hoặc bạn không có quyền truy cập." });
@@ -324,7 +362,16 @@ class OperatorController {
     async getRefundEstimate(req, res) {
         try {
             const { bookingId } = req.params;
-            const result = await operatorService.getRefundEstimate(bookingId, req.user.id);
+            const { participantIds } = req.query;
+            let parsedParticipantIds = [];
+            if (participantIds) {
+                if (Array.isArray(participantIds)) {
+                    parsedParticipantIds = participantIds;
+                } else {
+                    parsedParticipantIds = participantIds.split(",").map(id => id.trim()).filter(Boolean);
+                }
+            }
+            const result = await operatorService.getRefundEstimate(bookingId, parsedParticipantIds, req.user.id);
             res.json(result);
         } catch (err) {
             if (err.message === "BOOKING_NOT_FOUND") {
@@ -342,8 +389,16 @@ class OperatorController {
     async cancelBooking(req, res) {
         try {
             const { bookingId } = req.params;
-            const { reason } = req.body;
-            const result = await operatorService.cancelBooking(bookingId, reason, req.user.id);
+            const { reason, participantIds } = req.body;
+            let parsedParticipantIds = [];
+            if (participantIds) {
+                if (Array.isArray(participantIds)) {
+                    parsedParticipantIds = participantIds;
+                } else {
+                    parsedParticipantIds = participantIds.split(",").map(id => id.trim()).filter(Boolean);
+                }
+            }
+            const result = await operatorService.cancelBooking(bookingId, reason, parsedParticipantIds, req.user.id);
             res.json({ success: true, message: "Hủy chuyến đi thành công!", refundAmount: result.refundAmount });
         } catch (err) {
             if (err.message === "BOOKING_NOT_FOUND") {

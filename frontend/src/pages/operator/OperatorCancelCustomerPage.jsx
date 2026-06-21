@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile, searchCustomer, getCustomerBookings, getRefundEstimate, cancelBooking } from "../../api/operatorApi";
+import { getOperatorProfile, searchCustomer, getCustomerBookings, getRefundEstimate, cancelBooking, getBookingVerification } from "../../api/operatorApi";
 
 const OperatorCancelCustomerPage = () => {
     const [user, setUser] = useState(null);
@@ -11,6 +11,11 @@ const OperatorCancelCustomerPage = () => {
     const [refundEstimate, setRefundEstimate] = useState(null);
     const [isSearching, setIsSearching] = useState(false);
     const [loadingEstimate, setLoadingEstimate] = useState(false);
+    
+    // Selected booking participants list
+    const [participants, setParticipants] = useState([]);
+    const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
+    const [loadingParticipants, setLoadingParticipants] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -29,6 +34,8 @@ const OperatorCancelCustomerPage = () => {
         setIsSearching(true);
         setSelectedBooking(null);
         setRefundEstimate(null);
+        setParticipants([]);
+        setSelectedParticipantIds([]);
         try {
             const customerData = await searchCustomer(searchQuery);
             const bookingsData = await getCustomerBookings(customerData.id);
@@ -48,19 +55,65 @@ const OperatorCancelCustomerPage = () => {
     const handleSelectBooking = async (booking) => {
         setSelectedBooking(booking);
         setLoadingEstimate(true);
+        setLoadingParticipants(true);
+        setParticipants([]);
+        setSelectedParticipantIds([]);
         try {
-            const estimate = await getRefundEstimate(booking.id);
+            const verifyData = await getBookingVerification(booking.id);
+            const bookingParticipants = verifyData.participants || [];
+            
+            const allIds = bookingParticipants.map(p => p.id);
+            setParticipants(bookingParticipants);
+            setSelectedParticipantIds(allIds);
+
+            const estimate = await getRefundEstimate(booking.id, allIds);
+            setRefundEstimate(estimate);
+        } catch (err) {
+            console.error("Failed to load booking details or estimate", err);
+            alert("Lỗi khi tải thông tin chi tiết hoặc ước tính hoàn tiền.");
+            setRefundEstimate(null);
+        } finally {
+            setLoadingEstimate(false);
+            setLoadingParticipants(false);
+        }
+    };
+
+    const handleToggleParticipant = async (participantId) => {
+        let newSelected;
+        if (selectedParticipantIds.includes(participantId)) {
+            newSelected = selectedParticipantIds.filter(id => id !== participantId);
+        } else {
+            newSelected = [...selectedParticipantIds, participantId];
+        }
+        setSelectedParticipantIds(newSelected);
+
+        if (newSelected.length === 0) {
+            setRefundEstimate({
+                originalAmount: 0,
+                cancelFee: 0,
+                refundAmount: 0,
+                refundPolicy: "Chưa chọn hành khách cần hủy."
+            });
+            return;
+        }
+
+        setLoadingEstimate(true);
+        try {
+            const estimate = await getRefundEstimate(selectedBooking.id, newSelected);
             setRefundEstimate(estimate);
         } catch (err) {
             console.error("Failed to get refund estimate", err);
-            alert("Lỗi khi tính toán hoàn tiền.");
-            setRefundEstimate(null);
         } finally {
             setLoadingEstimate(false);
         }
     };
 
     const handleCancel = async (booking) => {
+        if (selectedParticipantIds.length === 0) {
+            alert("Vui lòng chọn ít nhất một hành khách để hủy.");
+            return;
+        }
+
         const reason = window.prompt(`Nhập lý do hủy chuyến cho booking ${booking.code}:`);
         if (reason === null) return; // User clicked cancel
         if (!reason.trim()) {
@@ -69,10 +122,12 @@ const OperatorCancelCustomerPage = () => {
         }
 
         try {
-            const res = await cancelBooking(booking.id, reason);
+            const res = await cancelBooking(booking.id, reason, selectedParticipantIds);
             alert(`Đã hủy chuyến đi thành công! Số tiền hoàn trả khách hàng: ${res.refundAmount.toLocaleString("vi-VN")} đ`);
             setSelectedBooking(null);
             setRefundEstimate(null);
+            setParticipants([]);
+            setSelectedParticipantIds([]);
             // Reload bookings
             if (searchResult) {
                 const bookingsData = await getCustomerBookings(searchResult.id);
@@ -202,16 +257,72 @@ const OperatorCancelCustomerPage = () => {
                                                         {booking.totalPrice.toLocaleString("vi-VN")} VNĐ
                                                     </span>
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); handleCancel(booking); }}
+                                                        onClick={(e) => { e.stopPropagation(); handleSelectBooking(booking); }}
                                                         className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-600 text-xs font-semibold hover:bg-rose-200 transition w-fit"
                                                     >
-                                                        Hủy chuyến đi
+                                                        Chọn hủy
                                                     </button>
                                                 </div>
                                             ))
                                         )}
                                     </div>
                                 </div>
+
+                                {selectedBooking && (
+                                    <div className="bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-lg animate-fadeIn">
+                                        <div className="flex items-center justify-between border-b border-outline-variant/20 pb-3 mb-4">
+                                            <div>
+                                                <h3 className="font-semibold text-on-surface font-semibold text-lg">Danh sách hành khách hủy</h3>
+                                                <p className="text-xs text-on-surface-variant mt-0.5">Chọn hành khách muốn thực hiện hủy chuyến</p>
+                                            </div>
+                                            <span className="text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                                                Booking: {selectedBooking.code}
+                                            </span>
+                                        </div>
+
+                                        {loadingParticipants ? (
+                                            <p className="text-xs text-on-surface-variant py-4 text-center">Đang tải danh sách hành khách...</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {participants.map((p) => (
+                                                    <label
+                                                        key={p.id}
+                                                        className={`flex items-center justify-between p-3 rounded-lg border transition cursor-pointer ${
+                                                            selectedParticipantIds.includes(p.id)
+                                                                ? "border-primary/45 bg-primary/5"
+                                                                : "border-outline-variant/30 hover:bg-surface-container-low/30"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedParticipantIds.includes(p.id)}
+                                                                onChange={() => handleToggleParticipant(p.id)}
+                                                                className="rounded border-outline-variant text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                                                            />
+                                                            <div>
+                                                                <span className="text-sm font-semibold text-on-surface">{p.name}</span>
+                                                                {p.isLead && (
+                                                                    <span className="ml-2 px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
+                                                                        Trưởng đoàn
+                                                                    </span>
+                                                                )}
+                                                                <p className="text-xs text-on-surface-variant mt-0.5">Ngày sinh: {p.dateOfBirth}</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                                                            p.type === "Người lớn"
+                                                                ? "bg-blue-50 text-blue-700"
+                                                                : "bg-purple-50 text-purple-700"
+                                                        }`}>
+                                                            {p.type}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right: Refund Detail */}

@@ -107,8 +107,26 @@ export const getBookingVerification = async (bookingId) => {
   return response.data;
 };
 
-export const approveBooking = async (bookingId) => {
-  const response = await axiosInstance.put(`/api/operator/bookings/${bookingId}/approve`);
+export const approveBooking = async (bookingId, approvedParticipantIds) => {
+  const response = await axiosInstance.put(`/api/operator/bookings/${bookingId}/approve`, { approvedParticipantIds });
+  return response.data;
+};
+
+export const updateParticipantCCCD = async (participantId, formData) => {
+  const response = await axiosInstance.put(`/api/operator/participants/${participantId}/cccd`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const addParticipantToBooking = async (bookingId, formData) => {
+  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/participants`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -133,12 +151,14 @@ export const getCustomerBookings = async (customerId) => {
   return response.data;
 };
 
-export const getRefundEstimate = async (bookingId) => {
-  const response = await axiosInstance.get(`/api/operator/bookings/${bookingId}/refund-estimate`);
+export const getRefundEstimate = async (bookingId, participantIds = []) => {
+  const response = await axiosInstance.get(`/api/operator/bookings/${bookingId}/refund-estimate`, {
+    params: { participantIds: participantIds.join(",") }
+  });
   return response.data;
 };
 
-export const cancelBooking = async (bookingId, reason) => {
-  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/cancel`, { reason });
+export const cancelBooking = async (bookingId, reason, participantIds = []) => {
+  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/cancel`, { reason, participantIds });
   return response.data;
 };

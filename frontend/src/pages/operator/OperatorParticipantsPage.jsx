@@ -122,7 +122,6 @@ const OperatorParticipantsPage = () => {
                                 <option value="all">Tất cả loại</option>
                                 <option value="adult">Người lớn</option>
                                 <option value="child">Trẻ em</option>
-                                <option value="infant">Em bé</option>
                             </select>
                         </div>
 

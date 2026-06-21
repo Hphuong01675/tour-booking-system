@@ -41,6 +41,8 @@ router.get("/api/operator/bookings/:bookingId/verify", operatorController.getBoo
 router.put("/api/operator/bookings/:bookingId/approve", operatorController.approveBooking);
 router.put("/api/operator/bookings/:bookingId/reject", operatorController.rejectBooking);
 router.get("/api/operator/bookings/pending", operatorController.getPendingBookings);
+router.put("/api/operator/participants/:id/cccd", upload.fields([{ name: 'frontImage', maxCount: 1 }, { name: 'backImage', maxCount: 1 }]), operatorController.updateParticipantCCCD);
+router.post("/api/operator/bookings/:bookingId/participants", upload.fields([{ name: 'frontImage', maxCount: 1 }, { name: 'backImage', maxCount: 1 }]), operatorController.addParticipantToBooking);
 
 // Customer management & cancellation
 router.get("/api/operator/customers", operatorController.searchCustomer);

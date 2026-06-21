@@ -3,9 +3,44 @@
 
 import bcrypt from "bcryptjs";
 import db from "../models";
+import { Op } from "sequelize";
 import operatorRepository from "../repositories/operator.repository";
+import mailService from "./mail.service";
+import cloudinary from "../config/cloudinary";
 
 const { TourItineraryDay } = db;
+
+const uploadToCloudinaryHelper = (fileBuffer, folder, publicId) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                folder,
+                public_id: publicId,
+                resource_type: "image",
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url);
+            },
+        );
+        stream.end(fileBuffer);
+    });
+};
+
+const deleteFromCloudinaryHelper = async (url) => {
+    try {
+        if (!url) return;
+        const urlParts = url.split("/");
+        const folderIndex = urlParts.findIndex(p => p === "Home");
+        if (folderIndex !== -1) {
+            const publicIdWithExt = urlParts.slice(folderIndex).join("/");
+            const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf("."));
+            await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+        }
+    } catch (error) {
+        console.error("Warning: Failed to delete image from Cloudinary:", error?.message || error);
+    }
+};
 
 const VALID_TRANSITIONS = {
     draft: ["pending"],
@@ -167,31 +202,128 @@ class OperatorService {
             }
 
             // Cập nhật thông tin chính của Tour (trừ status và createdBy)
-            const { status, createdBy, itineraryDays, ...updatableData } =
+            const { status, createdBy, itineraryDays, schedules, information, ...updatableData } =
                 tourData;
             await tour.update(updatableData, { transaction });
 
-            // Cập nhật các ngày lịch trình nếu được gửi lên
+            // Cập nhật các ngày lịch trình nếu được gửi lên (bulk-replace với locations & items)
             if (itineraryDays) {
                 await TourItineraryDay.destroy({
                     where: { tourId: id },
                     transaction,
                 });
-                const itineraries = itineraryDays.map((day, idx) => ({
-                    tourId: id,
-                    dayNumber: idx + 1,
-                    title: day.title || `Ngày ${idx + 1}`,
-                    mainActivity: day.mainActivity || day.title || "",
-                    meals: day.meals
-                        ? typeof day.meals === "string"
-                            ? day.meals
-                            : Object.keys(day.meals)
-                                  .filter((k) => day.meals[k])
-                                  .join(", ")
-                        : "",
-                    description: day.description || "",
-                }));
-                await TourItineraryDay.bulkCreate(itineraries, { transaction });
+
+                for (let i = 0; i < itineraryDays.length; i++) {
+                    const dayData = itineraryDays[i];
+
+                    // Format meals
+                    let mealsStr = "";
+                    if (dayData.meals) {
+                        if (typeof dayData.meals === "object") {
+                            mealsStr = Object.keys(dayData.meals)
+                                .filter((k) => dayData.meals[k])
+                                .map((k) =>
+                                    k === "breakfast" ? "Sáng" : k === "lunch" ? "Trưa" : "Tối",
+                                )
+                                .join(", ");
+                        } else {
+                            mealsStr = dayData.meals;
+                        }
+                    }
+
+                    const day = await TourItineraryDay.create(
+                        {
+                            tourId: id,
+                            dayNumber: i + 1,
+                            title: dayData.title || `Ngày ${i + 1}`,
+                            mainActivity: dayData.mainActivity || dayData.title || "",
+                            meals: mealsStr,
+                            description: dayData.description || "",
+                            imageUrl: dayData.imageUrl || "",
+                        },
+                        { transaction },
+                    );
+
+                    // Create Locations under this day
+                    if (dayData.locations && dayData.locations.length > 0) {
+                        const locationsData = dayData.locations.map((loc, idx) => ({
+                            itineraryDayId: day.id,
+                            name: loc.name || "",
+                            description: loc.description || "",
+                            latitude: parseFloat(loc.latitude) || 0,
+                            longitude: parseFloat(loc.longitude) || 0,
+                            imageUrl: loc.imageUrl || "",
+                            visitOrder: parseInt(loc.visitOrder) || idx + 1,
+                        }));
+                        await db.TourItineraryLocation.bulkCreate(locationsData, { transaction });
+                    }
+
+                    // Create Items under this day
+                    if (dayData.items && dayData.items.length > 0) {
+                        const itemsData = dayData.items.map((item, idx) => ({
+                            itineraryDayId: day.id,
+                            title: item.title || "",
+                            description: item.description || "",
+                            activityTime: item.activityTime || null,
+                            sortOrder: parseInt(item.sortOrder) || idx,
+                        }));
+                        await db.TourItineraryItem.bulkCreate(itemsData, { transaction });
+                    }
+                }
+            }
+
+            // Cập nhật lịch khởi hành nếu được gửi lên (bulk-replace)
+            if (schedules !== undefined) {
+                await db.TourSchedule.destroy({
+                    where: { tourId: id },
+                    transaction,
+                });
+                if (schedules && schedules.length > 0) {
+                    const schedulesData = schedules
+                        .filter((sch) => sch.departureDate && sch.returnDate)
+                        .map((sch, i) => ({
+                            tourId: id,
+                            scheduleCode: `SCH-${id.substring(id.length - 6)}-${String(i + 1).padStart(3, "0")}`,
+                            departureDate: new Date(sch.departureDate),
+                            returnDate: new Date(sch.returnDate),
+                            price: parseFloat(sch.price) || 0,
+                            maxCapacity: parseInt(sch.maxCapacity) || 20,
+                            registered: parseInt(sch.registered) || 0,
+                            status: sch.status || "open",
+                        }));
+                    if (schedulesData.length > 0) {
+                        await db.TourSchedule.bulkCreate(schedulesData, { transaction });
+                    }
+                }
+            }
+
+            // Cập nhật thông tin bổ sung nếu được gửi lên (bulk-replace)
+            if (information !== undefined) {
+                await db.TourInformation.destroy({
+                    where: { tourId: id },
+                    transaction,
+                });
+                if (information && information.length > 0) {
+                    const categories = await db.TourInformationCategory.findAll({ transaction });
+                    const categoryMap = {};
+                    categories.forEach((cat) => { categoryMap[cat.code] = cat.id; });
+
+                    const infoData = [];
+                    information.forEach((info, idx) => {
+                        const categoryId = categoryMap[info.categoryCode];
+                        if (categoryId && info.content && info.content.trim().length > 0) {
+                            infoData.push({
+                                tourId: id,
+                                categoryId,
+                                content: info.content,
+                                sortOrder: idx + 1,
+                            });
+                        }
+                    });
+                    if (infoData.length > 0) {
+                        await db.TourInformation.bulkCreate(infoData, { transaction });
+                    }
+                }
             }
 
             await transaction.commit();
@@ -422,24 +554,22 @@ class OperatorService {
                         : ["pending_payment", "paid", "refunded"].includes(booking.status)
                           ? "approved"
                           : "rejected",
-                frontImage:
-                    leadParticipant?.cccdFrontUrl ||
-                    "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
-                backImage:
-                    leadParticipant?.cccdBackUrl ||
-                    "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
             },
-            companions: companions.map((c) => ({
-                name: c.fullName,
-                dateOfBirth: c.dateOfBirth
-                    ? new Date(c.dateOfBirth).toLocaleDateString("vi-VN")
+            participants: booking.participants.map((p) => ({
+                id: p.id,
+                name: p.fullName,
+                dateOfBirth: p.dateOfBirth
+                    ? new Date(p.dateOfBirth).toLocaleDateString("vi-VN")
                     : "N/A",
                 type:
-                    c.participantType === "adult"
+                    p.participantType === "adult"
                         ? "Người lớn"
-                        : c.participantType === "child"
+                        : p.participantType === "child"
                           ? "Trẻ em"
                           : "Em bé",
+                isLead: p.isLead,
+                cccdFrontUrl: p.cccdFrontUrl || "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
+                cccdBackUrl: p.cccdBackUrl || "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
             })),
             customerNote:
                 booking.cancellationReason ||
@@ -447,7 +577,7 @@ class OperatorService {
         };
     }
 
-    async approveBooking(bookingId, operatorId) {
+    async approveBooking(bookingId, approvedParticipantIds, operatorId) {
         const booking = await operatorRepository.findBookingByPkAndOperator(
             bookingId,
             operatorId,
@@ -456,9 +586,124 @@ class OperatorService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
+        // Delete unapproved participants
+        const unapprovedParticipants = booking.participants.filter(p => !approvedParticipantIds.includes(p.id));
+        if (unapprovedParticipants.length > 0) {
+            await db.Participant.destroy({
+                where: { id: { [Op.in]: unapprovedParticipants.map(p => p.id) } }
+            });
+            // Update schedule registered count
+            booking.schedule.registered = Math.max(0, booking.schedule.registered - unapprovedParticipants.length);
+            await booking.schedule.save();
+        }
+
+        // Reload participants to calculate final price
+        const finalParticipants = await db.Participant.findAll({ where: { bookingId: booking.id } });
+        const adultPrice = parseFloat(booking.schedule.price);
+        const childPrice = adultPrice * 0.7;
+
+        let finalPrice = 0;
+        for (const p of finalParticipants) {
+            if (p.participantType === "adult") {
+                finalPrice += adultPrice;
+            } else if (p.participantType === "child") {
+                finalPrice += childPrice;
+            }
+        }
+        
+        booking.finalPrice = finalPrice;
         booking.status = "pending_payment";
         await booking.save();
         return booking;
+    }
+
+    async updateParticipantCCCD(participantId, frontImageFile, backImageFile, operatorId) {
+        const participant = await db.Participant.findByPk(participantId, {
+            include: [{
+                model: db.Booking,
+                as: "booking",
+                include: [{
+                    model: db.TourSchedule,
+                    as: "schedule",
+                    include: [{
+                        model: db.Tour,
+                        as: "tour",
+                        where: { createdBy: operatorId }
+                    }]
+                }]
+            }]
+        });
+
+        if (!participant || !participant.booking || !participant.booking.schedule || !participant.booking.schedule.tour) {
+            throw new Error("PARTICIPANT_NOT_FOUND");
+        }
+
+        const folder = `Home/Images/participants/${participantId}`;
+        const timestamp = Date.now();
+
+        if (frontImageFile) {
+            if (participant.cccdFrontUrl) {
+                await deleteFromCloudinaryHelper(participant.cccdFrontUrl);
+            }
+            const publicId = `front_${timestamp}`;
+            participant.cccdFrontUrl = await uploadToCloudinaryHelper(frontImageFile.buffer, folder, publicId);
+        }
+
+        if (backImageFile) {
+            if (participant.cccdBackUrl) {
+                await deleteFromCloudinaryHelper(participant.cccdBackUrl);
+            }
+            const publicId = `back_${timestamp}`;
+            participant.cccdBackUrl = await uploadToCloudinaryHelper(backImageFile.buffer, folder, publicId);
+        }
+
+        await participant.save();
+        return participant;
+    }
+
+    async addParticipantToBooking(bookingId, participantData, frontImageFile, backImageFile, operatorId) {
+        const booking = await operatorRepository.findBookingByPkAndOperator(
+            bookingId,
+            operatorId,
+        );
+        if (!booking) {
+            throw new Error("BOOKING_NOT_FOUND");
+        }
+
+        const newParticipant = await db.Participant.create({
+            bookingId: booking.id,
+            fullName: participantData.fullName,
+            dateOfBirth: participantData.dateOfBirth,
+            participantType: participantData.participantType,
+            address: participantData.address || "",
+            phone: participantData.phone || null,
+            isLead: false,
+        });
+
+        const folder = `Home/Images/participants/${newParticipant.id}`;
+        const timestamp = Date.now();
+
+        let updated = false;
+        if (frontImageFile) {
+            const publicId = `front_${timestamp}`;
+            newParticipant.cccdFrontUrl = await uploadToCloudinaryHelper(frontImageFile.buffer, folder, publicId);
+            updated = true;
+        }
+
+        if (backImageFile) {
+            const publicId = `back_${timestamp}`;
+            newParticipant.cccdBackUrl = await uploadToCloudinaryHelper(backImageFile.buffer, folder, publicId);
+            updated = true;
+        }
+
+        if (updated) {
+            await newParticipant.save();
+        }
+
+        booking.schedule.registered += 1;
+        await booking.schedule.save();
+
+        return newParticipant;
     }
 
     async rejectBooking(bookingId, reason, operatorId) {
@@ -545,7 +790,7 @@ class OperatorService {
         }));
     }
 
-    async getRefundEstimate(bookingId, operatorId) {
+    async getRefundEstimate(bookingId, participantIds, operatorId) {
         const booking = await operatorRepository.findBookingByPkAndOperator(
             bookingId,
             operatorId,
@@ -559,7 +804,27 @@ class OperatorService {
         const timeDiff = depDate.getTime() - today.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-        let originalAmount = parseFloat(booking.finalPrice);
+        const participants = await db.Participant.findAll({
+            where: { bookingId: booking.id }
+        });
+
+        const selectedParticipants = participantIds && participantIds.length > 0
+            ? participants.filter(p => participantIds.includes(p.id))
+            : participants;
+
+        const adultPrice = parseFloat(booking.schedule.price);
+        const childPrice = adultPrice * 0.7;
+
+        let totalOriginalAmount = 0;
+        for (const p of selectedParticipants) {
+            if (p.participantType === "adult") {
+                totalOriginalAmount += adultPrice;
+            } else if (p.participantType === "child") {
+                totalOriginalAmount += childPrice;
+            }
+        }
+
+        let originalAmount = totalOriginalAmount;
         let refundAmount = 0;
         let cancelFee = 0;
         let calcDetails = "";
@@ -602,7 +867,7 @@ class OperatorService {
         };
     }
 
-    async cancelBooking(bookingId, reason, operatorId) {
+    async cancelBooking(bookingId, reason, participantIds, operatorId) {
         const booking = await operatorRepository.findBookingByPkAndOperator(
             bookingId,
             operatorId,
@@ -616,31 +881,101 @@ class OperatorService {
         const timeDiff = depDate.getTime() - today.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-        const originalAmount = parseFloat(booking.finalPrice);
-        let refundAmount = 0;
+        const participants = await db.Participant.findAll({
+            where: { bookingId: booking.id }
+        });
 
+        const selectedParticipants = participantIds && participantIds.length > 0
+            ? participants.filter(p => participantIds.includes(p.id))
+            : participants;
+
+        if (selectedParticipants.length === 0) {
+            throw new Error("NO_PARTICIPANTS_SELECTED");
+        }
+
+        const adultPrice = parseFloat(booking.schedule.price);
+        const childPrice = adultPrice * 0.7;
+
+        let totalOriginalAmount = 0;
+        for (const p of selectedParticipants) {
+            if (p.participantType === "adult") {
+                totalOriginalAmount += adultPrice;
+            } else if (p.participantType === "child") {
+                totalOriginalAmount += childPrice;
+            }
+        }
+
+        let refundAmount = 0;
         if (booking.status === "paid") {
             if (daysDiff > 15) {
-                refundAmount = originalAmount;
+                refundAmount = totalOriginalAmount;
             } else if (daysDiff >= 7 && daysDiff <= 15) {
-                refundAmount = originalAmount * 0.5;
+                refundAmount = totalOriginalAmount * 0.5;
             } else {
                 refundAmount = 0;
             }
         }
 
-        // Cập nhật trạng thái và thông tin hủy/hoàn tiền
-        booking.status = (booking.status === "paid" && refundAmount > 0) ? "refunded" : "cancelled";
-        booking.cancellationReason = reason || "Hủy bởi điều hành viên.";
-        booking.refundAmount = refundAmount;
-        await booking.save();
+        // Delete selected participants
+        const selectedIds = selectedParticipants.map(p => p.id);
+        await db.Participant.destroy({
+            where: { id: { [Op.in]: selectedIds } }
+        });
 
+        // Reduce registered count
         const schedule = await db.TourSchedule.findByPk(booking.scheduleId);
         if (schedule) {
-            const count =
-                await operatorRepository.countParticipantsByBooking(bookingId);
-            schedule.registered = Math.max(0, schedule.registered - count);
+            schedule.registered = Math.max(0, schedule.registered - selectedParticipants.length);
             await schedule.save();
+        }
+
+
+        // Fetch remaining participants to recalculate price
+        const remainingParticipants = await db.Participant.findAll({
+            where: { bookingId: booking.id }
+        });
+
+        booking.refundAmount = parseFloat(booking.refundAmount || 0) + refundAmount;
+
+        if (remainingParticipants.length === 0) {
+            booking.status = (booking.status === "paid" && booking.refundAmount > 0) ? "refunded" : "cancelled";
+            booking.finalPrice = 0;
+            booking.totalPrice = 0;
+        } else {
+            let newFinalPrice = 0;
+            for (const p of remainingParticipants) {
+                if (p.participantType === "adult") {
+                    newFinalPrice += adultPrice;
+                } else if (p.participantType === "child") {
+                    newFinalPrice += childPrice;
+                }
+            }
+            booking.finalPrice = newFinalPrice;
+            booking.totalPrice = newFinalPrice;
+        }
+
+        booking.cancellationReason = reason || "Hủy bởi điều hành viên.";
+        await booking.save();
+
+        // Send email
+        try {
+            const customer = await db.User.findByPk(booking.customerId);
+            if (customer && customer.email) {
+                const tourTitle = booking.schedule.tour.title;
+                const departureDate = new Date(booking.schedule.departureDate).toLocaleDateString("vi-VN");
+                const cancelledNames = selectedParticipants.map(p => p.fullName);
+                
+                await mailService.sendCancellationEmail(customer.email, {
+                    tourTitle,
+                    departureDate,
+                    bookingCode: booking.bookingCode,
+                    cancelledNames,
+                    refundAmount,
+                    reason: reason || "Hủy bởi điều hành viên"
+                });
+            }
+        } catch (mailErr) {
+            console.error("Failed to send cancellation email:", mailErr);
         }
 
         return {
@@ -1002,6 +1337,26 @@ class OperatorService {
         });
         if (!image) {
             throw new Error("IMAGE_NOT_FOUND");
+        }
+
+        // Delete from Cloudinary before removing the DB record
+        try {
+            const cloudinary = require("../config/cloudinary").default;
+            const imageUrl = image.imageUrl;
+            // Extract public_id from Cloudinary URL
+            // Format: https://res.cloudinary.com/<cloud>/image/upload/v<version>/<folder/public_id>.<ext>
+            const uploadIndex = imageUrl.indexOf("/upload/");
+            if (uploadIndex !== -1) {
+                let afterUpload = imageUrl.substring(uploadIndex + "/upload/".length);
+                // Remove version prefix (e.g., "v1234567890/")
+                afterUpload = afterUpload.replace(/^v\d+\//, "");
+                // Remove file extension
+                const publicId = afterUpload.replace(/\.[^/.]+$/, "");
+                await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+            }
+        } catch (cloudinaryErr) {
+            // Log but do not block DB deletion if Cloudinary fails
+            console.error("Warning: Failed to delete image from Cloudinary:", cloudinaryErr?.message || cloudinaryErr);
         }
 
         await image.destroy();

@@ -253,17 +253,20 @@ class OperatorRepository {
 
     async findBookingByPkAndOperator(bookingId, operatorId) {
         return await Booking.findByPk(bookingId, {
-            include: [{
-                model: TourSchedule,
-                as: "schedule",
-                required: true,
-                include: [{
-                    model: Tour,
-                    as: "tour",
-                    where: { createdBy: operatorId },
-                    required: true
-                }]
-            }]
+            include: [
+                {
+                    model: TourSchedule,
+                    as: "schedule",
+                    required: true,
+                    include: [{
+                        model: Tour,
+                        as: "tour",
+                        where: { createdBy: operatorId },
+                        required: true
+                    }]
+                },
+                { model: Participant, as: "participants" }
+            ]
         });
     }
 
