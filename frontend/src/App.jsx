@@ -1,122 +1,261 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import CustomerChatWidget from "./components/Customer/CustomerChatWidget";
+
+// Auth Pages - Login
+import LoginPage from "./pages/auth/LoginPage";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+
+// Auth Pages - Register
+import RegisterPage from "./pages/auth/RegisterPage";
+import OTPPage from "./pages/auth/OTPPage";
+
+// Auth Pages - Forgot Password
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+
+// Guide Pages
+import GuideDashboardPage from "./pages/guide/GuideDashboardPage";
+import GuideAssignedToursPage from "./pages/guide/GuideAssignedToursPage";
+import GuideTourDetailPage from "./pages/guide/GuideTourDetailPage";
+import GuideChatPage from "./pages/guide/GuideChatPage";
+import GuideProfilePage from "./pages/guide/GuideProfilePage";
+
+// Operator Pages
+import OperatorToursPage from "./pages/operator/OperatorToursPage";
+import OperatorApprovalsPage from "./pages/operator/OperatorApprovalsPage";
+import OperatorProfilePage from "./pages/operator/OperatorProfilePage";
+import OperatorNewTourPage from "./pages/operator/OperatorNewTourPage";
+import OperatorCancelCustomerPage from "./pages/operator/OperatorCancelCustomerPage";
+import OperatorGuideAssignPage from "./pages/operator/OperatorGuideAssignPage";
+import OperatorHardApprovalPage from "./pages/operator/OperatorHardApprovalPage";
+import OperatorCustomerVerifyPage from "./pages/operator/OperatorCustomerVerifyPage";
+import OperatorDashboardPage from "./pages/operator/OperatorDashboardPage";
+import OperatorTourDetailPage from "./pages/operator/OperatorTourDetailPage";
+import OperatorParticipantsPage from "./pages/operator/OperatorParticipantsPage";
+
+// Profile/Dashboard Pages for other roles
+import CustomerToursPage from "./pages/customer/CustomerToursPage";
+import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import CustomerTransactionsPage from "./pages/customer/CustomerTransactionsPage";
+import TourDetailPage from "./pages/customer/TourDetailPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
+import Homepage from "./pages/Homepage";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const showChatWidget = !isAuthenticated || (user && user.role === "customer");
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    return (
+        <>
+            <Routes>
+            {/* Redirect base URL to the Homepage */}
+            <Route path="/" element={<Homepage />} />
+            <Route path="/tours/:id" element={<TourDetailPage />} />
 
-      <div className="ticks"></div>
+            {/* Auth routes - Login */}
+            <Route path="/login" element={<LoginPage />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            {/* Auth routes - Register */}
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-otp" element={<OTPPage />} />
+            <Route
+                path="/login-success"
+                element={<Navigate to="/guides/tours" replace />}
+            />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            {/* Auth routes - Forgot Password */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route
+                path="/forgot-password-verify-otp"
+                element={<VerifyOTPPage />}
+            />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            {/* Role based home routes */}
+            <Route
+                path="/customer/tours"
+                element={
+                    <ProtectedRoute allowedRoles={["customer"]}>
+                        <CustomerToursPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <AdminDashboardPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorDashboardPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Role based profile routes */}
+            <Route
+                path="/customer/profile"
+                element={
+                    <ProtectedRoute allowedRoles={["customer"]}>
+                        <CustomerProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/customer/transactions"
+                element={
+                    <ProtectedRoute allowedRoles={["customer"]}>
+                        <CustomerTransactionsPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/admin/profile"
+                element={
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <AdminProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/profile"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/guide/dashboard"
+                element={
+                    <ProtectedRoute allowedRoles={["guide"]}>
+                        <GuideDashboardPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Guide routes */}
+            <Route
+                path="/guides/tours"
+                element={
+                    <ProtectedRoute allowedRoles={["guide"]}>
+                        <GuideAssignedToursPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/guides/tours/:id"
+                element={
+                    <ProtectedRoute allowedRoles={["guide"]}>
+                        <GuideTourDetailPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/guides/consultations"
+                element={
+                    <ProtectedRoute allowedRoles={["guide"]}>
+                        <GuideChatPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/guide/profile"
+                element={
+                    <ProtectedRoute allowedRoles={["guide"]}>
+                        <GuideProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Operator routes */}
+            <Route
+                path="/operator/tours"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorToursPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/:id"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorTourDetailPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/:id/participants"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorParticipantsPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/tours/new"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorNewTourPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/approvals"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorApprovalsPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/approvals/hard"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorHardApprovalPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/customers/cancel"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorCancelCustomerPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/customers/verify/:id"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorCustomerVerifyPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/operator/guides/assign"
+                element={
+                    <ProtectedRoute allowedRoles={["operator"]}>
+                        <OperatorGuideAssignPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/guides/tours" replace />} />
+        </Routes>
+        {showChatWidget && <CustomerChatWidget />}
+        </>
+    );
 }
 
-export default App
+export default App;
