@@ -276,7 +276,7 @@ const Homepage = () => {
                 </div>
                 <div className="relative h-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop flex flex-col justify-center items-center text-center pb-16 z-10">
                     <h1 className="text-white text-2xl md:text-4xl font-black tracking-tight leading-tight animate-fade-in-up">
-                        Khám Phá Thế Giới Cùng GlobalExplore
+                        Khám Phá Thế Giới Cùng Chip3Chip
                     </h1>
                     <p className="text-neutral-300 text-xs md:text-sm mt-2 max-w-xl animate-fade-in-up stagger-1">
                         Hành trình trải nghiệm đẳng cấp dành cho gia đình và chuyên gia du lịch.
@@ -534,9 +534,9 @@ const Homepage = () => {
                         <span className="text-primary font-bold text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
                             Về Chúng Tôi
                         </span>
-                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Về GlobalExplore</h2>
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Về Chip3Chip</h2>
                         <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-                            Với hơn 15 năm kinh nghiệm trong ngành du lịch, GlobalExplore tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
+                            Với hơn 15 năm kinh nghiệm trong ngành du lịch, Chip3Chip tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 max-w-xl mx-auto text-left">
                             <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
@@ -575,7 +575,7 @@ const Homepage = () => {
                         {/* Testimonial 1 */}
                         <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                             <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
-                                "Dịch vụ tuyệt vời! Tour Sapa của GlobalExplore tổ chức rất chu đáo, hướng dẫn viên nhiệt tình và khách sạn 5 sao cực kỳ đẳng cấp. Gia đình tôi rất hài lòng."
+                                "Dịch vụ tuyệt vời! Tour Sapa của Chip3Chip tổ chức rất chu đáo, hướng dẫn viên nhiệt tình và khách sạn 5 sao cực kỳ đẳng cấp. Gia đình tôi rất hài lòng."
                             </p>
                             <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Nguyễn Văn Nam avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyYDTaLlcjUSexakPA_46fM-8-WdqU_dtNwTlsfsT1iO7aFkPUpj_wsFjnQgBJPN8P74-7Ut_swk6zZ73sWAb-kToL8HPg3XRLzfbr5X-jd78naVcp8O6-fq5doWfJ854C-s4vlxxEfZY2IfH4pmVbdsyPtxjrv35xaA2CN9Yhjl6d_U-jNDPR3VyOeGEQ0ksQjr5OjYGcQlyw-ggX0QFoUwqKCfYGlje8fyylJoMH8zreDud10K5znyU_ZTF17UqQnwF0iPrQCnpK" />
@@ -605,7 +605,7 @@ const Homepage = () => {
                         {/* Testimonial 3 */}
                         <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                             <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
-                                "Sự an tâm là điều tôi tìm kiếm và GlobalExplore đã đáp ứng hoàn hảo. Lịch trình hợp lý cho người lớn tuổi, không quá dồn dập."
+                                "Sự an tâm là điều tôi tìm kiếm và Chip3Chip đã đáp ứng hoàn hảo. Lịch trình hợp lý cho người lớn tuổi, không quá dồn dập."
                             </p>
                             <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Phạm Minh Đức avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc1JW0LzjP55KRD_9x-zl9Qz8QvYS05IxZ_F-SCS6DwXKYXD0Dc_xVnvxKwPASEjONZSq7L_nGf-nJXO0424cS5MjruxwEbYa_G8vu0m4JVdAnU_n_wG9LH6BriFxBCBnEz7XVqIWTCSx-ba6g9nJJhM41yAc5cSaOkxQJoWsURtuctf8pkc13ZfuJe5pZqxmNTko_57oiH3r-5vfPSkY4i8EE_E3kkwCgIiNTEoyVxlSTBk0VpqZemKK8aUOytEK1vj500k7Hgax2" />
@@ -649,7 +649,7 @@ const Homepage = () => {
                                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                     <span className="material-symbols-outlined text-primary text-[20px]">mail</span>
                                 </div>
-                                <span className="font-bold text-xs md:text-sm text-slate-700">Email: contact@globalexplore.com</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Email: contact@chip3chip.com</span>
                             </div>
                         </div>
                     </div>
@@ -670,7 +670,7 @@ const Homepage = () => {
             {/* Footer - Clean light style */}
             <footer className="w-full py-16 px-6 bg-slate-50 grid grid-cols-1 md:grid-cols-4 gap-8 border-t border-slate-200">
                 <div className="flex flex-col gap-4">
-                    <div className="text-xl font-black text-primary tracking-tight">GlobalExplore</div>
+                    <div className="text-xl font-black text-primary tracking-tight">Chip3Chip</div>
                     <p className="text-slate-500 font-semibold text-xs leading-relaxed">
                         Đồng hành cùng bạn trên mọi nẻo đường thế giới. Chất lượng và uy tín là kim chỉ nam của chúng tôi.
                     </p>
@@ -694,7 +694,7 @@ const Homepage = () => {
                         <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:scale-105 transition cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">share</span></span>
                     </div>
                     <div className="mt-3 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                        © 2026 Hệ sinh thái du lịch GlobalExplore. Bảo lưu mọi quyền.
+                        © 2026 Hệ sinh thái du lịch Chip3Chip. Bảo lưu mọi quyền.
                     </div>
                 </div>
             </footer>
@@ -845,7 +845,7 @@ const Homepage = () => {
                             <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-3.5 text-sm">
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Đơn vị thụ hưởng:</span>
-                                    <span className="font-black text-neutral-800">GLOBALEXPLORE TRAVELS CO.</span>
+                                    <span className="font-black text-neutral-800">CHIP3CHIP TRAVELS CO.</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Khách hàng:</span>

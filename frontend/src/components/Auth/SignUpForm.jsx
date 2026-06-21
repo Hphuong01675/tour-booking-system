@@ -305,7 +305,7 @@ const SignUpForm = ({ onSignUpSuccess }) => {
         />
         <label className="text-label-sm font-label-sm text-on-surface-variant leading-tight" htmlFor="terms">
           Bằng cách đăng ký, tôi đồng ý với <a href="#" className="text-primary hover:underline">Điều khoản dịch vụ</a> và{' '}
-          <a href="#" className="text-primary hover:underline">Chính sách bảo mật</a> của GlobalExplore.
+          <a href="#" className="text-primary hover:underline">Chính sách bảo mật</a> của Chip3Chip.
         </label>
       </div>
       {errors.agreeToTerms && <p className="text-label-sm text-error">{errors.agreeToTerms}</p>}

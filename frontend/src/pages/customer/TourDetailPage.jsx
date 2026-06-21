@@ -50,7 +50,7 @@ const TourDetailPage = () => {
     // Chat Bubble States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([
-        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm GlobalExplore. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
+        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm Chip3Chip. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
     ]);
     const [currentChatMessage, setCurrentChatMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -480,7 +480,7 @@ const TourDetailPage = () => {
         setIsTyping(true);
 
         setTimeout(() => {
-            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên GlobalExplore sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6789 nhé!";
+            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên Chip3Chip sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6789 nhé!";
             const textLower = userText.toLowerCase();
             if (textLower.includes("tour") || textLower.includes("lộ trình") || textLower.includes("ngày")) {
                 replyText = `Bạn đang xem chi tiết tour: ${tour?.title || "Tour đặc sắc"}. Lịch trình diễn ra trong ${tour?.durationDays} ngày ${tour?.durationNights} đêm.`;
@@ -822,7 +822,7 @@ const TourDetailPage = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-rose-500 text-[18px]">mail</span>
-                                    <span className="font-bold">Email: support@globalexplore.com</span>
+                                    <span className="font-bold">Email: support@chip3chip.vn</span>
                                 </div>
                             </div>
                         </div>
@@ -836,7 +836,7 @@ const TourDetailPage = () => {
                     <div>
                         <div className="flex items-center gap-2 mb-4">
                             <span className="material-symbols-outlined text-rose-500 text-2xl font-black">explore</span>
-                            <span className="text-xl font-black text-white tracking-tight">GlobalExplore</span>
+                            <span className="text-xl font-black text-white tracking-tight">Chip3Chip</span>
                         </div>
                         <p className="text-xs leading-relaxed text-neutral-400">
                             Đồng hành cùng bạn trên mọi nẻo đường thế giới. Chất lượng và uy tín là kim chỉ nam hàng đầu của chúng tôi.
@@ -871,7 +871,7 @@ const TourDetailPage = () => {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto border-t border-neutral-800 pt-6 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
-                    © 2026 GlobalExplore Travel Ecosystem. All rights reserved.
+                    © 2026 Chip3Chip Travel Ecosystem. All rights reserved.
                 </div>
             </footer>
 
@@ -1237,7 +1237,7 @@ const TourDetailPage = () => {
                             <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-2 text-xs">
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Đơn vị thụ hưởng:</span>
-                                    <span className="font-black text-neutral-850">GLOBALEXPLORE CO.</span>
+                                    <span className="font-black text-neutral-850">CHIP3CHIP CO.</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-bold">Số tiền thanh toán:</span>

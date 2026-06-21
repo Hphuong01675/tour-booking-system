@@ -37,7 +37,7 @@ const TopNavBar = () => {
                 {/* Logo */}
                 <div className="flex items-center">
                     <Link className="text-headline-md font-headline-md font-bold text-primary tracking-tight" to="/">
-                        GlobalExplore
+                        Chip3Chip
                     </Link>
                 </div>
 

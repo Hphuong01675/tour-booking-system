@@ -140,7 +140,7 @@ const CustomerChatWidget = () => {
                 <span className="material-symbols-outlined text-4xl text-outline-variant">forum</span>
                 <h5 className="font-semibold text-on-surface mt-2 text-sm">Xin chào quý khách!</h5>
                 <p className="text-xs text-on-surface-variant/80 mt-1">
-                  Cảm ơn bạn đã quan tâm đến GlobalExplore. Vui lòng gửi tin nhắn, tư vấn viên sẽ phản hồi bạn ngay lập tức!
+                  Cảm ơn bạn đã quan tâm đến Chip3Chip. Vui lòng gửi tin nhắn, tư vấn viên sẽ phản hồi bạn ngay lập tức!
                 </p>
               </div>
             ) : (

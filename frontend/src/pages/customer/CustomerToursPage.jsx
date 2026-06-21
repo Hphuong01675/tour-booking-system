@@ -930,7 +930,7 @@ const CustomerToursPage = () => {
                         <div className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white p-6 text-center relative">
                             <span className="material-symbols-outlined text-4xl animate-float">confirmation_number</span>
                             <h3 className="text-lg font-black mt-2 tracking-tight">VÉ TOUR DU LỊCH</h3>
-                            <p className="text-white/80 text-xs font-bold uppercase tracking-wider">GlobalExplore Boarding Pass</p>
+                            <p className="text-white/80 text-xs font-bold uppercase tracking-wider">Chip3Chip Boarding Pass</p>
 
                             <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-neutral-900 rounded-full" />
                             <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-neutral-900 rounded-full" />
@@ -1044,7 +1044,7 @@ const CustomerToursPage = () => {
                         
                         <div className="text-center mb-6">
                             <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest block mb-1">E-Receipt / Hóa Đơn Điện Tử</span>
-                            <h3 className="text-md font-black text-neutral-900">GLOBALEXPLORE TRAVEL SYSTEM</h3>
+                            <h3 className="text-md font-black text-neutral-900">CHIP3CHIP TRAVEL SYSTEM</h3>
                         </div>
 
                         <div className="space-y-4 border-t border-b border-dashed border-neutral-200 py-6 text-xs text-neutral-700 font-medium">

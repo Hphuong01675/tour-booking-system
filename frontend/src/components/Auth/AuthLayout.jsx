@@ -18,7 +18,7 @@ const AuthLayout = ({ children, showTrustBadge = false }) => {
                     className="text-xl font-bold tracking-tight"
                     style={{ color: "#003d9b" }}
                 >
-                    GlobalExplore
+                    Chip3Chip
                 </div>
                 <div className="flex items-center gap-2">
                     <span
@@ -83,10 +83,10 @@ const AuthLayout = ({ children, showTrustBadge = false }) => {
                         className="text-sm font-bold"
                         style={{ color: "#191c1e" }}
                     >
-                        GlobalExplore
+                        Chip3Chip
                     </span>
                     <p className="text-sm" style={{ color: "#434654" }}>
-                        © 2024 GlobalExplore. Tất cả quyền được bảo lưu.
+                        © 2024 Chip3Chip. Tất cả quyền được bảo lưu.
                     </p>
                 </div>
                 <div className="flex items-center gap-6">
