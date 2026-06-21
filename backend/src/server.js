@@ -13,7 +13,11 @@ import tourRoutes from "./routes/tour.routes";
 import pendingBookingRoutes from "./routes/pendingBooking.routes";
 import customerRoutes from "./routes/customer.routes";
 import uploadRoutes from "./routes/upload.routes";
+import chatRoutes from "./routes/chat.routes";
 import { seedDatabase } from "./seed/seed";
+import http from "http";
+import { Server } from "socket.io";
+import socketManager from "./sockets/socketManager";
 
 dotenv.config();
 
@@ -32,6 +36,7 @@ app.use("/", tourRoutes);
 app.use("/", pendingBookingRoutes);
 app.use("/", customerRoutes);
 app.use("/", uploadRoutes);
+app.use("/", chatRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ==================== API ROUTING ====================
@@ -586,7 +591,16 @@ db.sequelize
         // Seed default records if empty
         await seedDatabase();
 
-        app.listen(PORT, () => {
+        const server = http.createServer(app);
+        const io = new Server(server, {
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST", "PATCH"]
+            }
+        });
+        socketManager.initSocket(io);
+
+        server.listen(PORT, () => {
             console.log(`Backend Server running on port ${PORT}`);
         });
     })

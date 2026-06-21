@@ -13,11 +13,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Import API
-import { getAssignedTours, getGuideStats, exportToursReport } from '../../api/guideApi';
+import { getAssignedTours, getGuideStats, exportToursReport, getGuideProfile } from '../../api/guideApi';
 
 // Import Components
 import GuideStatCard from '../../components/Guide/GuideStatCard';
 import GuideStatusBadge from '../../components/Guide/GuideStatusBadge';
+import GuideHeader from '../../components/Guide/GuideHeader';
+import GuideFooter from '../../components/Guide/GuideFooter';
 
 // Import Features
 import GuideFilterGroup from '../../features/guideTours/GuideFilterGroup';
@@ -57,6 +59,9 @@ const GuideAssignedToursPage = () => {
 
   // Error handling
   const [error, setError] = useState(null);
+
+  // Guide profile
+  const [currentUser, setCurrentUser] = useState(null);
 
   // ==================== FETCH DATA ====================
 
@@ -118,9 +123,19 @@ const GuideAssignedToursPage = () => {
 
   // ==================== EFFECTS ====================
 
-  // Load stats when component mounts
+  // Load stats and profile when component mounts
   useEffect(() => {
     fetchStats();
+    
+    const loadProfile = async () => {
+      try {
+        const profile = await getGuideProfile();
+        setCurrentUser(profile);
+      } catch (err) {
+        console.error('Failed to load guide profile:', err);
+      }
+    };
+    loadProfile();
   }, []);
 
   // Load tours when filters or pagination changes
@@ -191,73 +206,77 @@ const GuideAssignedToursPage = () => {
   // ==================== RENDER ====================
 
   return (
-    <main className="flex-grow px-s-margin-mobile md:px-s-margin-desktop py-s-xl max-w-[1440px] mx-auto w-full">
-      {/* Error Alert */}
-      {error && (
-        <div className="mb-s-lg p-s-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-s-md">
-          <span className="material-symbols-outlined text-error flex-shrink-0 mt-0.5">
-            error
-          </span>
-          <div>
-            <p className="font-label-md text-error font-semibold">{error}</p>
+    <div className="bg-background text-on-background min-h-screen flex flex-col font-sans">
+      <GuideHeader currentUser={currentUser} />
+      <main className="flex-grow pt-24 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full">
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-s-lg p-s-md rounded-lg bg-error-container/20 border border-error/30 flex items-start gap-s-md">
+            <span className="material-symbols-outlined text-error flex-shrink-0 mt-0.5">
+              error
+            </span>
+            <div>
+              <p className="font-label-md text-error font-semibold">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-error hover:opacity-75"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
           </div>
-          <button
-            onClick={() => setError(null)}
-            className="ml-auto text-error hover:opacity-75"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
+        )}
+
+        {/* Page Title & Stats */}
+        <div className="mb-s-xl flex flex-col md:flex-row md:items-end justify-between gap-s-md">
+          <div>
+            <h2 className="font-headline-lg text-headline-lg text-on-surface mb-s-xs">
+              Tour đang được phân công
+            </h2>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              Chào mừng trở lại, hãy kiểm tra lịch trình vận hành của bạn.
+            </p>
+          </div>
+
+          {/* Stat Cards */}
+          <div className="flex gap-s-sm">
+            <GuideStatCard
+              icon="tour"
+              title="Tổng Tour"
+              value={isLoadingStats ? '...' : stats.totalTours}
+              bgColorClass="bg-primary/10"
+              iconColor="text-primary"
+            />
+            <GuideStatCard
+              icon="pending_actions"
+              title="Sắp diễn ra"
+              value={isLoadingStats ? '...' : stats.upcomingTours}
+              bgColorClass="bg-secondary-container/10"
+              iconColor="text-secondary"
+            />
+          </div>
         </div>
-      )}
 
-      {/* Page Title & Stats */}
-      <div className="mb-s-xl flex flex-col md:flex-row md:items-end justify-between gap-s-md">
-        <div>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-s-xs">
-            Tour đang được phân công
-          </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            Chào mừng trở lại, hãy kiểm tra lịch trình vận hành của bạn.
-          </p>
-        </div>
+        {/* Filter Bar */}
+        <GuideFilterGroup
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onExportReport={handleExportReport}
+          isLoading={isExporting}
+        />
 
-        {/* Stat Cards */}
-        <div className="flex gap-s-sm">
-          <GuideStatCard
-            icon="tour"
-            title="Tổng Tour"
-            value={isLoadingStats ? '...' : stats.totalTours}
-            bgColorClass="bg-primary/10"
-            iconColor="text-primary"
-          />
-          <GuideStatCard
-            icon="pending_actions"
-            title="Sắp diễn ra"
-            value={isLoadingStats ? '...' : stats.upcomingTours}
-            bgColorClass="bg-secondary-container/10"
-            iconColor="text-secondary"
-          />
-        </div>
-      </div>
-
-      {/* Filter Bar */}
-      <GuideFilterGroup
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onExportReport={handleExportReport}
-        isLoading={isExporting}
-      />
-
-      {/* Tour List Table */}
-      <GuideTourTable
-        tours={tours}
-        isLoading={isLoadingTours}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        onRowClick={handleRowClick}
-        onDetailClick={handleDetailClick}
-      />
-    </main>
+        {/* Tour List Table */}
+        <GuideTourTable
+          tours={tours}
+          isLoading={isLoadingTours}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onRowClick={handleRowClick}
+          onDetailClick={handleDetailClick}
+        />
+      </main>
+      <GuideFooter />
+    </div>
   );
 };
 

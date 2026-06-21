@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import CustomerChatWidget from "./components/Customer/CustomerChatWidget";
 
 // Auth Pages - Login
 import LoginPage from "./pages/auth/LoginPage";
@@ -43,8 +45,12 @@ import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import Homepage from "./pages/Homepage";
 
 function App() {
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const showChatWidget = !isAuthenticated || (user && user.role === "customer");
+
     return (
-        <Routes>
+        <>
+            <Routes>
             {/* Redirect base URL to the Homepage */}
             <Route path="/" element={<Homepage />} />
             <Route path="/tours/:id" element={<TourDetailPage />} />
@@ -247,6 +253,8 @@ function App() {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/guides/tours" replace />} />
         </Routes>
+        {showChatWidget && <CustomerChatWidget />}
+        </>
     );
 }
 

@@ -39,13 +39,7 @@ const Homepage = () => {
         setCurrentPage(1);
     }, [searchTerm, searchDate, priceRange]);
 
-    // Chatbot states
-    const [isChatOpen, setIsChatOpen] = useState(false);
-    const [chatMessages, setChatMessages] = useState([
-        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm GlobalExplore. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
-    ]);
-    const [currentChatMessage, setCurrentChatMessage] = useState("");
-    const [isTyping, setIsTyping] = useState(false);
+
 
     // Scroll state for header opacity
     const [scrolled, setScrolled] = useState(false);
@@ -206,40 +200,7 @@ const Homepage = () => {
         }
     };
 
-    const handleSendChatMessage = (e) => {
-        if (e) e.preventDefault();
-        if (!currentChatMessage.trim()) return;
 
-        const userMsg = {
-            id: Date.now(),
-            sender: "user",
-            text: currentChatMessage,
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
-        };
-
-        setChatMessages(prev => [...prev, userMsg]);
-        const userText = currentChatMessage;
-        setCurrentChatMessage("");
-        setIsTyping(true);
-
-        setTimeout(() => {
-            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên GlobalExplore sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6789 nhé!";
-            const textLower = userText.toLowerCase();
-            if (textLower.includes("tour") || textLower.includes("lộ trình") || textLower.includes("ngày")) {
-                replyText = "Hiện tại GlobalExplore đang mở bán nhiều tour hấp dẫn. Bạn có thể kéo xuống phần 'Tour Đặc Sắc' để xem chi tiết nhé!";
-            } else if (textLower.includes("giá") || textLower.includes("tiền") || textLower.includes("thanh toán")) {
-                replyText = "Hệ thống hỗ trợ thanh toán tự động qua cổng mô phỏng VNPay & MoMo tiện lợi. Vé QR sẽ được xuất ngay sau khi thanh toán thành công!";
-            }
-
-            setChatMessages(prev => [...prev, {
-                id: Date.now() + 1,
-                sender: "bot",
-                text: replyText,
-                time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
-            }]);
-            setIsTyping(false);
-        }, 1200);
-    };
 
     const handleSearchClick = () => {
         const toursSection = document.getElementById("featured-tours-section");
@@ -1004,89 +965,7 @@ const Homepage = () => {
                 </div>
             )}
 
-            {/* Persistent Chat Widget */}
-            <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
-                {isChatOpen && (
-                    <div className="w-80 md:w-96 h-[480px] bg-white/95 backdrop-blur-md rounded-[28px] border border-neutral-200/80 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300 text-neutral-850">
-                        {/* Header */}
-                        <div className="bg-gradient-to-r from-orange-500 to-rose-500 text-white p-4 flex items-center justify-between shadow-md">
-                            <div className="flex items-center gap-2.5">
-                                <div className="relative">
-                                    <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">
-                                        🎧
-                                    </div>
-                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-                                </div>
-                                <div>
-                                    <h4 className="text-xs font-black tracking-wide uppercase">Hỗ Trợ Trực Tuyến</h4>
-                                    <p className="text-[10px] text-orange-100 font-medium">Sẵn sàng phản hồi 24/7</p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={() => setIsChatOpen(false)}
-                                className="text-white hover:text-orange-200 transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-lg">close</span>
-                            </button>
-                        </div>
 
-                        {/* Messages */}
-                        <div className="flex-grow p-4 overflow-y-auto space-y-3 bg-neutral-50/50">
-                            {chatMessages.map((msg) => (
-                                <div 
-                                    key={msg.id} 
-                                    className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'ml-auto items-end' : 'items-start'}`}
-                                >
-                                    <div className={`px-4 py-2.5 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${
-                                        msg.sender === 'user' 
-                                            ? 'bg-rose-500 text-white rounded-tr-none' 
-                                            : 'bg-white border border-neutral-200 text-neutral-800 rounded-tl-none'
-                                    }`}>
-                                        {msg.text}
-                                    </div>
-                                    <span className="text-[9px] text-neutral-400 font-bold mt-1 px-1">
-                                        {msg.time}
-                                    </span>
-                                </div>
-                            ))}
-                            {isTyping && (
-                                <div className="flex flex-col items-start max-w-[80%]">
-                                    <div className="bg-white border border-neutral-200 px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce"></span>
-                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                                        <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Input form */}
-                        <form onSubmit={handleSendChatMessage} className="p-3 border-t border-neutral-200 bg-white flex gap-2">
-                            <input 
-                                type="text"
-                                placeholder="Nhập tin nhắn hỗ trợ..."
-                                className="flex-grow bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-neutral-800 outline-none focus:border-rose-500 focus:bg-white transition-all"
-                                value={currentChatMessage}
-                                onChange={(e) => setCurrentChatMessage(e.target.value)}
-                            />
-                            <button 
-                                type="submit"
-                                className="w-9 h-9 bg-rose-500 hover:bg-rose-600 text-white rounded-xl flex items-center justify-center transition-all shadow-md active:scale-95 cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-sm">send</span>
-                            </button>
-                        </form>
-                    </div>
-                )}
-
-                {/* Floating button */}
-                <button 
-                    onClick={() => setIsChatOpen(!isChatOpen)}
-                    className="w-20 h-20 bg-primary hover:bg-primary-container text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer relative"
-                >
-                    <span className="material-symbols-outlined text-[40px]">support_agent</span>
-                </button>
-            </div>
         </div>
     );
 };
