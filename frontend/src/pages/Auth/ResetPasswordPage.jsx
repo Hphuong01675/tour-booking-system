@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -21,9 +21,15 @@ const ResetPasswordPage = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error, resetToken } = useSelector(
+    const { loading, error, resetToken, email } = useSelector(
         (state) => state.forgotPassword
     );
+
+    useEffect(() => {
+        if (!resetToken || !email) {
+            navigate("/forgot-password");
+        }
+    }, [resetToken, email, navigate]);
 
     // Validate password strength
     const getStrength = (pwd) => {

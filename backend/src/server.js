@@ -577,6 +577,13 @@ app.post("/mock-momo-pay/:bookingId/confirm", async (req, res) => {
     } catch (err) {
         return res.status(500).json({ success: false, error: err.message });
     }
+// Global error handling middleware
+app.use((err, req, res, next) => {
+    console.error("Unhandled error:", err);
+    res.status(err.status || 500).json({
+        error: err.message || "Đã xảy ra lỗi hệ thống nghiêm trọng.",
+        code: err.code || "INTERNAL_SERVER_ERROR",
+    });
 });
 
 // ==================== START SERVER & DATABASE CONNECTION ====================

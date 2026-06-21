@@ -11,12 +11,10 @@ export const verifyResetToken = async (req, res, next) => {
     const token = authHeader?.split(" ")[1]; // Format: "Bearer <token>"
 
     if (!token) {
-        return res
-            .status(403)
-            .json({
-                success: false,
-                message: "Không có quyền truy cập. Token bị thiếu.",
-            });
+        return res.status(403).json({
+            success: false,
+            message: "Không có quyền truy cập. Token bị thiếu.",
+        });
     }
 
     try {
@@ -51,11 +49,9 @@ export const verifyResetToken = async (req, res, next) => {
             },
         );
     } catch (error) {
-        return res
-            .status(500)
-            .json({
-                success: false,
-                message: "Lỗi hệ thống khi xác thực token.",
-            });
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi hệ thống khi xác thực token.",
+        });
     }
 };

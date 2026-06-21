@@ -15,10 +15,27 @@ export const seedDatabase = async () => {
             Conversation,
             Message,
             Voucher,
-            VoucherTarget
+            VoucherTarget,
+            TourInformationCategory
         } = db;
 
         const defaultHash = bcrypt.hashSync("123456", 10);
+
+        // Seed Tour Information Categories if empty
+        const categoryCount = await TourInformationCategory.count();
+        if (categoryCount === 0) {
+            console.log("Seeding Tour Information Categories...");
+            await TourInformationCategory.bulkCreate([
+                { id: "cat-1", code: "included", title: "Bao gồm", icon: "check_circle", sortOrder: 1, isActive: true },
+                { id: "cat-2", code: "not_included", title: "Không bao gồm", icon: "cancel", sortOrder: 2, isActive: true },
+                { id: "cat-3", code: "requirements", title: "Điều kiện/Yêu cầu bắt buộc", icon: "assignment_late", sortOrder: 3, isActive: true },
+                { id: "cat-4", code: "transportation", title: "Phương tiện di chuyển", icon: "directions_bus", sortOrder: 4, isActive: true },
+                { id: "cat-5", code: "accommodation", title: "Lưu trú", icon: "hotel", sortOrder: 5, isActive: true },
+                { id: "cat-6", code: "attractions", title: "Điểm tham quan", icon: "map", sortOrder: 6, isActive: true },
+                { id: "cat-7", code: "cuisine", title: "Ẩm thực", icon: "restaurant", sortOrder: 7, isActive: true },
+                { id: "cat-8", code: "promotion", title: "Ưu đãi", icon: "local_activity", sortOrder: 8, isActive: true }
+            ]);
+        }
 
         // Check if Guide user exists
         const guideCount = await User.count({ where: { role: "guide" } });

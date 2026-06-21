@@ -27,13 +27,15 @@ module.exports = {
                 defaultValue: false,
             },
             cccd_front_url: { type: Sequelize.STRING(500) },
+            cccd_back_url: { type: Sequelize.STRING(500) },
             checkin_code: { type: Sequelize.STRING(50), unique: true },
             checkin_at: { type: Sequelize.DATE },
-            phone: { type: Sequelize.STRING(20) },
+            phone: { type: Sequelize.STRING(20), comment: 'Số điện thoại ' },
             status: {
                 type: Sequelize.STRING(20),
                 allowNull: false,
-                defaultValue: "active",
+                defaultValue: 'active',
+                comment: 'Trạng thái: active (Đang tham gia), cancelled (Đã hủy vé)',
             },
         });
 

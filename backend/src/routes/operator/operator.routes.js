@@ -4,6 +4,8 @@
 import express from "express";
 import operatorController from "../../controllers/operator/operator.controller";
 import { verifyAccessToken, authorizeRoles } from "../../middlewares/accessToken.middleware";
+import upload from "../../middlewares/upload.middleware";
+import tourValidation from "../../validations/tour.validation";
 
 const router = express.Router();
 
@@ -14,9 +16,17 @@ router.get("/api/operator/profile", operatorController.getProfile);
 router.patch("/api/operator/profile", operatorController.updateProfile);
 router.post("/api/operator/change-password", operatorController.changePassword);
 
+// Information categories
+router.get("/api/operator/info-categories", operatorController.getInfoCategories);
+
 // Tours routes
 router.get("/api/operator/tours", operatorController.getTours);
 router.get("/api/operator/tours/hard-approval", operatorController.getHardApprovalTours);
+router.post("/api/operator/tours", tourValidation.validateCreateTour, operatorController.createTour);
+router.post("/api/operator/tours/:id/images", upload.any(), operatorController.uploadTourImages);
+router.delete("/api/operator/tours/:id/images/:imageId", operatorController.deleteTourImage);
+router.get("/api/operator/tours/by-slug/:slug", operatorController.getTourBySlug);
+router.get("/api/operator/tours/export", operatorController.exportToursCSV);
 router.get("/api/operator/tours/:id", operatorController.getTourDetail);
 router.patch("/api/operator/tours/:id", operatorController.updateTour);
 
@@ -31,6 +41,8 @@ router.get("/api/operator/bookings/:bookingId/verify", operatorController.getBoo
 router.put("/api/operator/bookings/:bookingId/approve", operatorController.approveBooking);
 router.put("/api/operator/bookings/:bookingId/reject", operatorController.rejectBooking);
 router.get("/api/operator/bookings/pending", operatorController.getPendingBookings);
+router.put("/api/operator/participants/:id/cccd", upload.fields([{ name: 'frontImage', maxCount: 1 }, { name: 'backImage', maxCount: 1 }]), operatorController.updateParticipantCCCD);
+router.post("/api/operator/bookings/:bookingId/participants", upload.fields([{ name: 'frontImage', maxCount: 1 }, { name: 'backImage', maxCount: 1 }]), operatorController.addParticipantToBooking);
 
 // Customer management & cancellation
 router.get("/api/operator/customers", operatorController.searchCustomer);
