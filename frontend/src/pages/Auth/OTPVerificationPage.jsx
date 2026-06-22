@@ -110,7 +110,7 @@ const OTPVerificationPage = () => {
       {/* Header */}
       <header className="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline fixed top-0 w-full z-50">
         <div className="flex justify-between items-center px-4 md:px-s-margin-desktop h-16 w-full">
-          <div className="text-headline-sm font-headline-lg-mobile text-primary dark:text-inverse-primary tracking-tight">GlobalExplore</div>
+          <div className="text-headline-sm font-headline-lg-mobile text-primary dark:text-inverse-primary tracking-tight">Chip3Chip</div>
           <div className="flex items-center gap-s-md">
             <button className="text-on-surface-variant font-medium hover:text-primary transition-colors text-label-md font-label-md">
               Help
@@ -192,7 +192,7 @@ const OTPVerificationPage = () => {
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyHCb-VABOvWPETXxydPK3XAQLE2kbmXjjueaJwlZzmBcF6TmSuirkzllq_oybXMBzHbQbznbGdd40VkXe7UwWzr474dJD5VoxraqQI0JxJVvLWNma38kbMq_Y5Dl99E3YUdhief9DhvakLfGIA2TKR7NPFWOoteGfTknuAZRcmhGRufd7rDL1ebZTLgTqMcEBVXyCd73Ibpcq1PFk66tR0ktSHFAehAUbw4NzLmu6lnINbX7jqg4_HKdMRAU2Suf1bHDILI15Ceq4"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-s-lg">
-              <p className="text-white font-label-md">GlobalExplore bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.</p>
+              <p className="text-white font-label-md">Chip3Chip bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.</p>
             </div>
           </div>
         </div>
@@ -201,7 +201,7 @@ const OTPVerificationPage = () => {
       {/* Footer */}
       <footer className="bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant">
         <div className="flex flex-col md:flex-row justify-between items-center px-s-margin-mobile md:px-s-margin-desktop py-s-lg w-full gap-s-md">
-          <div className="text-label-md font-label-md font-bold text-on-surface">GlobalExplore</div>
+          <div className="text-label-md font-label-md font-bold text-on-surface">Chip3Chip</div>
           <div className="flex gap-s-lg">
             <a href="#" className="text-on-surface-variant text-label-sm font-label-sm hover:underline decoration-secondary">
               Điều khoản
@@ -213,7 +213,7 @@ const OTPVerificationPage = () => {
               Liên hệ
             </a>
           </div>
-          <div className="text-on-surface-variant text-body-sm font-body-sm">© 2024 GlobalExplore. Tất cả quyền được bảo lưu.</div>
+          <div className="text-on-surface-variant text-body-sm font-body-sm">© 2024 Chip3Chip. Tất cả quyền được bảo lưu.</div>
         </div>
       </footer>
     </div>

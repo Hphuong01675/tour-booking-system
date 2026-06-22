@@ -121,7 +121,7 @@ const OperatorProfilePage = () => {
         const hasUpper = /[A-Z]/.test(newPassword);
         const hasLower = /[a-z]/.test(newPassword);
         const hasNumber = /\d/.test(newPassword);
-        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword);
 
         if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
             setSecurityError("Mật khẩu mới phải bao gồm: 1 chữ in hoa, 1 chữ thường, 1 chữ số, 1 ký tự đặc biệt.");

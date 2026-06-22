@@ -90,7 +90,7 @@ const ForgotPasswordPage = () => {
                                 type="email"
                                 value={emailInput}
                                 onChange={(e) => setEmailInput(e.target.value)}
-                                placeholder="example@globalexplore.com"
+                                placeholder="example@chip3chip.com"
                                 required
                                 className="w-full pl-12 pr-4 py-3 rounded-lg text-base outline-none transition-all"
                                 style={{

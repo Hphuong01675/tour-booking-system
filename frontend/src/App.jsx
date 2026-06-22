@@ -1,24 +1,26 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import CustomerChatWidget from "./components/Customer/CustomerChatWidget";
 
 // Auth Pages - Login
-import LoginPage from "./pages/auth/LoginPage";
+import LoginPage from "./pages/Auth/LoginPage";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 // Auth Pages - Register
-import RegisterPage from "./pages/auth/RegisterPage";
-import OTPPage from "./pages/auth/OTPPage";
+import RegisterPage from "./pages/Auth/RegisterPage";
+import OTPPage from "./pages/Auth/OTPPage";
 
 // Auth Pages - Forgot Password
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import VerifyOTPPage from "./pages/auth/VerifyOTPPage";
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
+import VerifyOTPPage from "./pages/Auth/VerifyOTPPage";
+import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
 
 // Guide Pages
-import GuideDashboardPage from "./pages/guide/GuideDashboardPage";
-import GuideAssignedToursPage from "./pages/guide/GuideAssignedToursPage";
-import GuideTourDetailPage from "./pages/guide/GuideTourDetailPage";
-import GuideChatPage from "./pages/guide/GuideChatPage";
-import GuideProfilePage from "./pages/guide/GuideProfilePage";
+import GuideLayout from "./components/guide/GuideLayout";
+import GuideAssignedToursPage from "./pages/Guide/GuideAssignedToursPage";
+import GuideTourDetailPage from "./pages/Guide/GuideTourDetailPage";
+import GuideChatPage from "./pages/Guide/GuideChatPage";
+import GuideProfilePage from "./pages/Guide/GuideProfilePage";
 
 // Operator Pages
 import OperatorToursPage from "./pages/operator/OperatorToursPage";
@@ -36,206 +38,216 @@ import OperatorParticipantsPage from "./pages/operator/OperatorParticipantsPage"
 // Profile/Dashboard Pages for other roles
 import CustomerToursPage from "./pages/customer/CustomerToursPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import CustomerTransactionsPage from "./pages/customer/CustomerTransactionsPage";
+import TourDetailPage from "./pages/customer/TourDetailPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import Homepage from "./pages/Homepage";
 
 function App() {
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+    const showChatWidget = !isAuthenticated || (user && user.role === "customer");
+
     return (
-        <Routes>
-            {/* Redirect base URL to the Homepage */}
-            <Route path="/" element={<Homepage />} />
+        <>
+            <Routes>
+                {/* Redirect base URL to the Homepage */}
+                <Route path="/" element={<Homepage />} />
+                <Route path="/tours/:id" element={<TourDetailPage />} />
 
-            {/* Auth routes - Login */}
-            <Route path="/login" element={<LoginPage />} />
+                {/* Auth routes - Login */}
+                <Route path="/login" element={<LoginPage />} />
 
-            {/* Auth routes - Register */}
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-otp" element={<OTPPage />} />
-            <Route
-                path="/login-success"
-                element={<Navigate to="/guides/tours" replace />}
-            />
+                {/* Auth routes - Register */}
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-otp" element={<OTPPage />} />
+                <Route
+                    path="/login-success"
+                    element={<Navigate to="/guides/tours" replace />}
+                />
 
-            {/* Auth routes - Forgot Password */}
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route
-                path="/forgot-password-verify-otp"
-                element={<VerifyOTPPage />}
-            />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+                {/* Auth routes - Forgot Password */}
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route
+                    path="/forgot-password-verify-otp"
+                    element={<VerifyOTPPage />}
+                />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-            {/* Role based home routes */}
-            <Route
-                path="/customer/tours"
-                element={
-                    <ProtectedRoute allowedRoles={["customer"]}>
-                        <CustomerToursPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/admin/dashboard"
-                element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <AdminDashboardPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/dashboard"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorDashboardPage />
-                    </ProtectedRoute>
-                }
-            />
+                {/* Role based home routes */}
+                <Route
+                    path="/customer/tours"
+                    element={
+                        <ProtectedRoute allowedRoles={["customer"]}>
+                            <CustomerToursPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminDashboardPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/dashboard"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorDashboardPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-            {/* Role based profile routes */}
-            <Route
-                path="/customer/profile"
-                element={
-                    <ProtectedRoute allowedRoles={["customer"]}>
-                        <CustomerProfilePage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/admin/profile"
-                element={
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <AdminProfilePage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/profile"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorProfilePage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/guide/dashboard"
-                element={
-                    <ProtectedRoute allowedRoles={["guide"]}>
-                        <GuideDashboardPage />
-                    </ProtectedRoute>
-                }
-            />
+                {/* Role based profile routes */}
+                <Route
+                    path="/customer/profile"
+                    element={
+                        <ProtectedRoute allowedRoles={["customer"]}>
+                            <CustomerProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/customer/transactions"
+                    element={
+                        <ProtectedRoute allowedRoles={["customer"]}>
+                            <CustomerTransactionsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/profile"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/profile"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorProfilePage />
+                        </ProtectedRoute>
+                    }
+                />
+                {/* Guide routes */}
+                <Route element={<GuideLayout />}>
+                    <Route
+                        path="/guides/tours"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideAssignedToursPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guides/tours/:id"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideTourDetailPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guides/consultations"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideChatPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guide/profile"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideProfilePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                </Route>
 
-            {/* Guide routes */}
-            <Route
-                path="/guides/tours"
-                element={
-                    <ProtectedRoute allowedRoles={["guide"]}>
-                        <GuideAssignedToursPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/guides/tours/:id"
-                element={
-                    <ProtectedRoute allowedRoles={["guide"]}>
-                        <GuideTourDetailPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/guides/consultations"
-                element={
-                    <ProtectedRoute allowedRoles={["guide"]}>
-                        <GuideChatPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/guide/profile"
-                element={
-                    <ProtectedRoute allowedRoles={["guide"]}>
-                        <GuideProfilePage />
-                    </ProtectedRoute>
-                }
-            />
+                {/* Operator routes */}
+                <Route
+                    path="/operator/tours"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorToursPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/tours/new"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorNewTourPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/tours/:slug"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorTourDetailPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/tours/:id/participants"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorParticipantsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/approvals"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorApprovalsPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/approvals/hard"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorHardApprovalPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/customers/cancel"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorCancelCustomerPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/customers/verify/:id"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorCustomerVerifyPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/operator/guides/assign"
+                    element={
+                        <ProtectedRoute allowedRoles={["operator"]}>
+                            <OperatorGuideAssignPage />
+                        </ProtectedRoute>
+                    }
+                />
 
-            {/* Operator routes */}
-            <Route
-                path="/operator/tours"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorToursPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/tours/:id"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorTourDetailPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/tours/:id/participants"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorParticipantsPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/tours/new"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorNewTourPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/approvals"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorApprovalsPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/approvals/hard"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorHardApprovalPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/customers/cancel"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorCancelCustomerPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/customers/verify/:id"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorCustomerVerifyPage />
-                    </ProtectedRoute>
-                }
-            />
-            <Route
-                path="/operator/guides/assign"
-                element={
-                    <ProtectedRoute allowedRoles={["operator"]}>
-                        <OperatorGuideAssignPage />
-                    </ProtectedRoute>
-                }
-            />
-
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/guides/tours" replace />} />
-        </Routes>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/guides/tours" replace />} />
+            </Routes>
+            {showChatWidget && <CustomerChatWidget />}
+        </>
     );
 }
 

@@ -3,10 +3,19 @@ import tourService from "../services/tour.service";
 class TourController {
     async getTours(req, res) {
         try {
-            const tours = await tourService.getPublishedTours();
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 6;
+            const search = req.query.search || "";
+            const priceRange = req.query.priceRange || "all";
+            const date = req.query.date || "";
+
+            const { tours, total } = await tourService.getPublishedTours({ page, limit, search, priceRange, date });
             return res.status(200).json({
                 success: true,
-                tours
+                tours,
+                total,
+                page,
+                limit
             });
         } catch (error) {
             return res.status(500).json({

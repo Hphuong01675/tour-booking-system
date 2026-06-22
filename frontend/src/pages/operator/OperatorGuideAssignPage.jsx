@@ -1,5 +1,5 @@
 // Path: frontend/src/pages/operator/OperatorGuideAssignPage.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
@@ -20,6 +20,7 @@ const OperatorGuideAssignPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const isSilentRef = useRef(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -50,6 +51,11 @@ const OperatorGuideAssignPage = () => {
                     totalGuests: sch.registered,
                     requiredSkills: sch.tour.difficulty === "hard" ? ["CCCD Xác thực", "Trekking", "Sức khỏe tốt"] : ["Thông thường", "Thân thiện"],
                 });
+                if (sch.assignments && sch.assignments.length > 0) {
+                    setAssignedGuide(sch.assignments[0].guideId);
+                } else {
+                    setAssignedGuide(null);
+                }
             } catch (err) {
                 console.error("Failed to load schedule details", err);
             }
@@ -60,11 +66,15 @@ const OperatorGuideAssignPage = () => {
     }, [scheduleId]);
 
     // Fetch available guides page by page
-    const fetchGuidesList = async (pageNum) => {
+    const fetchGuidesList = async (pageNum, silent = false) => {
         if (!scheduleId) return;
-        if (pageNum === 1) setLoading(true);
-        else setLoadingMore(true);
-
+        
+        if (pageNum === 1) {
+            if (!silent) setLoading(true);
+        } else {
+            setLoadingMore(true);
+        }
+ 
         try {
             const data = await getAvailableGuides(scheduleId, pageNum);
             if (pageNum === 1) {
@@ -82,7 +92,9 @@ const OperatorGuideAssignPage = () => {
     };
 
     useEffect(() => {
-        fetchGuidesList(page);
+        const silent = isSilentRef.current;
+        isSilentRef.current = false; // Reset the flag after use
+        fetchGuidesList(page, silent);
     }, [scheduleId, page]);
 
     // Infinite Scroll Intersection Observer
@@ -109,8 +121,29 @@ const OperatorGuideAssignPage = () => {
     const handleAssign = async (guide) => {
         try {
             await assignGuide(scheduleId, guide.id);
+            
+            // Cập nhật state local ngay lập tức để phản hồi nhanh (Optimistic UI Update)
+            const previousGuideId = assignedGuide;
             setAssignedGuide(guide.id);
+            setGuides((prevGuides) =>
+                prevGuides.map((g) => {
+                    if (g.id === guide.id) return { ...g, isFree: false };
+                    if (g.id === previousGuideId) return { ...g, isFree: true };
+                    return g;
+                })
+            );
+ 
             alert(`Đã phân công ${guide.fullName} cho tour!`);
+ 
+            // Đặt cờ tải ngầm (silent) để tránh giật màn hình
+            isSilentRef.current = true;
+            if (page === 1) {
+                // Nếu đang ở trang 1 thì useEffect không kích hoạt, tự gọi fetch ngầm
+                fetchGuidesList(1, true);
+            } else {
+                // Nếu đang ở trang khác, đổi page về 1 sẽ tự kích hoạt useEffect với cờ silent
+                setPage(1);
+            }
         } catch (err) {
             console.error("Failed to assign guide", err);
             alert(err.message || "Lỗi khi thực hiện phân công.");
@@ -282,13 +315,16 @@ const OperatorGuideAssignPage = () => {
                                                 </div>
                                                 <button
                                                     onClick={() => handleAssign(guide)}
+                                                    disabled={assignedGuide === guide.id || !guide.isFree}
                                                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
                                                         assignedGuide === guide.id
-                                                            ? "bg-green-100 text-green-700"
+                                                            ? "bg-green-100 text-green-700 cursor-not-allowed"
+                                                            : !guide.isFree
+                                                            ? "bg-outline-variant/30 text-on-surface-variant/40 cursor-not-allowed opacity-50"
                                                             : "bg-primary text-white hover:opacity-90 active:scale-95"
                                                     }`}
                                                 >
-                                                    {assignedGuide === guide.id ? "Đã phân công ✓" : "Phân công"}
+                                                    {assignedGuide === guide.id ? "Đã phân công" : "Phân công"}
                                                 </button>
                                             </div>
                                         </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile, getBookingVerification, approveBooking, rejectBooking } from "../../api/operatorApi";
+import { getOperatorProfile, getBookingVerification, approveBooking, rejectBooking, updateParticipantCCCD, addParticipantToBooking } from "../../api/operatorApi";
 
 const OperatorCustomerVerifyPage = () => {
     const { id } = useParams(); // bookingId
@@ -11,11 +11,34 @@ const OperatorCustomerVerifyPage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
+    const [approvedParticipantIds, setApprovedParticipantIds] = useState([]);
     
     // Rejection modal state
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
     const [submittingReject, setSubmittingReject] = useState(false);
+
+    // Add Participant Modal State
+    const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
+    const [newParticipant, setNewParticipant] = useState({
+        fullName: "",
+        dateOfBirth: "",
+        participantType: "adult",
+        address: "",
+        phone: "",
+        frontImage: null,
+        backImage: null
+    });
+    const [submittingAdd, setSubmittingAdd] = useState(false);
+
+    // Update CCCD Modal State
+    const [showUpdateCCCDModal, setShowUpdateCCCDModal] = useState(false);
+    const [selectedParticipantId, setSelectedParticipantId] = useState(null);
+    const [updateCCCDFiles, setUpdateCCCDFiles] = useState({
+        frontImage: null,
+        backImage: null
+    });
+    const [submittingUpdateCCCD, setSubmittingUpdateCCCD] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -34,6 +57,9 @@ const OperatorCustomerVerifyPage = () => {
         try {
             const result = await getBookingVerification(id);
             setData(result);
+            if (result.participants) {
+                setApprovedParticipantIds(result.participants.map(p => p.id));
+            }
         } catch (err) {
             console.error("Failed to load verification data", err);
         } finally {
@@ -47,20 +73,102 @@ const OperatorCustomerVerifyPage = () => {
         }
     }, [id]);
 
-    const showToast = (type) => {
+    const showToastMessage = (type) => {
         setToast(type);
         setTimeout(() => setToast(null), 3000);
     };
 
-    const handleApprove = async () => {
-        if (!window.confirm("Bạn có chắc chắn muốn phê duyệt hồ sơ đặt chỗ này?")) return;
+    const toggleParticipantApproval = (participantId) => {
+        setApprovedParticipantIds(prev => 
+            prev.includes(participantId) 
+                ? prev.filter(id => id !== participantId) 
+                : [...prev, participantId]
+        );
+    };
+
+    const openUpdateCCCDModal = (participantId) => {
+        setSelectedParticipantId(participantId);
+        setUpdateCCCDFiles({ frontImage: null, backImage: null });
+        setShowUpdateCCCDModal(true);
+    };
+
+    const handleUpdateCCCDSubmit = async (e) => {
+        e.preventDefault();
+        if (!updateCCCDFiles.frontImage && !updateCCCDFiles.backImage) {
+            alert("Vui lòng chọn ít nhất 1 ảnh để cập nhật!");
+            return;
+        }
+
+        setSubmittingUpdateCCCD(true);
         try {
-            await approveBooking(id);
-            showToast("approve");
+            const formData = new FormData();
+            if (updateCCCDFiles.frontImage) formData.append("frontImage", updateCCCDFiles.frontImage);
+            if (updateCCCDFiles.backImage) formData.append("backImage", updateCCCDFiles.backImage);
+
+            await updateParticipantCCCD(selectedParticipantId, formData);
+            setShowUpdateCCCDModal(false);
+            showToastMessage("success");
+            fetchVerificationData();
+        } catch (err) {
+            alert("Lỗi cập nhật CCCD: " + (err.response?.data?.error || err.message));
+        } finally {
+            setSubmittingUpdateCCCD(false);
+        }
+    };
+
+    const handleAddParticipant = async (e) => {
+        e.preventDefault();
+        setSubmittingAdd(true);
+        try {
+            const formData = new FormData();
+            formData.append("fullName", newParticipant.fullName);
+            formData.append("dateOfBirth", newParticipant.dateOfBirth);
+            formData.append("participantType", newParticipant.participantType);
+            formData.append("address", newParticipant.address);
+            formData.append("phone", newParticipant.phone);
+            if (newParticipant.frontImage) formData.append("frontImage", newParticipant.frontImage);
+            if (newParticipant.backImage) formData.append("backImage", newParticipant.backImage);
+
+            await addParticipantToBooking(id, formData);
+            setShowAddParticipantModal(false);
+            setNewParticipant({
+                fullName: "",
+                dateOfBirth: "",
+                participantType: "adult",
+                address: "",
+                phone: "",
+                frontImage: null,
+                backImage: null
+            });
+            showToastMessage("success");
+            fetchVerificationData();
+        } catch (err) {
+            alert("Lỗi thêm hành khách: " + (err.response?.data?.error || err.message));
+        } finally {
+            setSubmittingAdd(false);
+        }
+    };
+
+    const handleApprove = async () => {
+        if (!data) return;
+        if (approvedParticipantIds.length === 0) {
+            alert("Phải chọn ít nhất 1 người tham gia để duyệt!");
+            return;
+        }
+
+        const approvedCount = approvedParticipantIds.length;
+        const confirmMessage = `Bạn có chắc chắn muốn phê duyệt hồ sơ đặt chỗ này?\n\n` +
+            `Số lượng người sẽ được phê duyệt: ${approvedCount} người\n\n` +
+            `Lưu ý: Những hành khách không được chọn sẽ bị xóa khỏi booking và giá sẽ được tính lại!`;
+
+        if (!window.confirm(confirmMessage)) return;
+        try {
+            await approveBooking(id, approvedParticipantIds);
+            showToastMessage("approve");
             fetchVerificationData();
         } catch (err) {
             console.error("Failed to approve booking", err);
-            alert("Lỗi khi phê duyệt: " + (err.message || err));
+            alert("Lỗi khi phê duyệt: " + (err.response?.data?.error || err.message));
         }
     };
 
@@ -75,11 +183,11 @@ const OperatorCustomerVerifyPage = () => {
             await rejectBooking(id, rejectReason);
             setShowRejectModal(false);
             setRejectReason("");
-            showToast("reject");
+            showToastMessage("reject");
             fetchVerificationData();
         } catch (err) {
             console.error("Failed to reject booking", err);
-            alert("Lỗi khi từ chối phê duyệt: " + (err.message || err));
+            alert("Lỗi khi từ chối phê duyệt: " + (err.response?.data?.error || err.message));
         } finally {
             setSubmittingReject(false);
         }
@@ -149,13 +257,13 @@ const OperatorCustomerVerifyPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-                    {/* Left Column: Profile & Docs */}
+                    {/* Left Column: Participants & Profile */}
                     <div className="lg:col-span-8 flex flex-col gap-gutter">
                         {/* Customer Profile Section */}
                         <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
                             <div className="flex items-center gap-3 mb-s-lg">
                                 <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">person</span>
-                                <h2 className="text-lg font-semibold text-on-surface">Thông tin khách hàng</h2>
+                                <h2 className="text-lg font-semibold text-on-surface">Người đặt (Đại diện)</h2>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-gutter">
                                 <div>
@@ -174,52 +282,83 @@ const OperatorCustomerVerifyPage = () => {
                                     <p className="text-xs uppercase tracking-wider text-outline font-semibold mb-1">Email</p>
                                     <p className="text-sm font-semibold text-primary underline">{data.customer.email}</p>
                                 </div>
-                                <div className="md:col-span-2">
-                                    <p className="text-xs uppercase tracking-wider text-outline font-semibold mb-1">Địa chỉ thường trú</p>
-                                    <p className="text-sm font-semibold text-on-surface">{data.customer.address}</p>
-                                </div>
                             </div>
                         </section>
 
-                        {/* Document Verification Section */}
+                        {/* Participants List */}
                         <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30">
                             <div className="flex justify-between items-center mb-s-lg">
                                 <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">id_card</span>
-                                    <h2 className="text-lg font-semibold text-on-surface">Giấy tờ định danh</h2>
+                                    <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">group</span>
+                                    <h2 className="text-lg font-semibold text-on-surface">Danh sách hành khách tham gia</h2>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
-                                    data.documents.status === "pending" ? "bg-amber-100 text-amber-700" :
-                                    data.documents.status === "approved" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                                }`}>
-                                    <span className="material-symbols-outlined text-[14px]">
-                                        {data.documents.status === "pending" ? "pending" :
-                                         data.documents.status === "approved" ? "check_circle" : "cancel"}
-                                    </span>
-                                    {data.documents.status === "pending" ? "Chờ duyệt" :
-                                     data.documents.status === "approved" ? "Đã duyệt" : "Đã từ chối"}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-s-lg">
-                                {[
-                                    { label: "Mặt trước CMND/CCCD/Hộ chiếu", src: data.documents.frontImage },
-                                    { label: "Mặt sau CMND/CCCD/Hộ chiếu", src: data.documents.backImage },
-                                ].map((doc) => (
-                                    <div
-                                        key={doc.label}
-                                        onClick={() => window.open(doc.src, "_blank")}
-                                        className="group relative overflow-hidden rounded-xl border-2 border-dashed border-outline-variant aspect-video flex flex-col items-center justify-center bg-surface-container-low hover:border-primary transition-colors cursor-pointer"
+                                {data.documents.status === "pending" && (
+                                    <button 
+                                        onClick={() => setShowAddParticipantModal(true)}
+                                        className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
                                     >
-                                        <img
-                                            src={doc.src}
-                                            alt={doc.label}
-                                            className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="relative z-10 flex flex-col items-center gap-2">
-                                            <span className="material-symbols-outlined text-[36px] text-primary drop-shadow">zoom_in</span>
-                                            <p className="text-sm font-medium text-on-surface bg-white/80 px-3 py-1 rounded-full">
-                                                {doc.label}
-                                            </p>
+                                        <span className="material-symbols-outlined text-[16px]">add</span>
+                                        Thêm khách
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-6">
+                                {data.participants?.map((p, idx) => (
+                                    <div key={p.id} className="border border-outline-variant/50 rounded-xl p-4 flex flex-col gap-4">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                {data.documents.status === "pending" && (
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={approvedParticipantIds.includes(p.id)}
+                                                        onChange={() => toggleParticipantApproval(p.id)}
+                                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    />
+                                                )}
+                                                <div>
+                                                    <h3 className="font-bold text-on-surface flex items-center gap-2">
+                                                        {p.name}
+                                                        {p.isLead && <span className="bg-primary-fixed text-primary-fixed-dim px-2 py-0.5 rounded text-[10px] uppercase font-bold">Leader</span>}
+                                                    </h3>
+                                                    <p className="text-xs text-on-surface-variant mt-1">
+                                                        Sinh: {p.dateOfBirth} | Loại: {p.type}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {data.documents.status === "pending" && (
+                                                <button 
+                                                    onClick={() => openUpdateCCCDModal(p.id)}
+                                                    className="text-xs px-3 py-1 bg-surface-container-low border border-outline-variant/50 rounded hover:bg-surface-container transition font-medium text-on-surface"
+                                                >
+                                                    Cập nhật ảnh
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {[
+                                                { label: "Mặt trước CCCD", src: p.cccdFrontUrl },
+                                                { label: "Mặt sau CCCD", src: p.cccdBackUrl },
+                                            ].map((doc, docIdx) => (
+                                                <div
+                                                    key={docIdx}
+                                                    onClick={() => window.open(doc.src, "_blank")}
+                                                    className="group relative overflow-hidden rounded-lg border border-dashed border-outline-variant aspect-[16/9] flex flex-col items-center justify-center bg-surface-container-lowest hover:border-primary transition-colors cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={doc.src}
+                                                        alt={doc.label}
+                                                        className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                    <div className="relative z-10 flex flex-col items-center gap-1 bg-white/70 p-2 rounded-lg backdrop-blur-sm shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <span className="material-symbols-outlined text-[24px] text-primary">zoom_in</span>
+                                                        <p className="text-xs font-semibold text-on-surface">
+                                                            {doc.label}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 ))}
@@ -227,7 +366,7 @@ const OperatorCustomerVerifyPage = () => {
                         </section>
                     </div>
 
-                    {/* Right Column: Booking Summary & Companions */}
+                    {/* Right Column: Booking Summary */}
                     <div className="lg:col-span-4 flex flex-col gap-gutter">
                         {/* Booking Summary Card */}
                         <div className="bg-primary text-on-primary p-s-xl rounded-xl shadow-lg relative overflow-hidden">
@@ -251,50 +390,12 @@ const OperatorCustomerVerifyPage = () => {
                             </div>
                         </div>
 
-                        {/* Accompanied Persons */}
-                        <section className="bg-white p-s-xl rounded-xl shadow-sm border border-outline-variant/30 flex-grow">
-                            <div className="flex items-center gap-3 mb-s-lg">
-                                <span className="material-symbols-outlined text-primary p-2 bg-primary-fixed rounded-lg">group</span>
-                                <h2 className="text-lg font-semibold text-on-surface">Người đi cùng</h2>
-                            </div>
-                            {data.companions.length === 0 ? (
-                                <p className="text-xs italic text-on-surface-variant">Không có người đi cùng.</p>
-                            ) : (
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="border-b border-outline-variant/30">
-                                            <th className="pb-3 text-xs font-semibold uppercase text-outline">Họ tên</th>
-                                            <th className="pb-3 text-xs font-semibold uppercase text-outline text-center">Loại</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-outline-variant/20">
-                                        {data.companions.map((c, idx) => (
-                                            <tr key={idx}>
-                                                <td className="py-4">
-                                                    <p className="text-sm font-semibold text-on-surface">{c.name}</p>
-                                                    <p className="text-xs text-on-surface-variant">{c.dateOfBirth}</p>
-                                                </td>
-                                                <td className="py-4 text-center">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                        c.type === "Người lớn"
-                                                            ? "bg-surface-container-high text-on-surface-variant"
-                                                            : "bg-primary-fixed text-on-primary-fixed"
-                                                    }`}>
-                                                        {c.type}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                            <div className="mt-6 p-4 bg-surface-container-low rounded-lg">
-                                <p className="text-xs text-on-surface-variant mb-2 font-medium">Ghi chú / Lý do hủy:</p>
-                                <p className="text-xs italic text-on-surface-variant leading-relaxed">
-                                    "{data.customerNote}"
-                                </p>
-                            </div>
-                        </section>
+                        <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30 mt-gutter">
+                            <p className="text-xs text-on-surface-variant mb-2 font-medium">Ghi chú từ khách hàng:</p>
+                            <p className="text-xs italic text-on-surface-variant leading-relaxed">
+                                "{data.customerNote}"
+                            </p>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -341,16 +442,173 @@ const OperatorCustomerVerifyPage = () => {
                 </div>
             )}
 
+            {/* Update CCCD Modal */}
+            {showUpdateCCCDModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeIn">
+                        <div className="p-6 border-b border-outline-variant/20">
+                            <h3 className="font-bold text-lg text-on-surface">Cập nhật ảnh CCCD</h3>
+                            <p className="text-xs text-on-surface-variant mt-1">
+                                Tải lên ảnh mặt trước hoặc mặt sau (hoặc cả hai) để cập nhật.
+                            </p>
+                        </div>
+                        <form onSubmit={handleUpdateCCCDSubmit}>
+                            <div className="p-6 flex flex-col gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Ảnh CCCD Mặt trước</label>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*"
+                                        className="w-full border rounded p-2 text-sm" 
+                                        onChange={e => setUpdateCCCDFiles({...updateCCCDFiles, frontImage: e.target.files[0]})} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Ảnh CCCD Mặt sau</label>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*"
+                                        className="w-full border rounded p-2 text-sm" 
+                                        onChange={e => setUpdateCCCDFiles({...updateCCCDFiles, backImage: e.target.files[0]})} 
+                                    />
+                                </div>
+                            </div>
+                            <div className="p-6 bg-surface-container-low flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUpdateCCCDModal(false)}
+                                    className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface transition"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingUpdateCCCD}
+                                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                >
+                                    {submittingUpdateCCCD ? "Đang xử lý..." : "Cập nhật ảnh"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Participant Modal */}
+            {showAddParticipantModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeIn">
+                        <div className="p-6 border-b border-outline-variant/20">
+                            <h3 className="font-bold text-lg text-on-surface">Thêm hành khách</h3>
+                            <p className="text-xs text-on-surface-variant mt-1">
+                                Điền thông tin hành khách tham gia tour.
+                            </p>
+                        </div>
+                        <form onSubmit={handleAddParticipant}>
+                            <div className="p-6 flex flex-col gap-4">
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Họ và tên *</label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        className="w-full border rounded p-2 text-sm" 
+                                        value={newParticipant.fullName} 
+                                        onChange={e => setNewParticipant({...newParticipant, fullName: e.target.value})} 
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-semibold mb-1 block">Ngày sinh *</label>
+                                        <input 
+                                            required
+                                            type="date" 
+                                            className="w-full border rounded p-2 text-sm" 
+                                            value={newParticipant.dateOfBirth} 
+                                            onChange={e => setNewParticipant({...newParticipant, dateOfBirth: e.target.value})} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold mb-1 block">Loại hình *</label>
+                                        <select 
+                                            required
+                                            className="w-full border rounded p-2 text-sm" 
+                                            value={newParticipant.participantType} 
+                                            onChange={e => setNewParticipant({...newParticipant, participantType: e.target.value})}
+                                        >
+                                            <option value="adult">Người lớn</option>
+                                            <option value="child">Trẻ em (70%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Địa chỉ</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full border rounded p-2 text-sm" 
+                                        value={newParticipant.address} 
+                                        onChange={e => setNewParticipant({...newParticipant, address: e.target.value})} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Số điện thoại</label>
+                                    <input 
+                                        type="tel" 
+                                        className="w-full border rounded p-2 text-sm" 
+                                        value={newParticipant.phone} 
+                                        onChange={e => setNewParticipant({...newParticipant, phone: e.target.value})} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Ảnh CCCD Mặt trước</label>
+                                    <input 
+                                        type="file"
+                                        accept="image/*"
+                                        className="w-full border rounded p-2 text-sm" 
+                                        onChange={e => setNewParticipant({...newParticipant, frontImage: e.target.files[0]})} 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold mb-1 block">Ảnh CCCD Mặt sau</label>
+                                    <input 
+                                        type="file"
+                                        accept="image/*"
+                                        className="w-full border rounded p-2 text-sm" 
+                                        onChange={e => setNewParticipant({...newParticipant, backImage: e.target.files[0]})} 
+                                    />
+                                </div>
+                            </div>
+                            <div className="p-6 bg-surface-container-low flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddParticipantModal(false)}
+                                    className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:text-on-surface transition"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingAdd}
+                                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
+                                >
+                                    {submittingAdd ? "Đang xử lý..." : "Thêm hành khách"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Toast */}
             {toast && (
                 <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-xl shadow-2xl text-white z-50 flex items-center gap-3 animate-fadeIn ${
-                    toast === "approve" ? "bg-primary" : "bg-error"
+                    toast === "reject" ? "bg-error" : "bg-primary"
                 }`}>
                     <span className="material-symbols-outlined">
-                        {toast === "approve" ? "check_circle" : "cancel"}
+                        {toast === "reject" ? "cancel" : "check_circle"}
                     </span>
                     <span className="font-bold">
-                        {toast === "approve" ? "Đã phê duyệt hồ sơ" : "Đã từ chối hồ sơ"}
+                        {toast === "approve" ? "Đã phê duyệt hồ sơ" : 
+                         toast === "reject" ? "Đã từ chối hồ sơ" : "Thao tác thành công"}
                     </span>
                 </div>
             )}

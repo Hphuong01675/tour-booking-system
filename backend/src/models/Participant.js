@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         field: 'full_name',
       },
+
       dateOfBirth: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -57,6 +58,16 @@ module.exports = (sequelize, DataTypes) => {
       checkinAt: {
         type: DataTypes.DATE,
         field: 'checkin_at',
+      },
+      phone: {
+        type: DataTypes.STRING(20),
+        field: 'phone',
+      },
+      status: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'active',
+        field: 'status',
       },
     },
     {

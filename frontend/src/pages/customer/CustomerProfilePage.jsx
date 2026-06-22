@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchCurrentUser, logoutUser } from "../../features/auth/authSlice";
 import axiosInstance from "../../api/axiosInstance";
+import TopNavBar from "../../components/TopNavBar";
 
 const CustomerProfilePage = () => {
     const dispatch = useDispatch();
@@ -120,33 +121,8 @@ const CustomerProfilePage = () => {
                 }
             `}</style>
 
-            {/* Navigation Header */}
-            <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur border-b border-neutral-200/50 px-6 py-5 md:px-12 flex justify-between items-center shadow-sm">
-                <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-rose-500 text-3xl font-black">explore</span>
-                    <Link className="text-2xl font-black tracking-tight bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent" to="/">
-                        Chip3Chip
-                    </Link>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <Link to="/" className="px-4 py-2.5 text-xs font-black uppercase tracking-wider text-neutral-600 hover:text-rose-500 transition-colors flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[18px]">home</span>
-                        Trang chủ
-                    </Link>
-                    <Link to="/customer/tours" className="px-4 py-2.5 text-xs font-black uppercase tracking-wider text-neutral-600 hover:text-rose-500 transition-colors flex items-center gap-1.5">
-                        <span className="material-symbols-outlined text-[18px]">backpack</span>
-                        My Tours
-                    </Link>
-                    <button
-                        onClick={handleLogout}
-                        className="px-3.5 py-2 text-xs font-bold text-neutral-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-[16px]">logout</span>
-                        Đăng xuất
-                    </button>
-                </div>
-            </header>
+            {/* TopNavBar */}
+            <TopNavBar />
 
             {/* Page Content */}
             <main className="flex-grow max-w-4xl mx-auto px-6 py-12 w-full">

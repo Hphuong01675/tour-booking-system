@@ -32,7 +32,7 @@ const LoginPage = () => {
                             Khám phá thế giới theo cách của bạn.
                         </h2>
                         <p className="text-lg opacity-90 drop-shadow-sm">
-                            Bắt đầu hành trình của bạn với GlobalExplore ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
+                            Bắt đầu hành trình của bạn với Chip3Chip ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
                         </p>
                     </div>
                 </div>

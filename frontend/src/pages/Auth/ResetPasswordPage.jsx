@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -21,9 +21,15 @@ const ResetPasswordPage = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, error, resetToken } = useSelector(
+    const { loading, error, resetToken, email } = useSelector(
         (state) => state.forgotPassword
     );
+
+    useEffect(() => {
+        if (!resetToken || !email) {
+            navigate("/forgot-password");
+        }
+    }, [resetToken, email, navigate]);
 
     // Validate password strength
     const getStrength = (pwd) => {
@@ -50,7 +56,7 @@ const ResetPasswordPage = () => {
         const hasUpper = /[A-Z]/.test(newPassword);
         const hasLower = /[a-z]/.test(newPassword);
         const hasNumber = /\d/.test(newPassword);
-        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword);
+        const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword);
 
         if (newPassword.length < 8) {
             setLocalError("Mật khẩu phải có ít nhất 8 ký tự.");
@@ -422,7 +428,7 @@ const ResetPasswordPage = () => {
                             { text: "Chứa chữ hoa (A-Z)", check: /[A-Z]/.test(newPassword) },
                             { text: "Chứa chữ thường (a-z)", check: /[a-z]/.test(newPassword) },
                             { text: "Chứa chữ số (0-9)", check: /\d/.test(newPassword) },
-                            { text: "Ký tự đặc biệt (!@#$%^&*)", check: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) },
+                            { text: "Ký tự đặc biệt (!@#$%^&*)", check: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(newPassword) },
                         ].map(({ text, check }) => (
                             <div key={text} className="flex items-center gap-1.5">
                                 <span

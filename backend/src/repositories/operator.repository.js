@@ -24,7 +24,7 @@ class OperatorRepository {
         
         if (search) {
             tourWhere[Op.or] = [
-                { title: { [Op.like]: `%${search}%` } },
+                db.sequelize.literal(`LOWER(\`title\`) COLLATE utf8mb4_bin LIKE LOWER(${db.sequelize.escape(`%${search}%`)})`),
                 { tourCode: { [Op.like]: `%${search}%` } }
             ];
         }
@@ -32,7 +32,12 @@ class OperatorRepository {
         const scheduleInclude = {
             model: TourSchedule,
             as: "schedules",
-            required: false
+            required: false,
+            include: [{
+                model: TourAssignment,
+                as: "assignments",
+                required: false
+            }]
         };
 
         if (departureDate) {
@@ -57,10 +62,51 @@ class OperatorRepository {
             where: { id, createdBy: operatorId },
             include: [
                 { model: TourSchedule, as: "schedules" },
-                { model: TourItineraryDay, as: "itineraryDays" },
+                { 
+                    model: TourItineraryDay, 
+                    as: "itineraryDays",
+                    include: [
+                        { model: db.TourItineraryLocation, as: "locations" },
+                        { model: db.TourItineraryItem, as: "items" }
+                    ]
+                },
                 { model: TourImage, as: "images" },
-                { model: TourInformation, as: "information" }
+                { 
+                    model: TourInformation, 
+                    as: "information",
+                    include: [{ model: db.TourInformationCategory, as: "category" }]
+                }
             ]
+        });
+    }
+
+    async findTourBySlugAndOperator(slug, operatorId) {
+        return await Tour.findOne({
+            where: { slug, createdBy: operatorId },
+            include: [
+                { model: TourSchedule, as: "schedules" },
+                { 
+                    model: TourItineraryDay, 
+                    as: "itineraryDays",
+                    include: [
+                        { model: db.TourItineraryLocation, as: "locations" },
+                        { model: db.TourItineraryItem, as: "items" }
+                    ]
+                },
+                { model: TourImage, as: "images" },
+                { 
+                    model: TourInformation, 
+                    as: "information",
+                    include: [{ model: db.TourInformationCategory, as: "category" }]
+                }
+            ]
+        });
+    }
+
+    async findInfoCategories() {
+        return await db.TourInformationCategory.findAll({
+            where: { isActive: true },
+            order: [["sortOrder", "ASC"]]
         });
     }
 
@@ -72,12 +118,19 @@ class OperatorRepository {
 
     async findScheduleByIdAndOperator(scheduleId, operatorId) {
         return await TourSchedule.findByPk(scheduleId, {
-            include: [{
-                model: Tour,
-                as: "tour",
-                where: { createdBy: operatorId },
-                required: true
-            }]
+            include: [
+                {
+                    model: Tour,
+                    as: "tour",
+                    where: { createdBy: operatorId },
+                    required: true
+                },
+                {
+                    model: TourAssignment,
+                    as: "assignments",
+                    required: false
+                }
+            ]
         });
     }
 
@@ -87,19 +140,23 @@ class OperatorRepository {
         });
     }
 
-    async countOverlappingAssignments(guideId, departureDate, returnDate) {
+    async countOverlappingAssignments(guideId, departureDate, returnDate, excludeScheduleId = null) {
+        const scheduleWhere = {
+            [Op.and]: [
+                { departureDate: { [Op.lte]: returnDate } },
+                { returnDate: { [Op.gte]: departureDate } }
+            ],
+            status: { [Op.ne]: "cancelled" }
+        };
+        if (excludeScheduleId) {
+            scheduleWhere.id = { [Op.ne]: excludeScheduleId };
+        }
         return await TourAssignment.count({
             where: { guideId },
             include: [{
                 model: TourSchedule,
                 as: "schedule",
-                where: {
-                    [Op.and]: [
-                        { departureDate: { [Op.lte]: returnDate } },
-                        { returnDate: { [Op.gte]: departureDate } }
-                    ],
-                    status: { [Op.ne]: "cancelled" }
-                }
+                where: scheduleWhere
             }]
         });
     }
@@ -196,17 +253,20 @@ class OperatorRepository {
 
     async findBookingByPkAndOperator(bookingId, operatorId) {
         return await Booking.findByPk(bookingId, {
-            include: [{
-                model: TourSchedule,
-                as: "schedule",
-                required: true,
-                include: [{
-                    model: Tour,
-                    as: "tour",
-                    where: { createdBy: operatorId },
-                    required: true
-                }]
-            }]
+            include: [
+                {
+                    model: TourSchedule,
+                    as: "schedule",
+                    required: true,
+                    include: [{
+                        model: Tour,
+                        as: "tour",
+                        where: { createdBy: operatorId },
+                        required: true
+                    }]
+                },
+                { model: Participant, as: "participants" }
+            ]
         });
     }
 
@@ -283,6 +343,40 @@ class OperatorRepository {
 
     async countParticipantsByBooking(bookingId) {
         return await Participant.count({ where: { bookingId } });
+    }
+
+    async findAllToursWithAllDetails(operatorId) {
+        return await Tour.findAll({
+            where: { createdBy: operatorId },
+            include: [
+                {
+                    model: TourSchedule,
+                    as: "schedules",
+                    required: false,
+                    include: [{
+                        model: TourAssignment,
+                        as: "assignments",
+                        required: false
+                    }]
+                },
+                {
+                    model: TourItineraryDay,
+                    as: "itineraryDays",
+                    required: false
+                },
+                {
+                    model: TourImage,
+                    as: "images",
+                    required: false
+                },
+                {
+                    model: TourInformation,
+                    as: "information",
+                    required: false
+                }
+            ],
+            order: [["createdAt", "DESC"]]
+        });
     }
 }
 

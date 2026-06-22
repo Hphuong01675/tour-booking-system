@@ -1,5 +1,6 @@
 // Path: backend/src/seed/seed.js
 import db from "../models";
+import bcrypt from "bcryptjs";
 
 export const seedDatabase = async () => {
     try {
@@ -12,8 +13,29 @@ export const seedDatabase = async () => {
             Booking,
             Participant,
             Conversation,
-            Message
+            Message,
+            Voucher,
+            VoucherTarget,
+            TourInformationCategory
         } = db;
+
+        const defaultHash = bcrypt.hashSync("123456", 10);
+
+        // Seed Tour Information Categories if empty
+        const categoryCount = await TourInformationCategory.count();
+        if (categoryCount === 0) {
+            console.log("Seeding Tour Information Categories...");
+            await TourInformationCategory.bulkCreate([
+                { id: "cat-1", code: "included", title: "Bao gồm", icon: "check_circle", sortOrder: 1, isActive: true },
+                { id: "cat-2", code: "not_included", title: "Không bao gồm", icon: "cancel", sortOrder: 2, isActive: true },
+                { id: "cat-3", code: "requirements", title: "Điều kiện/Yêu cầu bắt buộc", icon: "assignment_late", sortOrder: 3, isActive: true },
+                { id: "cat-4", code: "transportation", title: "Phương tiện di chuyển", icon: "directions_bus", sortOrder: 4, isActive: true },
+                { id: "cat-5", code: "accommodation", title: "Lưu trú", icon: "hotel", sortOrder: 5, isActive: true },
+                { id: "cat-6", code: "attractions", title: "Điểm tham quan", icon: "map", sortOrder: 6, isActive: true },
+                { id: "cat-7", code: "cuisine", title: "Ẩm thực", icon: "restaurant", sortOrder: 7, isActive: true },
+                { id: "cat-8", code: "promotion", title: "Ưu đãi", icon: "local_activity", sortOrder: 8, isActive: true }
+            ]);
+        }
 
         // Check if Guide user exists
         const guideCount = await User.count({ where: { role: "guide" } });
@@ -29,7 +51,7 @@ export const seedDatabase = async () => {
             id: "guide-1",
             fullName: "Lê Quang Huy",
             email: "lequanghuy@chip3chip.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "+84 912 999 888",
             role: "guide",
             dateOfBirth: new Date("1990-05-15"),
@@ -42,7 +64,7 @@ export const seedDatabase = async () => {
             id: "guide-2",
             fullName: "Trần Văn Khánh",
             email: "trankhanh@chip3chip.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "+84 909 333 444",
             role: "guide",
             dateOfBirth: new Date("1993-08-20"),
@@ -55,7 +77,7 @@ export const seedDatabase = async () => {
             id: "guide-3",
             fullName: "Phạm Thị Hoa",
             email: "phamhoa@chip3chip.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "+84 988 555 666",
             role: "guide",
             dateOfBirth: new Date("1995-12-02"),
@@ -68,7 +90,7 @@ export const seedDatabase = async () => {
             id: "operator-1",
             fullName: "Nguyễn Minh Tuấn",
             email: "minhtuan.nguyen@chip3chip.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "+84 908 123 456",
             role: "operator",
             isActive: true,
@@ -79,7 +101,7 @@ export const seedDatabase = async () => {
             id: "customer-1",
             fullName: "Nguyễn Thành Trung",
             email: "trung@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0901234567",
             role: "customer",
         });
@@ -88,7 +110,7 @@ export const seedDatabase = async () => {
             id: "customer-2",
             fullName: "Lê Thị Thu Hà",
             email: "ha@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0987654321",
             role: "customer",
         });
@@ -97,7 +119,7 @@ export const seedDatabase = async () => {
             id: "customer-3",
             fullName: "Nguyễn Văn An",
             email: "an@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0903112233",
             role: "customer",
         });
@@ -106,7 +128,7 @@ export const seedDatabase = async () => {
             id: "customer-4",
             fullName: "Lê Hồng Phúc",
             email: "phuc@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0944556677",
             role: "customer",
         });
@@ -115,7 +137,7 @@ export const seedDatabase = async () => {
             id: "customer-5",
             fullName: "Vũ Nam Khánh",
             email: "khanh@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0977889900",
             role: "customer",
         });
@@ -124,7 +146,7 @@ export const seedDatabase = async () => {
             id: "customer-6",
             fullName: "Phạm Minh Khang",
             email: "khang@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0901112222",
             role: "customer",
         });
@@ -133,7 +155,7 @@ export const seedDatabase = async () => {
             id: "customer-7",
             fullName: "Đỗ Hoàng Nam",
             email: "namdh@gmail.com",
-            passwordHash: "hashedpassword",
+            passwordHash: defaultHash,
             phone: "0966777888",
             role: "customer",
         });
@@ -391,6 +413,61 @@ export const seedDatabase = async () => {
             status: "closed",
         });
 
+        // Seeding Vouchers
+        await Voucher.create({
+            id: "voucher-all-1",
+            name: "Giảm 10% Cho Mọi Chuyến Đi",
+            code: "SYSTEM10",
+            description: "Mã giảm giá 10% áp dụng toàn hệ thống, tối đa 500,000 VND.",
+            discountType: "percent",
+            discountValue: 10.0,
+            maxDiscountAmount: 500000.0,
+            minOrderValue: 1000000.0,
+            validFrom: new Date("2025-01-01"),
+            validUntil: new Date("2027-12-31"),
+            totalQuantity: 100,
+            usageLimitPerUser: 2,
+            targetType: "all",
+            usedCount: 0,
+            isActive: true,
+            createdBy: "operator-1",
+            createdAt: new Date(),
+        });
+
+        await Voucher.create({
+            id: "voucher-specific-1",
+            name: "Ưu Đãi Đặc Biệt Khách Hàng Thân Thiết",
+            code: "LOYALTY500",
+            description: "Giảm trực tiếp 500,000 VND dành riêng cho một số khách hàng cụ thể.",
+            discountType: "fixed",
+            discountValue: 500000.0,
+            maxDiscountAmount: null,
+            minOrderValue: 2000000.0,
+            validFrom: new Date("2025-01-01"),
+            validUntil: new Date("2027-12-31"),
+            totalQuantity: 50,
+            usageLimitPerUser: 1,
+            targetType: "specific",
+            usedCount: 0,
+            isActive: true,
+            createdBy: "operator-1",
+            createdAt: new Date(),
+        });
+
+        await VoucherTarget.create({
+            id: "target-1",
+            voucherId: "voucher-specific-1",
+            userId: "customer-1",
+            usedCount: 0,
+        });
+
+        await VoucherTarget.create({
+            id: "target-2",
+            voucherId: "voucher-specific-1",
+            userId: "customer-2",
+            usedCount: 0,
+        });
+
         // 5. Create Tour Assignments
         // Guide 1 is assigned to schedule-1
         await TourAssignment.create({
@@ -433,6 +510,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-NT-101",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0901234567",
+                status: "active",
             },
             {
                 id: "participant-2",
@@ -444,6 +523,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-TM-102",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0987654321",
+                status: "active",
             },
             {
                 id: "participant-3",
@@ -455,6 +536,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-GH-103",
                 checkinAt: null,
+                phone: "0903112233",
+                status: "active",
             },
         ]);
 
@@ -479,6 +562,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-TH-104",
                 checkinAt: new Date("2026-10-15T09:12:00.000Z"),
+                phone: "0944556677",
+                status: "active",
             },
             {
                 id: "participant-5",
@@ -490,6 +575,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-MT-105",
                 checkinAt: new Date("2026-10-15T08:45:00.000Z"),
+                phone: "0977889900",
+                status: "active",
             },
         ]);
 
@@ -513,6 +600,8 @@ export const seedDatabase = async () => {
             isLead: true,
             checkinCode: "QR-VA-106",
             checkinAt: null,
+            phone: "0901112222",
+            status: "active",
         });
 
         await Booking.create({
@@ -536,6 +625,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-HP-107",
                 checkinAt: new Date("2026-10-15T08:35:00.000Z"),
+                phone: "0966777888",
+                status: "active",
             },
             {
                 id: "participant-8",
@@ -547,6 +638,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-TT-108",
                 checkinAt: null,
+                phone: "0988555666",
+                status: "active",
             },
         ]);
 
@@ -571,6 +664,8 @@ export const seedDatabase = async () => {
                 isLead: true,
                 checkinCode: "QR-NK-109",
                 checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+                phone: "0909333444",
+                status: "active",
             },
             {
                 id: "participant-10",
@@ -582,6 +677,8 @@ export const seedDatabase = async () => {
                 isLead: false,
                 checkinCode: "QR-MD-110",
                 checkinAt: null,
+                phone: "0912999888",
+                status: "active",
             },
         ]);
 
@@ -605,6 +702,8 @@ export const seedDatabase = async () => {
             isLead: true,
             checkinCode: "QR-MK-111",
             checkinAt: new Date("2026-10-15T08:30:00.000Z"),
+            phone: "0908123456",
+            status: "active",
         });
 
         // Hard Approvals Seeding for Tour 2 (schedule-2)
@@ -630,6 +729,8 @@ export const seedDatabase = async () => {
                 cccdFrontUrl: "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
                 cccdBackUrl: "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
                 checkinCode: "QR-HN-701",
+                phone: "0901234123",
+                status: "active",
             },
             {
                 id: "participant-13",
@@ -640,6 +741,8 @@ export const seedDatabase = async () => {
                 address: "Quận 3, TP. HCM",
                 isLead: false,
                 checkinCode: "QR-HL-702",
+                phone: "0901234321",
+                status: "active",
             }
         ]);
 
@@ -665,6 +768,8 @@ export const seedDatabase = async () => {
             cccdFrontUrl: "https://images.unsplash.com/photo-1618044619888-009e412ff12a?w=400&h=250&fit=crop",
             cccdBackUrl: "https://images.unsplash.com/photo-1618044733555-e6f1d85e4dcb?w=400&h=250&fit=crop",
             checkinCode: "QR-LH-801",
+            phone: "0901234456",
+            status: "active",
         });
 
         // 7. Create Conversations

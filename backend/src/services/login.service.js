@@ -22,6 +22,8 @@ class LoginService {
             fullName: user.fullName,
             email: user.email,
             phone: user.phone,
+            address: user.address,
+            dateOfBirth: user.dateOfBirth,
             role: user.role,
             avatarUrl: user.avatarUrl,
         };
