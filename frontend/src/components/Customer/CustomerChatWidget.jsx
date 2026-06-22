@@ -7,6 +7,14 @@ import axiosInstance from '../../api/axiosInstance';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const QUICK_EMOJIS = ['👍', '😊', '🙏', '❤️', '🎉', '✅'];
+const QUICK_REPLIES_CUSTOMER = [
+  'Cảm ơn bạn 🙏',
+  'Tôi vẫn chưa rõ 🤔',
+  'Có thể liên hệ được không? 📞',
+  'Cần hỗ trợ thêm 😊',
+  'OK, hiểu rồi ✅',
+  'Tối nay gọi lại được không? ⏰'
+];
 
 const parseChatContent = (content) => {
   if (typeof content !== 'string') return { type: 'text', text: '' };
@@ -261,7 +269,8 @@ const CustomerChatWidget = () => {
 
       const firstBooking = bookings[0];
       setSelectedBookingId(firstBooking?.id || '');
-      setSelectedParticipantId(firstBooking?.participants?.[0]?.id || '');
+      const firstAdult = firstBooking?.participants?.find(p => p.participantType === 'adult');
+      setSelectedParticipantId(firstAdult?.id || firstBooking?.participants?.[0]?.id || '');
     } catch (err) {
       alert(err.response?.data?.error || 'Không thể tải danh sách tour đang tham gia.');
     } finally {
@@ -272,7 +281,8 @@ const CustomerChatWidget = () => {
   const handleBookingChange = (bookingId) => {
     const booking = customerBookings.find((item) => item.id === bookingId);
     setSelectedBookingId(bookingId);
-    setSelectedParticipantId(booking?.participants?.[0]?.id || '');
+    const firstAdult = booking?.participants?.find(p => p.participantType === 'adult');
+    setSelectedParticipantId(firstAdult?.id || booking?.participants?.[0]?.id || '');
     setCccdFrontFile(null);
     setCccdBackFile(null);
   };
@@ -334,7 +344,7 @@ const CustomerChatWidget = () => {
       setCccdFrontFile(null);
       setCccdBackFile(null);
       setShowCccdModal(false);
-      alert('Đã gửi CCCD cho HDV kiểm tra.');
+      // No alert - just close modal and message is sent
     } catch (err) {
       alert(err.response?.data?.error || err.message || 'Không thể gửi CCCD cho HDV. Vui lòng thử lại.');
     } finally {
@@ -392,7 +402,7 @@ const CustomerChatWidget = () => {
                   onChange={(e) => setSelectedParticipantId(e.target.value)}
                   className="w-full min-w-0 px-3 py-2 rounded-xl border border-outline-variant/50 bg-surface-container-low text-sm outline-none focus:border-primary"
                 >
-                  {(selectedBooking?.participants || []).map((participant) => (
+                  {(selectedBooking?.participants || []).filter(p => p.participantType === 'adult').map((participant) => (
                     <option key={participant.id} value={participant.id}>
                       {participant.fullName} {participant.isLead ? '(Trưởng nhóm)' : ''}
                     </option>
@@ -606,6 +616,23 @@ const CustomerChatWidget = () => {
                 </button>
               ))}
             </div>
+            {/* Quick Replies */}
+            {conversation && (
+              <div className="overflow-x-auto">
+                <div className="flex gap-1">
+                  {QUICK_REPLIES_CUSTOMER.map((reply, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setInputValue(reply)}
+                      className="px-2 py-1 whitespace-nowrap text-[11px] bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors flex-shrink-0 font-medium"
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 type="text"

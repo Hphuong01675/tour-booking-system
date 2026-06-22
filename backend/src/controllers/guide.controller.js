@@ -342,102 +342,297 @@ export const getTourAssignmentDetail = async (req, res) => {
   }
 };
 
+const getColumnName = (index) => {
+  let name = '';
+  let current = index;
+
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    current = Math.floor((current - 1) / 26);
+  }
+
+  return name;
+};
+
+const escapeXml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;');
+
+const createCrc32Table = () => {
+  const table = new Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) {
+      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+};
+
+const CRC32_TABLE = createCrc32Table();
+
+const crc32 = (buffer) => {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const getDosDateTime = (date = new Date()) => {
+  const year = Math.max(date.getFullYear(), 1980);
+  const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const dosDate = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { dosTime, dosDate };
+};
+
+const createZipBuffer = (files) => {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const { dosTime, dosDate } = getDosDateTime();
+
+  files.forEach((file) => {
+    const nameBuffer = Buffer.from(file.name, 'utf8');
+    const dataBuffer = Buffer.isBuffer(file.data) ? file.data : Buffer.from(file.data, 'utf8');
+    const checksum = crc32(dataBuffer);
+
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0x0800, 6);
+    localHeader.writeUInt16LE(0, 8);
+    localHeader.writeUInt16LE(dosTime, 10);
+    localHeader.writeUInt16LE(dosDate, 12);
+    localHeader.writeUInt32LE(checksum, 14);
+    localHeader.writeUInt32LE(dataBuffer.length, 18);
+    localHeader.writeUInt32LE(dataBuffer.length, 22);
+    localHeader.writeUInt16LE(nameBuffer.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+
+    localParts.push(localHeader, nameBuffer, dataBuffer);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0x0800, 8);
+    centralHeader.writeUInt16LE(0, 10);
+    centralHeader.writeUInt16LE(dosTime, 12);
+    centralHeader.writeUInt16LE(dosDate, 14);
+    centralHeader.writeUInt32LE(checksum, 16);
+    centralHeader.writeUInt32LE(dataBuffer.length, 20);
+    centralHeader.writeUInt32LE(dataBuffer.length, 24);
+    centralHeader.writeUInt16LE(nameBuffer.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(offset, 42);
+
+    centralParts.push(centralHeader, nameBuffer);
+    offset += localHeader.length + nameBuffer.length + dataBuffer.length;
+  });
+
+  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);
+  end.writeUInt16LE(0, 6);
+  end.writeUInt16LE(files.length, 8);
+  end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(centralSize, 12);
+  end.writeUInt32LE(offset, 16);
+  end.writeUInt16LE(0, 20);
+
+  return Buffer.concat([...localParts, ...centralParts, end]);
+};
+
+const createXlsxBuffer = (rows, sheetName = 'Danh sách khách hàng') => {
+  const safeSheetName = sheetName.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31) || 'Sheet1';
+  const maxColumns = Math.max(...rows.map((row) => row.length), 1);
+  const lastCell = `${getColumnName(maxColumns)}${Math.max(rows.length, 1)}`;
+  const columnXml = Array.from({ length: maxColumns }, (_, index) => {
+    const width = [8, 30, 16, 28, 18, 34, 18, 14][index] || 18;
+    return `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`;
+  }).join('');
+  const rowXml = rows.map((row, rowIndex) => {
+    const rowNumber = rowIndex + 1;
+    const cellXml = row.map((value, columnIndex) => {
+      const cellRef = `${getColumnName(columnIndex + 1)}${rowNumber}`;
+      const style = rowIndex === 0 || rowIndex === 11 ? 1 : rowIndex === 12 ? 2 : 0;
+      return `<c r="${cellRef}" t="inlineStr" s="${style}"><is><t>${escapeXml(value)}</t></is></c>`;
+    }).join('');
+    return `<row r="${rowNumber}">${cellXml}</row>`;
+  }).join('');
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="${escapeXml(safeSheetName)}" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`;
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="3">
+    <font><sz val="11"/><name val="Arial"/></font>
+    <font><b/><sz val="14"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>
+    <font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Arial"/></font>
+  </fonts>
+  <fills count="4">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2E4057"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF4472C4"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border><left style="thin"><color rgb="FFCFD8E3"/></left><right style="thin"><color rgb="FFCFD8E3"/></right><top style="thin"><color rgb="FFCFD8E3"/></top><bottom style="thin"><color rgb="FFCFD8E3"/></bottom><diagonal/></border>
+  </borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="3">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center"/></xf>
+  </cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+  const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <dimension ref="A1:${lastCell}"/>
+  <cols>${columnXml}</cols>
+  <sheetData>${rowXml}</sheetData>
+</worksheet>`;
+
+  return createZipBuffer([
+    { name: '[Content_Types].xml', data: contentTypes },
+    { name: '_rels/.rels', data: rootRels },
+    { name: 'xl/workbook.xml', data: workbook },
+    { name: 'xl/_rels/workbook.xml.rels', data: workbookRels },
+    { name: 'xl/styles.xml', data: styles },
+    { name: 'xl/worksheets/sheet1.xml', data: worksheet },
+  ]);
+};
+
 // 4b. Export customers/participants for a specific assignment/schedule
 export const exportCustomers = async (req, res) => {
   try {
-    const { TourAssignment, TourSchedule, Booking, Participant, User } = db;
+    const { TourAssignment, TourSchedule, Booking, Participant, User, Tour } = db;
     const targetId = req.params.id;
     const guideId = getAuthenticatedGuideId(req);
 
-    // Find assignment including schedule -> bookings -> customers & participants
     const assignment = await TourAssignment.findOne({
       where: {
-        [db.Sequelize.Op.or]: [ { id: targetId }, { scheduleId: targetId } ],
+        [db.Sequelize.Op.or]: [{ id: targetId }, { scheduleId: targetId }],
         guideId
       },
       include: [{
         model: TourSchedule,
         as: 'schedule',
         include: [{
+          model: Tour,
+          as: 'tour'
+        }, {
           model: Booking,
           as: 'bookings',
-          include: [
-            { model: User, as: 'customer', attributes: ['id', 'fullName', 'phone', 'email'] },
-            { model: Participant, as: 'participants' }
-          ]
+          include: [{
+            model: User,
+            as: 'customer',
+            attributes: ['id', 'fullName', 'phone', 'email']
+          }, {
+            model: Participant,
+            as: 'participants'
+          }]
         }]
       }]
     });
 
-    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
 
-    const bookings = (assignment.schedule && assignment.schedule.bookings) || [];
+    const schedule = assignment.schedule || {};
+    const bookings = schedule.bookings || [];
+    const guideName = req.user?.fullName || 'Chưa rõ';
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Customers');
+    const fmt = (d) => {
+      if (!d) return '';
+      const dt = new Date(d);
+      return `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+    };
 
-    sheet.columns = [
-      { header: 'Booking ID', key: 'bookingId', width: 24 },
-      { header: 'Booking Code', key: 'bookingCode', width: 20 },
-      { header: 'Booking Status', key: 'bookingStatus', width: 16 },
-      { header: 'Customer ID', key: 'customerId', width: 24 },
-      { header: 'Customer Name', key: 'customerName', width: 30 },
-      { header: 'Customer Phone', key: 'customerPhone', width: 16 },
-      { header: 'Participant ID', key: 'participantId', width: 24 },
-      { header: 'Participant Name', key: 'participantName', width: 30 },
-      { header: 'Type', key: 'participantType', width: 12 },
-      { header: 'Date of Birth', key: 'dateOfBirth', width: 16 },
-      { header: 'Address', key: 'address', width: 30 },
-      { header: 'Is Lead', key: 'isLead', width: 8 },
-      { header: 'Checkin Code', key: 'checkinCode', width: 16 },
-      { header: 'Checkin At', key: 'checkinAt', width: 20 }
+    const infoRows = [
+      ['Tên tour', schedule.tour?.title || 'Chưa có'],
+      ['Mã lịch trình', schedule.scheduleCode || 'Chưa có'],
+      ['Điểm đến', schedule.tour?.destination || 'Chưa có'],
+      ['Ngày khởi hành', fmt(schedule.departureDate) || 'Chưa có'],
+      ['Ngày kết thúc', fmt(schedule.returnDate) || 'Chưa có'],
+      ['Hướng dẫn viên', guideName],
+      ['Sức chứa', schedule.maxCapacity ? `${schedule.maxCapacity} khách` : 'Chưa có'],
+      ['Đã đăng ký', schedule.registered !== undefined ? `${schedule.registered} khách` : '0 khách'],
     ];
 
+    const rows = [
+      ['THÔNG TIN CHUYẾN ĐI'],
+      ...infoRows,
+      [],
+      [],
+      ['DANH SÁCH HÀNH KHÁCH'],
+      ['STT', 'Họ tên', 'Ngày sinh', 'Email', 'Số điện thoại', 'Địa chỉ', 'Mã check-in', 'Đã check-in'],
+    ];
+    const participantRows = [];
+    let stt = 0;
     for (const booking of bookings) {
-      const bookingId = booking.id;
-      const bookingCode = booking.bookingCode;
-      const bookingStatus = booking.status;
-      const customer = booking.customer || {};
-      const participants = booking.participants || [];
-
-      if (participants.length === 0) {
-        sheet.addRow({
-          bookingId,
-          bookingCode,
-          bookingStatus,
-          customerId: customer.id,
-          customerName: customer.fullName,
-          customerPhone: customer.phone
-        });
-      } else {
-        for (const p of participants) {
-          sheet.addRow({
-            bookingId,
-            bookingCode,
-            bookingStatus,
-            customerId: customer.id,
-            customerName: customer.fullName,
-            customerPhone: customer.phone,
-            participantId: p.id,
-            participantName: p.fullName,
-            participantType: p.participantType,
-            dateOfBirth: p.dateOfBirth ? new Date(p.dateOfBirth) : null,
-            address: p.address,
-            isLead: p.isLead,
-            checkinCode: p.checkinCode,
-            checkinAt: p.checkinAt ? new Date(p.checkinAt) : null
-          });
-        }
+      for (const participant of booking.participants || []) {
+        stt += 1;
+        participantRows.push([
+          stt,
+          participant.fullName || '',
+          fmt(participant.dateOfBirth),
+          booking.customer?.email || '',
+          participant.phone || booking.customer?.phone || '',
+          participant.address || '',
+          participant.checkinCode || '',
+          participant.checkinAt ? 'Có' : 'Chưa',
+        ]);
       }
     }
 
-    const buffer = await workbook.xlsx.writeBuffer();
+    if (participantRows.length) {
+      rows.push(...participantRows);
+    } else {
+      rows.push(['', 'Chưa có hành khách nào.']);
+    }
+
+    const scheduleCode = schedule.scheduleCode || targetId;
+    const workbookBuffer = createXlsxBuffer(rows);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=customers-${targetId}.xlsx`);
-    res.send(Buffer.from(buffer));
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''danh_sach_khach_hang_${encodeURIComponent(scheduleCode)}.xlsx`);
+    res.send(workbookBuffer);
   } catch (err) {
     console.error('Export customers error:', err);
-    res.status(500).json({ error: 'KhĂ´ng thá»ƒ xuáº¥t danh sĂ¡ch khĂ¡ch hĂ ng. Vui lĂ²ng thá»­ láº¡i sau.' });
+    res.status(500).json({ error: 'Không thể xuất danh sách khách hàng. Vui lòng thử lại sau.' });
   }
 };
 
@@ -762,6 +957,19 @@ export const sendGroupNotification = async (req, res) => {
       }
     }
 
+    if (type === 'announcement') {
+      const errors = {};
+      if (!String(subject || '').trim()) errors.subject = 'Vui lòng nhập tiêu đề thông báo';
+      if (!String(content || '').trim()) errors.content = 'Vui lòng nhập nội dung thông báo';
+      if (Object.keys(errors).length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập đầy đủ thông tin thông báo',
+          errors
+        });
+      }
+    }
+
     const assignment = await TourAssignment.findOne({
       where: {
         [db.Sequelize.Op.or]: [{ id: targetId }, { scheduleId: targetId }],
@@ -806,7 +1014,7 @@ export const sendGroupNotification = async (req, res) => {
     const targetBookingId = req.body.bookingId;
 
     const emailPromises = (schedule.bookings || []).map(async (booking) => {
-      if (targetBookingId && booking.id !== targetBookingId) {
+      if (targetBookingId && String(booking.id) !== String(targetBookingId)) {
         return { bookingId: booking.id, ok: true, skipped: true };
       }
       const customer = booking.customer || {};
@@ -822,81 +1030,81 @@ export const sendGroupNotification = async (req, res) => {
         const guidePhone = assignment.guide?.phone || '';
         const hotline = process.env.SUPPORT_HOTLINE || '';
 
-        mailSubject = `XĂ¡c nháº­n Ä‘Äƒng kĂ½ thĂ nh cĂ´ng chuyáº¿n Ä‘i ${tourTitle}`;
+        mailSubject = `Xác nhận đăng ký thành công chuyến đi ${tourTitle}`;
         
-        html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#222;line-height:1.6;">`;
-        html += `<p>ThĂ¢n gá»­i ${customer.fullName},</p>`;
-        html += `<p>ChĂºc má»«ng báº¡n Ä‘Ă£ Ä‘Äƒng kĂ½ thĂ nh cĂ´ng chuyáº¿n Ä‘i <strong>${tourTitle}</strong>! ChĂºng tĂ´i ráº¥t hĂ¡o há»©c Ä‘Æ°á»£c Ä‘á»“ng hĂ nh cĂ¹ng báº¡n trong hĂ nh trĂ¬nh sáº¯p tá»›i.</p>`;
-        html += `<p>DÆ°á»›i Ä‘Ă¢y lĂ  cĂ¡c thĂ´ng tin quan trá»ng Ä‘á»ƒ báº¡n chuáº©n bá»‹ cho chuyáº¿n Ä‘i:</p>`;
+        html = `<!doctype html><html lang="vi"><head><meta charset="UTF-8"></head><body style="font-family:Arial,Helvetica,sans-serif;color:#222;line-height:1.6;">`;
+        html += `<p>Thân gửi ${customer.fullName},</p>`;
+        html += `<p>Chúc mừng bạn đã đăng ký thành công chuyến đi <strong>${tourTitle}</strong>! Chúng tôi rất háo hức được đồng hành cùng bạn trong hành trình sắp tới.</p>`;
+        html += `<p>Dưới đây là các thông tin quan trọng để bạn chuẩn bị cho chuyến đi:</p>`;
         
-        html += `<h3>đŸ“Œ THĂ”NG TIN KHá»I HĂ€NH:</h3>`;
-        html += `<p>Thá»i gian táº­p trung: ${departureDate ? departureDate.toLocaleString('vi-VN') : ''}<br/>`;
-        html += `Äá»‹a Ä‘iá»ƒm Ä‘Ă³n: ${pickup || ''}</p>`;
+        html += `<h3>THÔNG TIN KHỞI HÀNH:</h3>`;
+        html += `<p>Thời gian tập trung: ${departureDate ? departureDate.toLocaleString('vi-VN') : ''}<br/>`;
+        html += `Địa điểm đón: ${pickup || ''}</p>`;
 
         html += `<h3>NHÓM ZALO HỖ TRỢ:</h3>`;
         html += `<p>Quý khách vui lòng tham gia nhóm Zalo của đoàn để nhận thông tin hỗ trợ nhanh từ hướng dẫn viên/điều hành:<br/>`;
         html += `<a href="${normalizedZaloGroupLink}" target="_blank" rel="noopener noreferrer">${normalizedZaloGroupLink}</a></p>`;
         
-        html += `<h3>đŸ« THĂ”NG TIN VĂ‰ & CHECK-IN:</h3>`;
-        html += `<p>Äá»ƒ thuáº­n tiá»‡n cho viá»‡c kiá»ƒm soĂ¡t vĂ  sáº¯p xáº¿p, mĂ£ QR check-in cá»§a cáº£ nhĂ³m sáº½ Ä‘Æ°á»£c gá»­i trá»±c tiáº¿p cho NhĂ³m trÆ°á»Ÿng. TrÆ°á»Ÿng nhĂ³m vui lĂ²ng lÆ°u láº¡i mĂ£ QR nĂ y Ä‘á»ƒ xuáº¥t trĂ¬nh cho HÆ°á»›ng dáº«n viĂªn khi lĂªn xe.</p>`;
+        html += `<h3>THÔNG TIN VÉ & CHECK-IN:</h3>`;
+        html += `<p>Để thuận tiện cho việc kiểm soát và sắp xếp, mã QR check-in của cả nhóm sẽ được gửi trực tiếp cho Trưởng nhóm. Trưởng nhóm vui lòng lưu lại mã QR này để xuất trình cho Hướng dẫn viên khi lên xe.</p>`;
         
         const participants = booking.participants || [];
         const leader = participants.find(p => p.isLead) || participants[0] || {};
         const members = participants.filter(p => p.id !== leader.id);
 
         if (leader.fullName) {
-          html += `<p><strong>Äáº¡i diá»‡n NhĂ³m trÆ°á»Ÿng:</strong> ${leader.fullName}<br/>`;
-          html += `<strong>Loáº¡i vĂ© (Check-in):</strong> ${leader.participantType === 'adult' ? 'NgÆ°á»i lá»›n' : 'Tráº» em'}<br/>`;
-          html += `<strong>MĂ£ QR:</strong><br/>`;
+          html += `<p><strong>Đại diện Nhóm trưởng:</strong> ${leader.fullName}<br/>`;
+          html += `<strong>Loại vé (Check-in):</strong> ${leader.participantType === 'adult' ? 'Người lớn' : 'Trẻ em'}<br/>`;
+          html += `<strong>Mã QR:</strong><br/>`;
           if (leader.checkinCode) {
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(leader.checkinCode)}`;
-            html += `<img src="${qrUrl}" alt="QR Code" style="margin-top:5px; border:1px solid #ccc; padding:3px; border-radius:4px;"/><br/>`;
-            html += `<span style="font-size: 14px; color: #555;">MĂ£ sá»‘: <strong>${leader.checkinCode}</strong></span></p>`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&ecc=H&margin=12&data=${encodeURIComponent(leader.checkinCode)}`;
+            html += `<img src="${qrUrl}" alt="QR Code" width="220" height="220" style="margin-top:5px; border:1px solid #ccc; padding:6px; border-radius:4px; background:#fff;"/><br/>`;
+            html += `<span style="font-size: 14px; color: #555;">Mã số: <strong>${leader.checkinCode}</strong></span></p>`;
           } else {
-            html += `<em>ChÆ°a cĂ³ mĂ£ QR</em></p>`;
+            html += `<em>Chưa có mã QR</em></p>`;
           }
         }
 
         members.forEach((m, index) => {
-          html += `<p><strong>ThĂ nh viĂªn ${index + 1}:</strong> ${m.fullName}<br/>`;
-          html += `<strong>Loáº¡i vĂ© (Check-in):</strong> ${m.participantType === 'adult' ? 'NgÆ°á»i lá»›n' : 'Tráº» em'}<br/>`;
-          html += `<strong>MĂ£ QR:</strong><br/>`;
+          html += `<p><strong>Thành viên ${index + 1}:</strong> ${m.fullName}<br/>`;
+          html += `<strong>Loại vé (Check-in):</strong> ${m.participantType === 'adult' ? 'Người lớn' : 'Trẻ em'}<br/>`;
+          html += `<strong>Mã QR:</strong><br/>`;
           if (m.checkinCode) {
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(m.checkinCode)}`;
-            html += `<img src="${qrUrl}" alt="QR Code" style="margin-top:5px; border:1px solid #ccc; padding:3px; border-radius:4px;"/><br/>`;
-            html += `<span style="font-size: 14px; color: #555;">MĂ£ sá»‘: <strong>${m.checkinCode}</strong></span></p>`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&ecc=H&margin=12&data=${encodeURIComponent(m.checkinCode)}`;
+            html += `<img src="${qrUrl}" alt="QR Code" width="220" height="220" style="margin-top:5px; border:1px solid #ccc; padding:6px; border-radius:4px; background:#fff;"/><br/>`;
+            html += `<span style="font-size: 14px; color: #555;">Mã số: <strong>${m.checkinCode}</strong></span></p>`;
           } else {
-            html += `<em>ChÆ°a cĂ³ mĂ£ QR</em></p>`;
+            html += `<em>Chưa có mã QR</em></p>`;
           }
         });
 
         if (notes) {
-          html += `<h3>đŸ’¡ GHI CHĂ Tá»ª HÆ¯á»NG DáºªN VIĂN:</h3>`;
+          html += `<h3>GHI CHÚ TỪ HƯỚNG DẪN VIÊN:</h3>`;
           html += `<p>${notes.replace(/\\n/g, '<br/>')}</p>`;
         }
 
         const contactInfo = [
           hotline ? `hotline: <strong>${hotline}</strong>` : '',
-          guideName || guidePhone ? `HÆ°á»›ng dáº«n viĂªn phá»¥ trĂ¡ch: <strong>${guideName}${guidePhone ? ` - ${guidePhone}` : ''}</strong>` : ''
-        ].filter(Boolean).join(' hoáº·c ');
+          guideName || guidePhone ? `Hướng dẫn viên phụ trách: <strong>${guideName}${guidePhone ? ` - ${guidePhone}` : ''}</strong>` : ''
+        ].filter(Boolean).join(' hoặc ');
         if (contactInfo) {
-          html += `<p>Náº¿u cáº§n há»— trá»£ kháº©n cáº¥p, vui lĂ²ng liĂªn há»‡ ${contactInfo}.</p>`;
+          html += `<p>Nếu cần hỗ trợ khẩn cấp, vui lòng liên hệ ${contactInfo}.</p>`;
         }
-        html += `<p>ChĂºc báº¡n vĂ  gia Ä‘Ă¬nh cĂ³ má»™t chuyáº¿n Ä‘i tháº­t tuyá»‡t vá»i!</p>`;
-        html += `<p>TrĂ¢n trá»ng,<br/><strong>Chip3chip / Ban Quáº£n LĂ½ Chuyáº¿n Äi</strong></p>`;
+        html += `<p>Chúc bạn và gia đình có một chuyến đi thật tuyệt vời!</p>`;
+        html += `<p>Trân trọng,<br/><strong>Chip3chip / Ban Quản Lý Chuyến Đi</strong></p>`;
         html += `</body></html>`;
       } else if (type === 'reminder') {
         const guideName = assignment.guide?.fullName || '';
         const guidePhone = assignment.guide?.phone || '';
         const hotline = process.env.SUPPORT_HOTLINE || '';
 
-        mailSubject = `đŸ§³ Nháº¯c nhá»Ÿ quan trá»ng: Chuáº©n bá»‹ hĂ nh trang cho chuyáº¿n Ä‘i ${tourTitle} cĂ¹ng Chip3chip!`;
+        mailSubject = `Nhắc nhở quan trọng: Chuẩn bị hành trang cho chuyến đi ${tourTitle} cùng Chip3chip!`;
         
-        html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#222;line-height:1.6;">`;
-        html += `<p>KĂ­nh gá»­i QuĂ½ khĂ¡ch <strong>${customer.fullName}</strong>,</p>`;
-        html += `<p>Lá»i Ä‘áº§u tiĂªn, Chip3chip xin chĂ¢n thĂ nh cáº£m Æ¡n QuĂ½ khĂ¡ch Ä‘Ă£ tin tÆ°á»Ÿng vĂ  Ä‘á»“ng hĂ nh cĂ¹ng chĂºng tĂ´i.</p>`;
-        html += `<p>ChĂºng tĂ´i xin trĂ¢n trá»ng nháº¯c láº¡i, QuĂ½ khĂ¡ch cĂ³ má»™t chuyáº¿n Ä‘i <strong>${tourTitle}</strong> sáº½ chĂ­nh thá»©c khá»Ÿi hĂ nh vĂ o ngĂ y <strong>${departureDate ? departureDate.toLocaleString('vi-VN') : ''}</strong>.</p>`;
-        html += `<p>Äá»ƒ cĂ³ má»™t chuyáº¿n Ä‘i hoĂ n háº£o vĂ  lÆ°u giá»¯ láº¡i nhá»¯ng ká»· niá»‡m Ä‘áº¹p nháº¥t, chĂºng tĂ´i xin nháº¯c QuĂ½ khĂ¡ch lÆ°u Ă½ chuáº©n bá»‹ vĂ  mang theo má»™t sá»‘ váº­t dá»¥ng cáº§n thiáº¿t sau:</p>`;
+        html = `<!doctype html><html lang="vi"><head><meta charset="UTF-8"></head><body style="font-family:Arial,Helvetica,sans-serif;color:#222;line-height:1.6;">`;
+        html += `<p>Kính gửi Quý khách <strong>${customer.fullName}</strong>,</p>`;
+        html += `<p>Lời đầu tiên, Chip3chip xin chân thành cảm ơn Quý khách đã tin tưởng và đồng hành cùng chúng tôi.</p>`;
+        html += `<p>Chúng tôi xin trân trọng nhắc lại, Quý khách có một chuyến đi <strong>${tourTitle}</strong> sẽ chính thức khởi hành vào ngày <strong>${departureDate ? departureDate.toLocaleString('vi-VN') : ''}</strong>.</p>`;
+        html += `<p>Để có một chuyến đi hoàn hảo và lưu giữ lại những kỷ niệm đẹp nhất, chúng tôi xin nhắc Quý khách lưu ý chuẩn bị và mang theo một số vật dụng cần thiết sau:</p>`;
         
         if (checklist && Array.isArray(checklist)) {
           let catIndex = 1;
@@ -905,7 +1113,7 @@ export const sendGroupNotification = async (req, res) => {
             if (checkedItems.length > 0) {
               html += `<h3>${catIndex}. ${cat.name}:</h3>`;
               checkedItems.forEach(item => {
-                const requiredTag = item.isRequired ? ' <strong style="color: #ba1a1a;">(Báº¯t buá»™c)</strong>' : '';
+                const requiredTag = item.isRequired ? ' <strong style="color: #ba1a1a;">(Bắt buộc)</strong>' : '';
                 html += `<li>${item.name}${requiredTag}</li>`;
               });
               html += `</ul>`;
@@ -914,47 +1122,69 @@ export const sendGroupNotification = async (req, res) => {
           });
         }
 
-        html += `<p><strong>LÆ°u Ă½ nhá»:</strong> QuĂ½ khĂ¡ch vui lĂ²ng cĂ³ máº·t táº¡i Ä‘iá»ƒm Ä‘Ă³n <strong>${pickup || ''}</strong> vĂ o lĂºc <strong>${departureDate ? departureDate.toLocaleString('vi-VN') : ''}</strong> Ä‘á»ƒ chuyáº¿n Ä‘i Ä‘Æ°á»£c báº¯t Ä‘áº§u Ä‘Ăºng lá»‹ch trĂ¬nh.</p>`;
+        html += `<p><strong>Lưu ý nhỏ:</strong> Quý khách vui lòng có mặt tại điểm đón <strong>${pickup || ''}</strong> vào lúc <strong>${departureDate ? departureDate.toLocaleString('vi-VN') : ''}</strong> để chuyến đi được bắt đầu đúng lịch trình.</p>`;
 
         if (mandatoryNote && mandatoryNote.trim() !== '') {
           html += `<div style="background-color: #ffebee; border-left: 4px solid #ba1a1a; padding: 15px; margin: 20px 0; border-radius: 4px;">`;
-          html += `<h4 style="color: #ba1a1a; margin-top: 0; margin-bottom: 10px;">â ï¸ LÆ¯U Ă Báº®T BUá»˜C Tá»ª HÆ¯á»NG DáºªN VIĂN:</h4>`;
+          html += `<h4 style="color: #ba1a1a; margin-top: 0; margin-bottom: 10px;">LƯU Ý BẮT BUỘC TỪ HƯỚNG DẪN VIÊN:</h4>`;
           html += `<p style="color: #93000a; font-weight: bold; margin: 0; font-size: 16px;">${mandatoryNote.replace(/\\n/g, '<br/>')}</p>`;
-          html += `<p style="color: #93000a; font-style: italic; margin-top: 10px; margin-bottom: 0;">(Náº¿u khĂ´ng mang theo chĂºng tĂ´i sáº½ khĂ´ng chá»‹u trĂ¡ch nhiá»‡m)</p>`;
+          html += `<p style="color: #93000a; font-style: italic; margin-top: 10px; margin-bottom: 0;">(Nếu không mang theo, chúng tôi sẽ không chịu trách nhiệm)</p>`;
           html += `</div>`;
         }
 
         const contactInfo = [
           hotline ? `Hotline: <strong>${hotline}</strong>` : '',
-          guideName || guidePhone ? `HÆ°á»›ng dáº«n viĂªn phá»¥ trĂ¡ch: <strong>${guideName}${guidePhone ? ` - ${guidePhone}` : ''}</strong>` : ''
-        ].filter(Boolean).join(' hoáº·c ');
+          guideName || guidePhone ? `Hướng dẫn viên phụ trách: <strong>${guideName}${guidePhone ? ` - ${guidePhone}` : ''}</strong>` : ''
+        ].filter(Boolean).join(' hoặc ');
         if (contactInfo) {
-          html += `<p>Náº¿u QuĂ½ khĂ¡ch cáº§n há»— trá»£ thĂªm thĂ´ng tin hoáº·c cĂ³ báº¥t ká»³ tháº¯c máº¯c nĂ o trÆ°á»›c chuyáº¿n Ä‘i, xin vui lĂ²ng liĂªn há»‡ vá»›i ${contactInfo}.</p>`;
+          html += `<p>Nếu Quý khách cần hỗ trợ thêm thông tin hoặc có bất kỳ thắc mắc nào trước chuyến đi, xin vui lòng liên hệ với ${contactInfo}.</p>`;
         }
-        html += `<p>ChĂºng tĂ´i ráº¥t hĂ¡o há»©c Ä‘Æ°á»£c Ä‘á»“ng hĂ nh cĂ¹ng QuĂ½ khĂ¡ch. ChĂºc QuĂ½ khĂ¡ch cĂ³ má»™t chuyáº¿n Ä‘i tháº­t vui váº», an toĂ n vĂ  Ä‘ong Ä‘áº§y ká»· niá»‡m!</p>`;
-        html += `<p>TrĂ¢n trá»ng,<br/><strong>Bá»™ pháº­n ChÄƒm sĂ³c khĂ¡ch hĂ ng</strong><br/>Chip3chip</p>`;
+        html += `<p>Chúng tôi rất háo hức được đồng hành cùng Quý khách. Chúc Quý khách có một chuyến đi thật vui vẻ, an toàn và đong đầy kỷ niệm!</p>`;
+        html += `<p>Trân trọng,<br/><strong>Bộ phận Chăm sóc khách hàng</strong><br/>Chip3chip</p>`;
         html += `</body></html>`;
       } else {
         // Announcement: use provided subject & content
-        mailSubject = mailSubject || `ThĂ´ng bĂ¡o tá»« Chip3Chip`;
-        html = `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#222">`;
+        mailSubject = mailSubject || `Thông báo từ Chip3Chip`;
+        html = `<!doctype html><html lang="vi"><head><meta charset="UTF-8"></head><body style="font-family:Arial,Helvetica,sans-serif;color:#222">`;
         html += `<h2>${mailSubject}</h2>`;
         html += `<div>${(content || '').replace(/\\n/g, '<br/>')}</div>`;
-        if (notes) html += `<hr/><h4>Ghi chĂº</h4><p>${notes}</p>`;
-        html += `<p>TrĂ¢n trá»ng,<br/>Äá»™i ngÅ© Chip3Chip</p>`;
+        if (notes) html += `<hr/><h4>Ghi chú</h4><p>${notes}</p>`;
+        html += `<p>Trân trọng,<br/>Đội ngũ Chip3Chip</p>`;
         html += `</body></html>`;
       }
 
-      const ok = await mailService.sendMail({ to: customer.email, subject: mailSubject, html });
-      return { bookingId: booking.id, email: customer.email, ok };
+      const sendResult = await mailService.sendMail({ to: customer.email, subject: mailSubject, html });
+      return {
+        bookingId: booking.id,
+        email: customer.email,
+        ok: Boolean(sendResult?.ok),
+        messageId: sendResult?.messageId,
+        accepted: sendResult?.accepted,
+        rejected: sendResult?.rejected,
+        reason: sendResult?.error
+      };
     });
 
-    const results = await Promise.all(emailPromises);
+    const settledResults = await Promise.allSettled(emailPromises);
+    const results = settledResults.map((result) => {
+      if (result.status === 'fulfilled') return result.value;
+      return { ok: false, reason: result.reason?.message || 'Send failed' };
+    });
+    const attempted = results.filter((result) => !result.skipped);
+    const sentCount = attempted.filter((result) => result.ok).length;
 
-    res.json({ results });
+    if (sentCount === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không gửi được email nào. Vui lòng kiểm tra email khách hàng hoặc cấu hình SMTP.',
+        results
+      });
+    }
+
+    res.json({ success: true, sentCount, results });
   } catch (err) {
     console.error('Send group notification error:', err);
-    res.status(500).json({ error: 'KhĂ´ng thá»ƒ gá»­i thĂ´ng bĂ¡o. Vui lĂ²ng thá»­ láº¡i sau.' });
+    res.status(500).json({ error: 'Không thể gửi thông báo. Vui lòng thử lại sau.' });
   }
 };
 
@@ -1142,7 +1372,7 @@ export const checkinParticipant = async (req, res) => {
     const guideId = getAuthenticatedGuideId(req);
 
     if (!checkinCode) {
-      return res.status(400).json({ error: 'MĂ£ check-in khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng' });
+      return res.status(400).json({ error: 'Mã không hợp lệ hoặc tour không tồn tại / không thuộc về bạn.' });
     }
 
     const participant = await Participant.findOne({
@@ -1169,9 +1399,9 @@ export const checkinParticipant = async (req, res) => {
     });
 
     if (!participant) {
-      return res.status(404).json({ error: 'MĂ£ check-in khĂ´ng há»£p lá»‡ hoáº·c tour khĂ´ng tá»“n táº¡i / khĂ´ng thuá»™c vá» báº¡n.' });
+      return res.status(404).json({ error: 'Mã không hợp lệ hoặc tour không tồn tại / không thuộc về bạn.' });
     } else if (participant.checkinAt) {
-      return res.status(400).json({ error: 'KhĂ¡ch hĂ ng nĂ y Ä‘Ă£ Ä‘Æ°á»£c check-in trÆ°á»›c Ä‘Ă³.' });
+      return res.status(400).json({ error: 'Khách hàng này đã được check-in trước đó.' });
     } else {
       participant.checkinAt = new Date();
       await participant.save();
@@ -1192,30 +1422,70 @@ export const checkinParticipant = async (req, res) => {
   }
 };
 
+// Helper function to upload file to Cloudinary
+const uploadCCCDToCloudinary = (fileBuffer, folder, publicId) => uploadImageToCloudinary(fileBuffer, folder, publicId);
+
 // 10. Upload CCCD images for a participant (front/back)
 export const uploadParticipantCccd = async (req, res) => {
   try {
     const { Participant } = db;
-    const { participantId } = req.params;
+    const { participantId, assignmentId } = req.params;
 
     const files = req.files || {};
     const front = files.front && files.front[0];
     const back = files.back && files.back[0];
 
-    if (!front && !back) return res.status(400).json({ error: 'No files uploaded' });
+    console.log('[CCCD Upload] Files received:', { 
+      hasFiles: !!req.files, 
+      fileKeys: Object.keys(req.files || {}),
+      front: !!front,
+      back: !!back
+    });
+
+    if (!front && !back) {
+      console.error('[CCCD Upload] No files uploaded');
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
 
     const participant = await Participant.findByPk(participantId);
     if (!participant) return res.status(404).json({ error: 'Participant not found' });
 
-    // Cloudinary path is stored in file.path
-    if (front && front.path) participant.cccdFrontUrl = front.path;
-    if (back && back.path) participant.cccdBackUrl = back.path;
-    await participant.save();
+    // Upload CCCD images to Cloudinary
+    try {
+      if (front && front.buffer) {
+        const frontUrl = await uploadCCCDToCloudinary(
+          front.buffer,
+          `tour-booking-system/participants/${participantId}/cccd`,
+          `cccd_front_${participantId}`
+        );
+        participant.cccdFrontUrl = frontUrl;
+      }
 
-    res.json({ success: true, participant });
+      if (back && back.buffer) {
+        const backUrl = await uploadCCCDToCloudinary(
+          back.buffer,
+          `tour-booking-system/participants/${participantId}/cccd`,
+          `cccd_back_${participantId}`
+        );
+        participant.cccdBackUrl = backUrl;
+      }
+
+      await participant.save();
+
+      res.json({ success: true, participant });
+    } catch (uploadErr) {
+      console.error('Cloudinary upload error:', uploadErr);
+      
+      const isConfigMissing = uploadErr.message === 'CLOUDINARY_CONFIG_MISSING';
+      const message = isConfigMissing
+        ? 'Cloudinary chưa được cấu hình. Vui lòng kiểm tra biến môi trường.'
+        : 'Không thể tải ảnh lên. Vui lòng thử lại sau.';
+      
+      res.status(isConfigMissing ? 503 : 500).json({ error: message });
+    }
   } catch (err) {
     console.error('Upload participant cccd error:', err);
-    res.status(500).json({ error: 'KhĂ´ng thá»ƒ táº£i áº£nh. Vui lĂ²ng thá»­ láº¡i sau.' });
+    res.status(500).json({ error: 'Không thể tải ảnh. Vui lòng thử lại sau.' });
   }
 };
 

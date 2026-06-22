@@ -225,24 +225,28 @@ class ParticipantSearchService {
       return { passes: true, reason: 'NO_PAYMENT_FILTER' };
     }
 
-    const bookingStatus = String(booking.status || '').toUpperCase();
-    const debtAmount = booking.debtAmount || 0;
+    const bookingStatus = String(booking.status || '').toLowerCase();
+    const finalPrice = Number(booking.finalPrice || booking.totalPrice || 0);
+    const paidAmount = (booking.payments || [])
+      .filter((payment) => String(payment.status || '').toLowerCase() === 'success')
+      .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+    const debtAmount = Math.max(finalPrice - paidAmount, 0);
 
     // Branch: Payment status filtering
     if (paymentStatusFilter === 'paid') {
-      if (bookingStatus === 'PAID' || debtAmount === 0) {
+      if (bookingStatus === 'paid' || (finalPrice > 0 && debtAmount === 0)) {
         return { passes: true, reason: 'FULLY_PAID' };
       } else {
         return { passes: false, reason: 'NOT_PAID', priority: 0 };
       }
     } else if (paymentStatusFilter === 'pending') {
-      if (bookingStatus === 'PENDING' || debtAmount > 0) {
+      if (bookingStatus === 'pending_payment' || (paidAmount === 0 && debtAmount > 0)) {
         return { passes: true, reason: 'PAYMENT_PENDING' };
       } else {
         return { passes: false, reason: 'NOT_PENDING', priority: 0 };
       }
     } else if (paymentStatusFilter === 'partial') {
-      if (debtAmount > 0 && bookingStatus !== 'NOT_PAID') {
+      if (paidAmount > 0 && debtAmount > 0) {
         return { passes: true, reason: 'PARTIAL_PAYMENT' };
       } else {
         return { passes: false, reason: 'NOT_PARTIAL', priority: 0 };

@@ -7,9 +7,26 @@ import {
     checkinParticipant,
     uploadParticipantCccd
 } from '../../api/guideApi';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import ChecklistTab from '../../components/guide/ChecklistTab';
 import * as chatApi from '../../api/chatApi';
+
+const formatChatPreview = (content) => {
+    if (!content) return 'Chưa có tin nhắn.';
+
+    try {
+        const parsed = JSON.parse(content);
+        if (parsed?.type === 'cccd_review') {
+            return `Khách đã gửi CCCD để kiểm tra${parsed.participantName ? `: ${parsed.participantName}` : ''}.`;
+        }
+        if (parsed?.type === 'image') return 'Khách đã gửi hình ảnh.';
+        if (parsed?.type === 'video') return 'Khách đã gửi video.';
+    } catch {
+        // Plain text message.
+    }
+
+    return content;
+};
 
 const QRScanner = ({ assignmentId, onClose, onCheckinSuccess }) => {
     const [manualCode, setManualCode] = useState('');
@@ -24,57 +41,33 @@ const QRScanner = ({ assignmentId, onClose, onCheckinSuccess }) => {
         onCheckinSuccessRef.current = onCheckinSuccess;
     }, [onCheckinSuccess]);
 
-    useEffect(() => {
-        // Tăng fps lên 20 để quét mượt hơn, thay đổi kích thước vùng quét tự động
-        const scanner = new Html5QrcodeScanner(
-            "qr-reader",
-            { fps: 20, qrbox: { width: 250, height: 250 }, rememberLastUsedCamera: true },
-            /* verbose= */ false
-        );
+    const resetScannerAfter = (delay) => {
+        setTimeout(() => {
+            isProcessing.current = false;
+            setIsProcessingFlag(false);
+            setScanStatus('scanning');
+            setStatusMsg('');
+        }, delay);
+    };
 
-        const handleScan = async (decodedText) => {
-            if (isProcessing.current) return;
-            isProcessing.current = true;
-            setIsProcessingFlag(true);
-            setScanStatus('processing');
-            setStatusMsg('Đang xử lý...');
+    const getCheckinCode = (participant, fallbackCode) => {
+        return participant?.checkinCode || participant?.checkin_code || fallbackCode || '';
+    };
 
-            try {
-                const response = await checkinParticipant(assignmentId, decodedText);
-                if (response.success) {
-                    setScanStatus('success');
-                    setStatusMsg(`Thành công: ${response.participant.fullName}`);
-                    if (onCheckinSuccessRef.current) onCheckinSuccessRef.current();
-                    // Sau 2 giây, quay lại trạng thái quét tiếp theo
-                    setTimeout(() => {
-                        isProcessing.current = false;
-                        setIsProcessingFlag(false);
-                        setScanStatus('scanning');
-                        setStatusMsg('');
-                    }, 2000);
-                }
-            } catch (err) {
-                setScanStatus('error');
-                setStatusMsg(err.response?.data?.error || 'Mã không hợp lệ!');
-                setTimeout(() => {
-                    isProcessing.current = false;
-                    setIsProcessingFlag(false);
-                    setScanStatus('scanning');
-                    setStatusMsg('');
-                }, 3000);
-            }
-        };
+    const getCheckinErrorMessage = (err) => {
+        const message = err.response?.data?.error || err.response?.data?.message || '';
+        const normalized = String(message).toLowerCase();
 
-        scanner.render(handleScan, () => {});
+        if (normalized.includes('check-in trước') || normalized.includes('already') || normalized.includes('đã được check-in')) {
+            return 'Khách hàng này đã được check-in trước đó.';
+        }
 
-        return () => {
-            scanner.clear().catch(e => console.error(e));
-        };
-    }, [assignmentId]);
+        return 'Mã không hợp lệ hoặc tour không tồn tại / không thuộc về bạn.';
+    };
 
-    const handleManualSubmit = async (e) => {
-        e.preventDefault();
-        if (!manualCode.trim() || isProcessing.current) return;
+    const handleCheckinCode = async (rawCode) => {
+        const checkinCode = String(rawCode || '').trim();
+        if (!checkinCode || isProcessing.current) return;
 
         isProcessing.current = true;
         setIsProcessingFlag(true);
@@ -82,28 +75,110 @@ const QRScanner = ({ assignmentId, onClose, onCheckinSuccess }) => {
         setStatusMsg('Đang xử lý...');
 
         try {
-            const response = await checkinParticipant(assignmentId, manualCode.trim());
+            const response = await checkinParticipant(assignmentId, checkinCode);
             if (response.success) {
+                const participant = response.participant || {};
+                const participantName = participant.fullName || 'Khách hàng';
+                const displayCode = getCheckinCode(participant, checkinCode);
                 setScanStatus('success');
-                setStatusMsg(`Thành công: ${response.participant.fullName}`);
-                setManualCode('');
-                onCheckinSuccess();
-                setTimeout(() => {
-                    isProcessing.current = false;
-                    setIsProcessingFlag(false);
-                    setScanStatus('scanning');
-                    setStatusMsg('');
-                }, 2000);
+                setStatusMsg(`Thành công: ${participantName} - ${displayCode}`);
+                onCheckinSuccessRef.current?.();
+                resetScannerAfter(2000);
             }
         } catch (err) {
             setScanStatus('error');
-            setStatusMsg(err.response?.data?.error || 'Mã không hợp lệ!');
-            setTimeout(() => {
-                isProcessing.current = false;
-                setScanStatus('scanning');
-                setStatusMsg('');
-            }, 3000);
+            setStatusMsg(getCheckinErrorMessage(err));
+            resetScannerAfter(3000);
         }
+    };
+
+    useEffect(() => {
+        let scanner = null;
+        let isCancelled = false;
+
+        const startCameraScanner = async () => {
+            try {
+                if (isCancelled) return;
+
+                scanner = new Html5Qrcode('qr-reader', false);
+                const cameras = await Html5Qrcode.getCameras();
+                if (isCancelled) return;
+
+                const preferredCamera = cameras.find((camera) => {
+                    const label = String(camera.label || '').toLowerCase();
+                    return label.includes('back') || label.includes('rear') || label.includes('environment');
+                }) || cameras[0];
+                const scannerConfig = {
+                    fps: 15,
+                    disableFlip: true,
+                    formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true,
+                    },
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const boxSize = Math.min(360, Math.max(220, Math.floor(minEdge * 0.84)));
+                        return { width: boxSize, height: boxSize };
+                    },
+                };
+                const cameraCandidates = [
+                    preferredCamera?.id,
+                    { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                    { facingMode: 'environment' },
+                    true,
+                ].filter(Boolean);
+
+                let lastCameraError = null;
+                for (const candidate of cameraCandidates) {
+                    if (isCancelled) return;
+                    try {
+                        await scanner.start(
+                            candidate,
+                            scannerConfig,
+                            (decodedText) => {
+                                handleCheckinCode(decodedText);
+                            },
+                            () => {}
+                        );
+                        return;
+                    } catch (cameraErr) {
+                        lastCameraError = cameraErr;
+                        console.warn('QR camera candidate failed:', candidate, cameraErr);
+                    }
+                }
+
+                throw lastCameraError || new Error('No camera candidate could be started');
+            } catch (err) {
+                console.error('Failed to start QR camera:', err);
+                if (!isCancelled) {
+                    setScanStatus('error');
+                    const reason = err?.name || err?.message || '';
+                    setStatusMsg(`Không thể mở camera${reason ? ` (${reason})` : ''}. Vui lòng kiểm tra trình duyệt đang dùng localhost/HTTPS, đóng app khác đang dùng camera hoặc nhập mã thủ công.`);
+                    resetScannerAfter(4000);
+                }
+            }
+        };
+
+        startCameraScanner();
+
+        return () => {
+            isCancelled = true;
+            if (scanner) {
+                Promise.resolve()
+                    .then(() => (scanner.isScanning ? scanner.stop() : undefined))
+                    .then(() => scanner.clear())
+                    .catch((err) => console.error('Failed to stop QR camera:', err));
+            }
+        };
+    }, [assignmentId]);
+
+    const handleManualSubmit = async (e) => {
+        e.preventDefault();
+        const checkinCode = manualCode.trim();
+        if (!checkinCode || isProcessing.current) return;
+
+        setManualCode('');
+        await handleCheckinCode(checkinCode);
     };
 
     return (
@@ -283,8 +358,8 @@ const GuideTourDetailPage = () => {
             });
             alert('Đã gửi email thành công!');
             setShowPrivateEmailModal(false);
-        } catch {
-            alert('Không thể gửi email. Vui lòng thử lại.');
+        } catch (err) {
+            alert(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi email. Vui lòng thử lại.');
         } finally {
             setIsSendingPrivateEmail(false);
         }
@@ -417,18 +492,72 @@ const GuideTourDetailPage = () => {
         return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
     };
 
+    const parseMoney = (value) => {
+        const amount = Number(value);
+        return Number.isFinite(amount) ? amount : 0;
+    };
+
+    const getBookingPaidAmount = (booking) => {
+        return (booking.payments || [])
+            .filter(payment => String(payment.status || '').toLowerCase() === 'success')
+            .reduce((sum, payment) => sum + parseMoney(payment.amount), 0);
+    };
+
+    const getBookingPaymentInfo = (booking) => {
+        const status = String(booking.status || '').toLowerCase();
+        const finalPrice = parseMoney(booking.finalPrice || booking.totalPrice);
+        const paidAmount = getBookingPaidAmount(booking);
+        const debtAmount = Math.max(finalPrice - paidAmount, 0);
+
+        if (status === 'paid' || (finalPrice > 0 && debtAmount <= 0)) {
+            return {
+                status,
+                finalPrice,
+                paidAmount: finalPrice || paidAmount,
+                debtAmount: 0,
+                label: 'Đã hoàn tất',
+                tone: 'paid'
+            };
+        }
+
+        if (paidAmount > 0) {
+            return {
+                status,
+                finalPrice,
+                paidAmount,
+                debtAmount,
+                label: 'Thanh toán một phần',
+                tone: 'partial'
+            };
+        }
+
+        return {
+            status,
+            finalPrice,
+            paidAmount,
+            debtAmount: finalPrice,
+            label: status === 'pending_approval' ? 'Chờ duyệt' : 'Chưa thanh toán',
+            tone: 'pending'
+        };
+    };
+
     // Flatten participants and attach booking information
-    const allParticipants = bookings.flatMap(booking =>
-        (booking.participants || []).map(p => ({
+    const allParticipants = bookings.flatMap(booking => {
+        const paymentInfo = getBookingPaymentInfo(booking);
+        return (booking.participants || []).map(p => ({
             ...p,
             bookingCode: booking.bookingCode,
-            bookingStatus: booking.status,
-            debtAmount: booking.debtAmount || 0,
+            bookingStatus: paymentInfo.status,
+            bookingFinalPrice: paymentInfo.finalPrice,
+            bookingPaidAmount: paymentInfo.paidAmount,
+            debtAmount: paymentInfo.debtAmount,
+            paymentLabel: paymentInfo.label,
+            paymentTone: paymentInfo.tone,
             customerPhone: booking.customer?.phone || 'Theo bố mẹ',
             customerName: booking.customer?.fullName || p.fullName,
             customerId: booking.customerId
-        }))
-    );
+        }));
+    });
 
     const filteredParticipants = allParticipants;
 
@@ -1076,15 +1205,20 @@ const GuideTourDetailPage = () => {
                                 </span>
                                                         </td>
                                                         <td className="px-lg py-md">
-                                                            {p.bookingStatus === 'PAID' ? (
+                                                            {p.paymentTone === 'paid' ? (
                                                                 <span className="inline-flex items-center gap-xs px-sm py-xs bg-green-100 text-green-700 rounded-lg text-label-sm font-semibold">
                                     <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                                    Đã hoàn tất
+                                    {p.paymentLabel}
+                                  </span>
+                                                            ) : p.paymentTone === 'partial' ? (
+                                                                <span className="inline-flex items-center gap-xs px-sm py-xs bg-amber-100 text-amber-700 rounded-lg text-label-sm font-semibold">
+                                    <span className="material-symbols-outlined text-[16px]">paid</span>
+                                    Đã trả {p.bookingPaidAmount.toLocaleString('vi-VN')}đ, còn {p.debtAmount.toLocaleString('vi-VN')}đ
                                   </span>
                                                             ) : (
                                                                 <span className="inline-flex items-center gap-xs px-sm py-xs bg-secondary-fixed/50 text-secondary font-semibold rounded-lg text-label-sm">
                                     <span className="material-symbols-outlined text-[16px]">pending</span>
-                                    Còn nợ: {p.debtAmount?.toLocaleString('vi-VN')}đ
+                                    {p.paymentLabel}: {p.debtAmount.toLocaleString('vi-VN')}đ
                                   </span>
                                                             )}
                                                         </td>
@@ -1230,7 +1364,7 @@ const GuideTourDetailPage = () => {
                                             <div className="min-w-0">
                                                 <p className="font-label-md text-on-surface">{formatDateTime(conversation.updatedAt)}</p>
                                                 <p className="font-body-sm text-on-surface-variant mt-xs line-clamp-2">
-                                                    {conversation.lastMessage || 'Chưa có tin nhắn.'}
+                                                    {formatChatPreview(conversation.lastMessage)}
                                                 </p>
                                                 <p className="font-label-sm text-outline mt-xs">Trạng thái: {conversation.status}</p>
                                             </div>
@@ -1349,20 +1483,32 @@ const GuideTourDetailPage = () => {
                                         <input
                                             type="text"
                                             value={notificationMsg.subject || ''}
-                                            onChange={(e) => setNotificationMsg(prev => ({ ...prev, subject: e.target.value }))}
+                                            onChange={(e) => {
+                                                setNotificationMsg(prev => ({ ...prev, subject: e.target.value }));
+                                                setNotificationErrors(prev => ({ ...prev, subject: '' }));
+                                            }}
                                             placeholder="Tiêu đề thông báo"
-                                            className="w-full px-md py-sm bg-surface-container border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                            className={`w-full px-md py-sm bg-surface-container border rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary ${notificationErrors.subject ? 'border-error' : 'border-outline-variant'}`}
                                         />
+                                        {notificationErrors.subject && (
+                                            <p className="text-error text-label-sm mt-1">{notificationErrors.subject}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-label-sm text-outline mb-xs">Nội dung</label>
                                         <textarea
                                             value={notificationMsg.content || ''}
-                                            onChange={(e) => setNotificationMsg(prev => ({ ...prev, content: e.target.value }))}
+                                            onChange={(e) => {
+                                                setNotificationMsg(prev => ({ ...prev, content: e.target.value }));
+                                                setNotificationErrors(prev => ({ ...prev, content: '' }));
+                                            }}
                                             placeholder="Nội dung thông báo gửi tới khách hàng"
                                             rows="6"
-                                            className="w-full px-md py-sm bg-surface-container border border-outline-variant rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                                            className={`w-full px-md py-sm bg-surface-container border rounded-lg font-body-sm text-body-sm focus:ring-2 focus:ring-primary focus:border-primary ${notificationErrors.content ? 'border-error' : 'border-outline-variant'}`}
                                         />
+                                        {notificationErrors.content && (
+                                            <p className="text-error text-label-sm mt-1">{notificationErrors.content}</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -1387,6 +1533,19 @@ const GuideTourDetailPage = () => {
                                             });
                                             return;
                                         }
+                                        if (notificationType === 'announcement') {
+                                            const errors = {};
+                                            if (!String(notificationMsg.subject || '').trim()) {
+                                                errors.subject = 'Vui lòng nhập tiêu đề thông báo';
+                                            }
+                                            if (!String(notificationMsg.content || '').trim()) {
+                                                errors.content = 'Vui lòng nhập nội dung thông báo';
+                                            }
+                                            if (Object.keys(errors).length > 0) {
+                                                setNotificationErrors(errors);
+                                                return;
+                                            }
+                                        }
 
                                         try {
                                             setIsSending(true);
@@ -1398,8 +1557,8 @@ const GuideTourDetailPage = () => {
                                                 zaloGroupLink: notificationMsg.zaloGroupLink
                                             };
                                             // Call backend to send group notification
-                                            await sendGroupNotification(id, payload);
-                                            alert('Đã gửi thông báo thành công tới thành viên đoàn.');
+                                            const response = await sendGroupNotification(id, payload);
+                                            alert(`Đã gửi thông báo thành công tới ${response.sentCount || 'các'} email thành viên đoàn.`);
                                             setNotificationMsg({});
                                             setNotificationErrors({});
                                             setShowNotificationModal(false);
@@ -1409,7 +1568,7 @@ const GuideTourDetailPage = () => {
                                                 setNotificationErrors(err.response.data.errors);
                                                 return;
                                             }
-                                            alert('Không thể gửi thông báo. Vui lòng thử lại sau.');
+                                            alert(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi thông báo. Vui lòng thử lại sau.');
                                         } finally {
                                             setIsSending(false);
                                         }

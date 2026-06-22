@@ -4,10 +4,17 @@ const path = require('path');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const host = process.env.EMAIL_HOST || process.env.SMTP_HOST;
-const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
-const user = process.env.EMAIL_USER || process.env.SMTP_USER;
-const pass = process.env.EMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+const host = process.env.EMAIL_HOST || process.env.SMTP_HOST || process.env.MAIL_HOST;
+const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || process.env.MAIL_PORT || 587;
+const user = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.MAIL_USER || process.env.GMAIL_USER;
+const pass = process.env.EMAIL_APP_PASSWORD
+  || process.env.EMAIL_PASSWORD
+  || process.env.EMAIL_PASS
+  || process.env.SMTP_PASS
+  || process.env.SMTP_PASSWORD
+  || process.env.MAIL_PASS
+  || process.env.MAIL_PASSWORD
+  || process.env.GMAIL_APP_PASSWORD;
 
 console.log('Cấu hình SMTP đọc được:');
 console.log('Host:', host);
@@ -23,7 +30,7 @@ if (!host || !user || !pass) {
 const transporter = nodemailer.createTransport({
   host,
   port: parseInt(port),
-  secure: parseInt(port) === 465,
+  secure: String(process.env.EMAIL_SECURE || '').toLowerCase() === 'true' || parseInt(port) === 465,
   auth: { user, pass },
 });
 

@@ -285,7 +285,7 @@ export const uploadParticipantCccd = async (assignmentId, participantId, formDat
     const response = await apiClient.post(
         `/guides/assigned-tours/${assignmentId}/participants/${participantId}/cccd`,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        { timeout: 60000 }
     );
     return response.data;
   } catch (error) {

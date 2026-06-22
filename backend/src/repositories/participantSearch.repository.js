@@ -12,7 +12,7 @@ class ParticipantSearchRepository {
    * Find tour assignment with full participant data
    */
   async findAssignmentWithDetails(targetId, guideId) {
-    const { TourAssignment, TourSchedule, Tour, Booking, User, Participant, TourItineraryDay } = this.db;
+    const { TourAssignment, TourSchedule, Tour, Booking, User, Participant, Payment, TourItineraryDay } = this.db;
 
     const assignment = await TourAssignment.findOne({
       where: {
@@ -54,6 +54,10 @@ class ParticipantSearchRepository {
                 {
                   model: Participant,
                   as: 'participants'
+                },
+                {
+                  model: Payment,
+                  as: 'payments'
                 }
               ]
             }
@@ -187,7 +191,7 @@ class ParticipantSearchRepository {
    * Get all bookings for an assignment
    */
   async getAssignmentBookings(targetId, guideId) {
-    const { TourAssignment, TourSchedule, Booking, User, Participant } = this.db;
+    const { TourAssignment, TourSchedule, Booking, User, Participant, Payment } = this.db;
 
     const assignment = await TourAssignment.findOne({
       where: {
@@ -214,6 +218,10 @@ class ParticipantSearchRepository {
                 {
                   model: Participant,
                   as: 'participants'
+                },
+                {
+                  model: Payment,
+                  as: 'payments'
                 }
               ]
             }

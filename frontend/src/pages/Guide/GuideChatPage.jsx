@@ -6,6 +6,22 @@ import * as guideApi from '../../api/guideApi';
 import { io } from 'socket.io-client';
 
 const QUICK_EMOJIS = ['👍', '😊', '🙏', '❤️', '🎉', '✅'];
+const QUICK_REPLIES_GUIDE = [
+  'Cảm ơn bạn 🙏',
+  'Sẽ xem xét sớm ⏰',
+  'Đã ghi nhận 📝',
+  'Sẽ liên hệ lại 📞',
+  'Rất vui được hỗ trợ 😊',
+  'OK, hiểu rồi ✅'
+];
+const QUICK_REPLIES_CUSTOMER = [
+  'Cảm ơn bạn 🙏',
+  'Tôi vẫn chưa rõ 🤔',
+  'Có thể liên hệ được không? 📞',
+  'Cần hỗ trợ thêm 😊',
+  'OK, hiểu rồi ✅',
+  'Tối nay gọi lại được không? ⏰'
+];
 const MAX_ACTIVE_CONVERSATIONS = 5;
 
 const parseChatContent = (content) => {
@@ -23,7 +39,7 @@ const getMessagePreview = (content) => {
   const parsed = parseChatContent(content);
   if (parsed.type === 'image') return '[Ảnh]';
   if (parsed.type === 'video') return '[Video]';
-  if (parsed.type === 'cccd_review') return `[CCCD] ${parsed.participantName || 'Hành khách'}`;
+  if (parsed.type === 'cccd_review') return `Khách đã gửi CCCD để kiểm tra${parsed.participantName ? `: ${parsed.participantName}` : ''}`;
   return parsed.text || 'Bắt đầu cuộc trò chuyện';
 };
 
@@ -46,9 +62,17 @@ const ChatMessageContent = ({ content, isGuide, onPreviewImage, onCCCDApproval }
     ].filter((item) => item.url);
 
     return (
-      <div 
-        onClick={() => !isGuide && onCCCDApproval?.()}
-        className={`w-72 max-w-full space-y-3 p-3 rounded-xl border ${isGuide ? 'border-primary-container bg-primary-container text-on-primary-container' : 'border-outline-variant bg-surface-container-low text-on-surface cursor-pointer hover:bg-surface-container-highest transition-colors'}`}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onCCCDApproval?.()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onCCCDApproval?.();
+          }
+        }}
+        className={`w-72 max-w-full space-y-3 p-3 rounded-xl border cursor-pointer hover:bg-surface-container-highest transition-colors ${isGuide ? 'border-primary-container bg-primary-container text-on-primary-container' : 'border-outline-variant bg-surface-container-low text-on-surface'}`}
       >
         <div>
           <p className="font-bold text-sm">Khách gửi CCCD cần kiểm tra</p>
@@ -74,11 +98,11 @@ const ChatMessageContent = ({ content, isGuide, onPreviewImage, onCCCDApproval }
         <p className="text-[11px] opacity-75 border-t border-outline-variant/30 pt-2 mt-2">
           Sau khi kiểm tra, HDV cập nhật ảnh chính thức tại danh sách hành khách của tour.
         </p>
-        {!isGuide && (
+        <>
           <div className="text-center pt-1">
             <span className="text-xs font-semibold text-primary">Nhấn để Xem & Duyệt</span>
           </div>
-        )}
+        </>
       </div>
     );
   }
@@ -107,6 +131,7 @@ const GuideChatPage = () => {
 
   // CCCD approval modal state
   const [showCCCDModal, setShowCCCDModal] = useState(false);
+  const [alertModal, setAlertModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [selectedCCCDMessage, setSelectedCCCDMessage] = useState(null);
   const [isUploadingCCCD, setIsUploadingCCCD] = useState(false);
 
@@ -247,12 +272,12 @@ const GuideChatPage = () => {
       setActiveQueueTab('active');
       setActiveConversationId(convId);
     } catch (err) {
-      alert(err.response?.data?.error || err.message || "Không thể tiếp nhận cuộc hội thoại.");
+      setAlertModal({ isOpen: true, title: 'Lỗi', message: err.response?.data?.error || err.message || "Không thể tiếp nhận cuộc hội thoại.", type: 'error' });
     }
   };
 
   const handleCloseConversation = async (convId) => {
-    if (window.confirm("Ban co chac chan muon ket thửuc cuoc ho tro tu van nay?")) {
+    if (window.confirm("Bạn có chắc chắn muốn kết thúc cuộc hỗ trợ tư vấn này?")) {
       try {
         const res = await chatApi.closeConversation(convId);
         const closedConversation = res?.data || res;
@@ -272,7 +297,7 @@ const GuideChatPage = () => {
           setActiveConversationId(null);
         }
       } catch (err) {
-        alert(err.message || "Khong the ket thửuc cuoc hoi thửoai.");
+        setAlertModal({ isOpen: true, title: 'Lỗi', message: err.message || 'Không thể kết thúc cuộc hội thoại.', type: 'error' });
       }
     }
   };
@@ -306,7 +331,7 @@ const GuideChatPage = () => {
         content: result.content
       });
     } catch (err) {
-      alert(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi tệp. Vui lòng thử lại.');
+      setAlertModal({ isOpen: true, title: 'Lỗi', message: err.response?.data?.message || err.response?.data?.error || 'Không thể gửi tệp. Vui lòng thử lại.', type: 'error' });
     } finally {
       setIsUploadingMedia(false);
       if (mediaInputRef.current) mediaInputRef.current.value = '';
@@ -348,7 +373,7 @@ const GuideChatPage = () => {
 
   const handleUploadCCCD = async () => {
     if (!selectedCCCDMessage || !activeConv) {
-      alert('Không thể lấy thông tin CCCD. Vui lòng thử lại.');
+      setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Không thể lấy thông tin CCCD. Vui lòng thử lại.', type: 'error' });
       return;
     }
 
@@ -356,36 +381,104 @@ const GuideChatPage = () => {
 
     setIsUploadingCCCD(true);
     try {
-      const assignmentId = activeConv.schedule?.assignments?.[0]?.id || activeConv.assignmentId;
+      const assignmentId = selectedCCCDMessage.assignmentId
+        || activeConv.schedule?.assignments?.[0]?.id
+        || activeConv.assignmentId
+        || activeConv.scheduleId
+        || selectedCCCDMessage.bookingId;
       const participantId = selectedCCCDMessage.participantId;
 
       if (!assignmentId || !participantId) {
-        alert('Không có thông tin assignment hoặc participant. Vui lòng thử lại.');
+        setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Không có thông tin assignment hoặc participant. Vui lòng thử lại.', type: 'error' });
         setIsUploadingCCCD(false);
         return;
       }
 
+      // Helper function to convert data URL to Blob
+      const dataUrlToBlob = (dataUrl) => {
+        const parts = dataUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const bstr = atob(parts[1]);
+        const n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        for (let i = 0; i < n; i++) {
+          u8arr[i] = bstr.charCodeAt(i);
+        }
+        return new Blob([u8arr], { type: mime });
+      };
+
+      // Helper function to fetch URL and convert to Blob
+      const urlToBlob = async (url) => {
+        // Check if it's a data URL
+        if (url.startsWith('data:')) {
+          console.log('Converting data URL to blob');
+          return dataUrlToBlob(url);
+        }
+        
+        // Otherwise fetch from URL
+        console.log('Fetching URL:', url);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
+        const blob = await response.blob();
+        if (blob.size === 0) throw new Error('Image blob is empty');
+        return blob;
+      };
+
       const formData = new FormData();
+      let hasFiles = false;
       
-      // Download images from URLs and add to FormData
       if (selectedCCCDMessage.frontUrl) {
-        const frontBlob = await fetch(selectedCCCDMessage.frontUrl).then(r => r.blob());
-        formData.append('front', frontBlob, 'cccd_front.jpg');
+        try {
+          console.log('Processing front image:', selectedCCCDMessage.frontUrl.substring(0, 100));
+          const frontBlob = await urlToBlob(selectedCCCDMessage.frontUrl);
+          console.log('Front blob size:', frontBlob.size, 'type:', frontBlob.type);
+          formData.append('front', frontBlob, 'cccd_front.jpg');
+          hasFiles = true;
+        } catch (err) {
+          console.error('Error processing front image:', err);
+          setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Lỗi tải ảnh mặt trước: ' + err.message, type: 'error' });
+          setIsUploadingCCCD(false);
+          return;
+        }
       }
       
       if (selectedCCCDMessage.backUrl) {
-        const backBlob = await fetch(selectedCCCDMessage.backUrl).then(r => r.blob());
-        formData.append('back', backBlob, 'cccd_back.jpg');
+        try {
+          console.log('Processing back image:', selectedCCCDMessage.backUrl.substring(0, 100));
+          const backBlob = await urlToBlob(selectedCCCDMessage.backUrl);
+          console.log('Back blob size:', backBlob.size, 'type:', backBlob.type);
+          formData.append('back', backBlob, 'cccd_back.jpg');
+          hasFiles = true;
+        } catch (err) {
+          console.error('Error processing back image:', err);
+          setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Lỗi tải ảnh mặt sau: ' + err.message, type: 'error' });
+          setIsUploadingCCCD(false);
+          return;
+        }
       }
 
+      if (!hasFiles) {
+        setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Không có ảnh CCCD để upload. Vui lòng thử lại.', type: 'error' });
+        setIsUploadingCCCD(false);
+        return;
+      }
+
+      console.log('Form data keys:', Array.from(formData.keys()));
       await guideApi.uploadParticipantCccd(assignmentId, participantId, formData);
 
-      alert('Đã duyệt và upload CCCD thành công!');
+      setAlertModal({ isOpen: true, title: 'Thành công', message: 'Đã duyệt và upload CCCD thành công!', type: 'info' });
       setShowCCCDModal(false);
       setSelectedCCCDMessage(null);
+      // Scroll to bottom to keep user on current conversation
+      setTimeout(() => {
+        const chatContainer = document.querySelector('.chat-scrollbar');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      }, 100);
     } catch (err) {
       console.error('Upload CCCD error:', err);
-      alert('Lỗi upload CCCD: ' + (err.response?.data?.error || err.message));
+      setAlertModal({ isOpen: true, title: 'Lỗi', message: 'Lỗi upload CCCD: ' + (err.response?.data?.error || err.message), type: 'error' });
     } finally {
       setIsUploadingCCCD(false);
     }
@@ -580,8 +673,9 @@ const GuideChatPage = () => {
                                     isGuide={isGuide} 
                                     onPreviewImage={setPreviewImage} 
                                     onCCCDApproval={() => {
-                                      if (activeConv.status !== 'active' || activeConv.guideId !== currentUser._id) {
-                                        alert('Vui lòng Tiếp nhận cuộc hỗ trợ này trước khi thao tác duyệt CCCD.');
+                                      const assignedGuideId = activeConv.supportUserId || activeConv.guideId;
+                                      if (activeConv.status !== 'active' || String(assignedGuideId) !== String(currentGuideId)) {
+                                        setAlertModal({ isOpen: true, title: 'Không thể thao tác', message: 'Vui lòng Tiếp nhận cuộc hỗ trợ này trước khi thao tác duyệt CCCD.', type: 'error' });
                                         return;
                                       }
                                       handleCCCDApproval(msg);
@@ -613,6 +707,22 @@ const GuideChatPage = () => {
                         className="w-full bg-transparent border-none focus:ring-0 text-body-md resize-none h-[60px] p-md chat-scrollbar outline-none"
                         placeholder="Nhập tin nhắn hỗ trợ..."
                     ></textarea>
+
+                          {/* Quick Replies */}
+                          <div className="px-md pb-xs overflow-x-auto chat-scrollbar">
+                            <div className="flex gap-xs">
+                              {QUICK_REPLIES_GUIDE.map((reply, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => setChatInputText(reply)}
+                                  className="px-md py-xs whitespace-nowrap text-body-sm bg-primary/10 text-primary hover:bg-primary/20 rounded-xl transition-colors flex-shrink-0 font-medium"
+                                >
+                                  {reply}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
 
                           <div className="flex items-center justify-between mt-sm px-sm">
                             <div className="flex gap-xs items-center">
@@ -821,6 +931,40 @@ const GuideChatPage = () => {
                 </div>
               </div>
             </div>
+        ), document.body)}
+
+        {/* Alert Modal */}
+        {alertModal.isOpen && createPortal((
+          <div className="fixed inset-0 z-[230] bg-black/50 flex items-center justify-center px-4 py-6">
+            <div className="bg-white rounded-xl shadow-2xl animate-fadeIn flex flex-col overflow-hidden" style={{ width: 'min(92vw, 420px)' }}>
+              <div className="p-6 border-b border-outline-variant/20">
+                <div className="flex items-center gap-3">
+                  {alertModal.type === 'error' && (
+                    <span className="material-symbols-outlined text-error text-[28px]">error</span>
+                  )}
+                  {alertModal.type === 'info' && (
+                    <span className="material-symbols-outlined text-primary text-[28px]">info</span>
+                  )}
+                  {alertModal.type === 'success' && (
+                    <span className="material-symbols-outlined text-success text-[28px]">check_circle</span>
+                  )}
+                  <h3 className="font-bold text-lg text-on-surface">{alertModal.title}</h3>
+                </div>
+              </div>
+              <div className="p-6">
+                <p className="text-on-surface-variant text-sm leading-relaxed">{alertModal.message}</p>
+              </div>
+              <div className="p-6 bg-surface-container-low flex justify-end border-t border-outline-variant/20">
+                <button
+                  type="button"
+                  onClick={() => setAlertModal({ isOpen: false, title: '', message: '', type: 'info' })}
+                  className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:opacity-90 transition"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
         ), document.body)}
       </>
   );

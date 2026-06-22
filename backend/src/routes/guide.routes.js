@@ -24,6 +24,43 @@ const uploadGuideAvatar = (req, res, next) => {
   });
 };
 
+const uploadCCCD = (req, res, next) => {
+  uploadCloud.fields([{ name: 'front', maxCount: 1 }, { name: 'back', maxCount: 1 }])(req, res, (err) => {
+    if (err) {
+      console.error('[uploadCCCD Middleware] Error:', {
+        message: err.message,
+        code: err.code,
+        field: err.field,
+        limit: err.limit,
+        received: err.received,
+        stack: err.stack
+      });
+      
+      // More specific error messages
+      let message = 'File ảnh không hợp lệ. Vui lòng chọn ảnh JPG, PNG hoặc WEBP.';
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        message = 'Kích thước file vượt quá giới hạn 20MB.';
+      } else if (err.message && err.message.includes('image')) {
+        message = 'File phải là ảnh. Vui lòng chọn ảnh JPG, PNG hoặc WEBP.';
+      } else if (err.message) {
+        message = `Lỗi: ${err.message}`;
+      }
+      
+      return res.status(400).json({
+        success: false,
+        message,
+        error: err.message || message,
+        code: err.code
+      });
+    }
+    console.log('[uploadCCCD Middleware] Files parsed successfully. Fields:', Object.keys(req.files || {}), 'File details:', {
+      front: req.files?.front?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size })),
+      back: req.files?.back?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size }))
+    });
+    next();
+  });
+};
+
 router.get('/stats', guideController.getGuideStats);
 router.get('/assigned-tours', guideController.getAssignedTours);
 router.get('/assigned-tours/export', guideController.exportAssignedTours);
@@ -43,6 +80,6 @@ router.patch('/packing-items/:itemId', guideController.updatePackingItem);
 router.delete('/packing-items/:itemId', guideController.deletePackingItem);
 router.post('/assigned-tours/:id/checkin', guideController.checkinParticipant);
 // Upload CCCD images for a participant (front/back) using Cloudinary
-router.post('/assigned-tours/:assignmentId/participants/:participantId/cccd', uploadCloud.fields([{ name: 'front', maxCount: 1 }, { name: 'back', maxCount: 1 }]), guideController.uploadParticipantCccd);
+router.post('/assigned-tours/:assignmentId/participants/:participantId/cccd', uploadCCCD, guideController.uploadParticipantCccd);
 
 export default router;

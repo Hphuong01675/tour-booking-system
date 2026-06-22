@@ -1,24 +1,9 @@
-// Đường dẫn: frontend/src/features/guideTours/GuideFilterGroup.jsx
-/**
- * GuideFilterGroup Component
- * Bộ lọc với dropdown Trạng thái, Tháng, nút Xuất báo cáo
- *
- * Props:
- *   - filters: {status, month} - Giá trị lọc hiện tại
- *   - onFilterChange: function - Callback khi bộ lọc thay đổi
- *   - onExportReport: function - Callback khi click nút Xuất báo cáo
- *   - isLoading: boolean - Trạng thái loading
- */
-
-import React from 'react';
-
 const GuideFilterGroup = ({
   filters = { status: 'all', month: 'all' },
   onFilterChange,
-  onExportReport,
+  onScheduleClick,
   isLoading = false,
 }) => {
-  // Xử lý thay đổi status
   const handleStatusChange = (e) => {
     onFilterChange({
       ...filters,
@@ -26,7 +11,6 @@ const GuideFilterGroup = ({
     });
   };
 
-  // Xử lý thay đổi month
   const handleMonthChange = (e) => {
     onFilterChange({
       ...filters,
@@ -34,23 +18,20 @@ const GuideFilterGroup = ({
     });
   };
 
-  // Xử lý click nút xuất báo cáo
-  const handleExportClick = (e) => {
+  const handleScheduleClick = (e) => {
     e.preventDefault();
-    if (onExportReport && !isLoading) {
-      onExportReport();
+    if (onScheduleClick) {
+      onScheduleClick();
     }
   };
 
   return (
     <div className="bg-surface-container-lowest rounded-xl p-s-md mb-s-lg flex flex-wrap gap-s-md items-center shadow-sm border border-outline-variant/10">
-      {/* Filter Label */}
       <div className="flex items-center gap-s-xs px-s-md py-s-sm bg-surface-container-low rounded-lg border border-outline-variant/20">
         <span className="material-symbols-outlined text-body-md">filter_list</span>
         <span className="font-label-md text-label-md">Bộ lọc</span>
       </div>
 
-      {/* Status Filter Dropdown */}
       <select
         value={filters.status || 'all'}
         onChange={handleStatusChange}
@@ -75,7 +56,6 @@ const GuideFilterGroup = ({
         <option value="cancelled">Đã hủy</option>
       </select>
 
-      {/* Month Filter Dropdown */}
       <select
         value={filters.month || 'all'}
         onChange={handleMonthChange}
@@ -100,11 +80,10 @@ const GuideFilterGroup = ({
         <option value="next-3">3 tháng tới</option>
       </select>
 
-      {/* Export Report Button */}
       <div className="ml-auto flex gap-s-sm">
         <button
-          onClick={handleExportClick}
-          disabled={isLoading}
+          type="button"
+          onClick={handleScheduleClick}
           className={`
             flex items-center gap-s-xs
             px-s-md
@@ -116,15 +95,13 @@ const GuideFilterGroup = ({
             duration-200
             ${
               isLoading
-                ? 'opacity-50 cursor-not-allowed'
+                ? 'opacity-70'
                 : 'hover:bg-primary/5 active:scale-95'
             }
           `}
         >
-          <span className="material-symbols-outlined text-body-md">
-            {isLoading ? 'hourglass_empty' : 'download'}
-          </span>
-          {isLoading ? 'Đang xuất...' : 'Xuất báo cáo'}
+          <span className="material-symbols-outlined text-body-md">calendar_month</span>
+          Lịch trình
         </button>
       </div>
     </div>
@@ -132,4 +109,3 @@ const GuideFilterGroup = ({
 };
 
 export default GuideFilterGroup;
-
