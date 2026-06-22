@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router-dom';
 import * as chatApi from '../../api/chatApi';
 import * as guideApi from '../../api/guideApi';
@@ -46,10 +45,7 @@ const ChatMessageContent = ({ content, isGuide, onPreviewImage, onCCCDApproval }
     ].filter((item) => item.url);
 
     return (
-      <div 
-        onClick={() => !isGuide && onCCCDApproval?.()}
-        className={`w-72 max-w-full space-y-3 p-3 rounded-xl border ${isGuide ? 'border-primary-container bg-primary-container text-on-primary-container' : 'border-outline-variant bg-surface-container-low text-on-surface cursor-pointer hover:bg-surface-container-highest transition-colors'}`}
-      >
+      <div className={`w-72 max-w-full space-y-3 ${isGuide ? 'text-on-primary' : 'text-on-surface'}`}>
         <div>
           <p className="font-bold text-sm">Khách gửi CCCD cần kiểm tra</p>
           <p className="text-xs opacity-80 mt-1">Hành khách: {parsed.participantName || 'Chưa rõ'}</p>
@@ -63,21 +59,30 @@ const ChatMessageContent = ({ content, isGuide, onPreviewImage, onCCCDApproval }
             </p>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2 pointer-events-none">
+        <div className="grid grid-cols-2 gap-2">
           {images.map((item) => (
-            <div key={item.label} className="text-left">
-              <img src={item.url} alt={`CCCD ${item.label}`} className="w-full h-24 object-cover rounded-lg bg-black/5" />
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => onPreviewImage?.({ url: item.url, name: `CCCD ${item.label} - ${parsed.participantName}` })}
+              className="text-left"
+            >
+              <img src={item.url} alt={`CCCD ${item.label}`} className="w-full h-24 object-cover rounded-lg bg-black/5 cursor-zoom-in" />
               <span className="block mt-1 text-[10px] opacity-75">{item.label}</span>
-            </div>
+            </button>
           ))}
         </div>
-        <p className="text-[11px] opacity-75 border-t border-outline-variant/30 pt-2 mt-2">
+        <p className="text-[11px] opacity-75">
           Sau khi kiểm tra, HDV cập nhật ảnh chính thức tại danh sách hành khách của tour.
         </p>
         {!isGuide && (
-          <div className="text-center pt-1">
-            <span className="text-xs font-semibold text-primary">Nhấn để Xem & Duyệt</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => onCCCDApproval?.()}
+            className="w-full px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-semibold hover:opacity-90 transition"
+          >
+            Duyệt & Upload CCCD
+          </button>
         )}
       </div>
     );
@@ -135,7 +140,7 @@ const GuideChatPage = () => {
     scrollToBottom();
   }, [activeConversationId, conversations]);
 
-  // Khá»Ÿi táº¡o Socket vĂ  Fetch danh sách hội thoại
+  // Khởi tạo Socket vĂ  Fetch danh sách hội thoại
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000');
     setSocket(newSocket);
@@ -252,7 +257,7 @@ const GuideChatPage = () => {
   };
 
   const handleCloseConversation = async (convId) => {
-    if (window.confirm("Ban co chac chan muon ket thửuc cuoc ho tro tu van nay?")) {
+    if (window.confirm("Ban co chac chan muon ket thuc cuoc ho tro tu van nay?")) {
       try {
         const res = await chatApi.closeConversation(convId);
         const closedConversation = res?.data || res;
@@ -272,7 +277,7 @@ const GuideChatPage = () => {
           setActiveConversationId(null);
         }
       } catch (err) {
-        alert(err.message || "Khong the ket thửuc cuoc hoi thửoai.");
+        alert(err.message || "Khong the ket thuc cuoc hoi thoai.");
       }
     }
   };
@@ -393,11 +398,11 @@ const GuideChatPage = () => {
 
   return (
       <>
-        <main className="flex-grow flex overflow-hidden h-[calc(100vh-160px)] w-full min-w-0">
+        <main className="flex-grow flex overflow-hidden h-full w-full min-w-0">
           <aside className="w-full max-w-[400px] min-h-0 shrink-0 border-r border-outline-variant bg-surface flex flex-col">
             <div className="p-lg space-y-md border-b border-outline-variant">
               <div className="flex items-center justify-between">
-                <h2 className="font-headline-sm text-headline-sm text-on-surface">Tư vấn khách hàng</h2>
+                <h2 className="font-headline-sm text-headline-sm text-on-surface">Tư vấn khĂ¡ch hĂ ng</h2>
                 <span className="bg-primary-container text-on-primary-fixed text-label-md px-sm py-xs rounded-full font-bold">
                 {conversations.filter(c => c.status === 'waiting').length} mới
               </span>
@@ -412,7 +417,7 @@ const GuideChatPage = () => {
                             : 'text-on-surface-variant hover:text-on-surface'
                     }`}
                 >
-                  Chờ tiếp nhận ({conversations.filter(c => c.status === 'waiting').length})
+                  Chá» tiếp nhận ({conversations.filter(c => c.status === 'waiting').length})
                 </button>
                 <button
                     onClick={() => setActiveQueueTab('active')}
@@ -432,7 +437,7 @@ const GuideChatPage = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-md bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary text-body-md"
-                    placeholder="Tìm kiếm khách hàng..."
+                    placeholder="Tìm kiếm khĂ¡ch hĂ ng..."
                 />
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
                 person_search
@@ -474,12 +479,12 @@ const GuideChatPage = () => {
                         {conv.status === 'waiting' ? (
                             <>
                               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                              Đang chờ tiếp nhận
+                              Äang chá»
                             </>
                         ) : (
                             <>
                               <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                              Đang tư vấn
+                              Äang tư vấn
                             </>
                         )}
                       </span>
@@ -498,7 +503,7 @@ const GuideChatPage = () => {
                   })
               ) : (
                   <div className="p-xl text-center text-outline italic">
-                    Không có cuộc hội thoại nào.
+                    Không có cuộc hội thoại nĂ o.
                   </div>
               )}
             </div>
@@ -527,7 +532,7 @@ const GuideChatPage = () => {
                         <h3 className="font-label-md text-on-surface leading-none mb-1">
                           {activeConv.customer ? activeConv.customer.fullName : activeConv.guestName}
                         </h3>
-                        <p className="text-label-sm text-primary">Đang trực tuyến</p>
+                        <p className="text-label-sm text-primary">Äang trực tuyến</p>
                       </div>
                     </div>
 
@@ -575,18 +580,7 @@ const GuideChatPage = () => {
                                 <p className="font-semibold text-[11px] opacity-75 mb-1">
                                   {senderName}
                                 </p>
-                                <ChatMessageContent 
-                                    content={msg.content}
-                                    isGuide={isGuide} 
-                                    onPreviewImage={setPreviewImage} 
-                                    onCCCDApproval={() => {
-                                      if (activeConv.status !== 'active' || activeConv.guideId !== currentUser._id) {
-                                        alert('Vui lòng Tiếp nhận cuộc hỗ trợ này trước khi thao tác duyệt CCCD.');
-                                        return;
-                                      }
-                                      handleCCCDApproval(msg);
-                                    }} 
-                                />
+                                <ChatMessageContent content={msg.content} isGuide={isGuide} onPreviewImage={setPreviewImage} onCCCDApproval={() => handleCCCDApproval(msg)} />
                               </div>
                               <span className="text-label-sm text-outline ml-1">
                           {new Date(msg.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
@@ -657,7 +651,7 @@ const GuideChatPage = () => {
                         <div className="p-lg bg-surface-container rounded-2xl border border-dashed border-outline-variant flex flex-col items-center justify-center">
                           <span className="material-symbols-outlined text-[36px] text-outline mb-sm">lock</span>
                           <p className="font-label-md text-on-surface-variant text-center">
-                            Bạn phải Tiếp nhận cuộc hội thoại này trước khi gửi tin nhắn tư vấn.
+                            Bạn phải Tiếp nhận cuộc hội thoại nĂ y trước khi gửi tin nhắn tư vấn.
                           </p>
                           <button
                               onClick={(e) => handleAcceptConversation(activeConv.id, e)}
@@ -672,12 +666,12 @@ const GuideChatPage = () => {
             ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-xl text-center">
                   <span className="material-symbols-outlined text-[64px] text-outline mb-md animate-pulse">forum</span>
-                  <h3 className="font-headline-sm text-on-surface mb-xs">Chào mừng đến với Trực Tổng Đài Tư Vấn</h3>
+                  <h3 className="font-headline-sm text-on-surface mb-xs">ChĂ o mừng đến với Trực Tổng ÄĂ i Tư Vấn</h3>
                   <p
                     className="font-body-md text-on-surface-variant mx-auto"
                     style={{ display: 'block', width: 'clamp(320px, 42vw, 420px)', maxWidth: 'calc(100vw - 480px)', whiteSpace: 'normal', wordBreak: 'keep-all', overflowWrap: 'normal', lineHeight: '1.5rem' }}
                   >
-                    Hãy chọn một cuộc hội thoại để bắt đầu hỗ trợ.
+                    HĂ£y chá»n một cuộc hội thoại để bắt đầu hỗ trợ.
                   </p>
                 </div>
             )}
@@ -686,16 +680,16 @@ const GuideChatPage = () => {
           {activeConv && (
               <aside className="hidden xl:flex w-[320px] bg-surface flex-col border-l border-outline-variant">
                 <div className="p-lg border-b border-outline-variant">
-                  <h4 className="font-label-md text-outline uppercase tracking-wider mb-md">Thông tin khách hàng</h4>
+                  <h4 className="font-label-md text-outline uppercase tracking-wider mb-md">Thông tin khĂ¡ch hĂ ng</h4>
                   <div className="space-y-md">
                     <div className="flex justify-between items-center">
-                      <span className="text-body-sm text-outline">Hành khách</span>
+                      <span className="text-body-sm text-outline">Há» tĂªn</span>
                       <span className="text-body-sm font-semibold text-on-surface">
                     {activeConv.customer ? activeConv.customer.fullName : activeConv.guestName}
                   </span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-body-sm text-outline">Số điện thoại</span>
+                      <span className="text-body-sm text-outline">Số ÄT</span>
                       <span className="text-body-sm font-semibold text-on-surface">
                     {activeConv.customer?.phone || 'Chưa cập nhật'}
                   </span>
@@ -709,7 +703,7 @@ const GuideChatPage = () => {
                       value={guideNotes[activeConversationId] || ''}
                       onChange={handleNotesChange}
                       className="w-full p-md bg-surface-container-low border-none rounded-xl text-body-sm h-32 focus:ring-1 focus:ring-primary outline-none resize-none"
-                      placeholder="Nhập ghi chú nhanh về khách hàng này..."
+                      placeholder="Nhập ghi chĂº nhanh vá» khĂ¡ch hĂ ng nĂ y..."
                   />
                 </div>
               </aside>
@@ -732,29 +726,17 @@ const GuideChatPage = () => {
         )}
 
         {/* CCCD Approval Modal */}
-        {showCCCDModal && selectedCCCDMessage && createPortal((
-            <div
-              className="fixed inset-0 z-[220] bg-black/50 flex items-center justify-center px-4 py-6"
-              onClick={() => {
-                if (!isUploadingCCCD) {
-                  setShowCCCDModal(false);
-                  setSelectedCCCDMessage(null);
-                }
-              }}
-            >
-              <div
-                className="bg-white rounded-xl shadow-2xl animate-fadeIn flex flex-col overflow-hidden"
-                style={{ width: 'min(92vw, 560px)', maxHeight: '90vh', minWidth: '320px' }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-6 border-b border-outline-variant/20 shrink-0">
+        {showCCCDModal && selectedCCCDMessage && (
+            <div className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeIn">
+                <div className="p-6 border-b border-outline-variant/20">
                   <h3 className="font-bold text-lg text-on-surface">Duyệt & Upload CCCD</h3>
                   <p className="text-xs text-on-surface-variant mt-1">
                     Xác nhận duyệt CCCD và upload lên danh sách hành khách
                   </p>
                 </div>
 
-                <div className="p-6 overflow-y-auto">
+                <div className="p-6">
                   <div className="space-y-4">
                     <div>
                       <label className="text-xs font-semibold text-on-surface-variant mb-2 block">Hành khách</label>
@@ -799,7 +781,7 @@ const GuideChatPage = () => {
                   </div>
                 </div>
 
-                <div className="p-6 bg-surface-container-low flex justify-end gap-3 shrink-0 rounded-b-xl border-t border-outline-variant/20">
+                <div className="p-6 bg-surface-container-low flex justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -821,7 +803,7 @@ const GuideChatPage = () => {
                 </div>
               </div>
             </div>
-        ), document.body)}
+        )}
       </>
   );
 };

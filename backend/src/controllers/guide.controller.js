@@ -498,20 +498,21 @@ export const updateGuideProfile = async (req, res) => {
 
     const errors = {};
     let normalizedPhone = null;
+
     if (fullName !== undefined) {
       if (!fullName || !String(fullName).trim()) {
-        errors.fullName = 'Há» vĂ  tĂªn khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.';
+        errors.fullName = 'Họ và tên không được để trống.';
       } else if (String(fullName).trim().length > 50) {
-        errors.fullName = 'Há» vĂ  tĂªn khĂ´ng Ä‘Æ°á»£c quĂ¡ 50 kĂ½ tá»±.';
+        errors.fullName = 'Họ và tên không được quá 50 ký tự.';
       }
     }
 
     if (phone !== undefined) {
       const phoneRegex = /^0\d{9}$/;
       if (!phone || !String(phone).trim()) {
-        errors.phone = 'Sá»‘ Ä‘iá»‡n thoáº¡i khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.';
+        errors.phone = 'Số điện thoại không được để trống.';
       } else if (!phoneRegex.test(String(phone).trim())) {
-        errors.phone = 'Sá»‘ Ä‘iá»‡n thoáº¡i pháº£i báº¯t Ä‘áº§u báº±ng sá»‘ 0 vĂ  cĂ³ Ä‘Ăºng 10 chá»¯ sá»‘.';
+        errors.phone = 'Số điện thoại phải bắt đầu bằng số 0 và có đúng 10 chữ số.';
       }
     }
 
@@ -520,7 +521,7 @@ export const updateGuideProfile = async (req, res) => {
       if (normalizedPhone) {
         delete errors.phone;
       } else if (phone && String(phone).trim()) {
-        errors.phone = 'Sá»‘ Ä‘iá»‡n thoáº¡i pháº£i lĂ  sá»‘ di Ä‘á»™ng Viá»‡t Nam há»£p lá»‡: 10 sá»‘, báº¯t Ä‘áº§u 03/05/07/08/09 hoáº·c +84.';
+        errors.phone = 'Số điện thoại phải là số di động Việt Nam hợp lệ: 10 số, bắt đầu 03/05/07/08/09 hoặc +84.';
       }
     }
 
@@ -529,24 +530,24 @@ export const updateGuideProfile = async (req, res) => {
         const birthDate = new Date(dateOfBirth);
         const today = new Date();
         if (Number.isNaN(birthDate.getTime())) {
-          errors.dateOfBirth = 'NgĂ y sinh khĂ´ng há»£p lá»‡.';
+          errors.dateOfBirth = 'Ngày sinh không hợp lệ.';
         } else if (birthDate > today) {
-          errors.dateOfBirth = 'NgĂ y sinh khĂ´ng thá»ƒ lá»›n hÆ¡n ngĂ y hiá»‡n táº¡i.';
+          errors.dateOfBirth = 'Ngày sinh không thể lớn hơn ngày hiện tại.';
         } else {
           let age = today.getFullYear() - birthDate.getFullYear();
           const m = today.getMonth() - birthDate.getMonth();
           if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-              age--;
+            age--;
           }
 
           if (age < 18) {
-            errors.dateOfBirth = 'Báº¡n pháº£i Ä‘á»§ 18 tuá»•i trá»Ÿ lĂªn.';
+            errors.dateOfBirth = 'Bạn phải đủ 18 tuổi trở lên.';
           } else if (age > 100 || birthDate.getFullYear() < 1900) {
-            errors.dateOfBirth = 'NgĂ y sinh khĂ´ng há»£p lĂ½ (nÄƒm sinh khĂ´ng há»£p lá»‡).';
+            errors.dateOfBirth = 'Ngày sinh không hợp lý (năm sinh không hợp lệ).';
           }
         }
       } else {
-        errors.dateOfBirth = 'Vui lĂ²ng nháº­p ngĂ y sinh.';
+        errors.dateOfBirth = 'Vui lòng nhập ngày sinh.';
       }
     }
 
@@ -562,7 +563,7 @@ export const updateGuideProfile = async (req, res) => {
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Dá»¯ liá»‡u khĂ´ng há»£p lá»‡. Vui lĂ²ng kiá»ƒm tra láº¡i thĂ´ng tin.',
+        message: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.',
         errors
       });
     }
@@ -571,7 +572,7 @@ export const updateGuideProfile = async (req, res) => {
     if (!guide) {
       return res.status(404).json({
         success: false,
-        message: 'KhĂ´ng tĂ¬m tháº¥y há»“ sÆ¡ hÆ°á»›ng dáº«n viĂªn.',
+        message: 'Không tìm thấy hồ sơ hướng dẫn viên.',
         error: 'Guide not found'
       });
     }
@@ -584,14 +585,14 @@ export const updateGuideProfile = async (req, res) => {
     await guide.save();
     res.json({
       success: true,
-      message: 'ÄĂ£ cáº­p nháº­t thĂ´ng tin thĂ nh cĂ´ng.',
+      message: 'Đã cập nhật thông tin thành công.',
       user: buildGuideProfileResponse(guide)
     });
   } catch (err) {
     console.error('Update guide profile error:', err);
     res.status(500).json({
       success: false,
-      message: 'CĂ³ lá»—i xáº£y ra khi lÆ°u thĂ´ng tin. Vui lĂ²ng thá»­ láº¡i.',
+      message: 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.',
       error: err.message
     });
   }
@@ -675,11 +676,11 @@ export const changeGuidePassword = async (req, res) => {
     const errors = {};
 
     if (!currentPassword) {
-      errors.currentPassword = 'Vui lĂ²ng nháº­p máº­t kháº©u hiá»‡n táº¡i.';
+      errors.currentPassword = 'Vui lòng nhập mật khẩu khác hiện tại.';
     }
 
     if (!newPassword) {
-      errors.newPassword = 'Vui lĂ²ng nháº­p máº­t kháº©u má»›i.';
+      errors.newPassword = 'Vui lòng nhập mật khẩu mới.';
     } else {
       const passwordError = validatePasswordStrength(newPassword);
       if (passwordError) errors.newPassword = passwordError;

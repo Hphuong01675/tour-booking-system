@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 import { useSelector } from 'react-redux';
@@ -323,6 +323,7 @@ const CustomerChatWidget = () => {
           bookingId: selectedBooking.id,
           participantId: selectedParticipant.id,
           participantName: selectedParticipant.fullName,
+          dateOfBirth: selectedParticipant.dateOfBirth || null,
           tourTitle: selectedBooking.schedule?.tour?.title || 'Tour',
           departureDate: selectedBooking.schedule?.departureDate || null,
           frontUrl,
