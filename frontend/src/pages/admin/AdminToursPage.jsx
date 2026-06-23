@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAdminTours, updateAdminTourStatus } from "../../api/adminApi";
 import AdminFooter from "../../components/admin/AdminFooter";
@@ -54,17 +54,25 @@ const AdminToursPage = () => {
         difficulty: "all",
         page: 1,
     });
+    const [searchInput, setSearchInput] = useState("");
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [updatingTourId, setUpdatingTourId] = useState("");
     const [error, setError] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const hasLoadedOnce = useRef(false);
 
     useEffect(() => {
         dispatch(fetchCurrentUser());
     }, [dispatch]);
 
-    const loadTours = async () => {
+    const loadTours = async ({ keepPreviousData = false } = {}) => {
         try {
-            setLoading(true);
+            if (keepPreviousData || hasLoadedOnce.current) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             setError("");
             const data = await getAdminTours({
                 search: filters.search,
@@ -76,18 +84,32 @@ const AdminToursPage = () => {
             setTours(data.tours || []);
             setSummary(data.summary || {});
             setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
+            hasLoadedOnce.current = true;
         } catch (err) {
-            setTours([]);
+            if (!keepPreviousData && !hasLoadedOnce.current) setTours([]);
             setError(err.message || "Không thể tải danh sách tour.");
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        loadTours();
+        loadTours({ keepPreviousData: hasLoadedOnce.current });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters.search, filters.status, filters.difficulty, filters.page]);
+
+    useEffect(() => {
+        const debounceId = window.setTimeout(() => {
+            setFilters((current) =>
+                current.search === searchInput
+                    ? current
+                    : { ...current, search: searchInput, page: 1 },
+            );
+        }, 350);
+
+        return () => window.clearTimeout(debounceId);
+    }, [searchInput]);
 
     const statusFilters = useMemo(
         () => [
@@ -115,11 +137,24 @@ const AdminToursPage = () => {
 
         try {
             setError("");
+            setUpdatingTourId(tour.id);
+            setTours((currentTours) =>
+                currentTours.map((item) =>
+                    item.id === tour.id ? { ...item, status: action.status } : item,
+                ),
+            );
             await updateAdminTourStatus(tour.id, action.status);
             setSuccessMessage("Trạng thái tour đã được cập nhật.");
-            await loadTours();
+            loadTours({ keepPreviousData: true });
+            setUpdatingTourId("");
             setTimeout(() => setSuccessMessage(""), 2500);
         } catch (err) {
+            setTours((currentTours) =>
+                currentTours.map((item) =>
+                    item.id === tour.id ? { ...item, status: tour.status } : item,
+                ),
+            );
+            setUpdatingTourId("");
             setError(err.message || "Không thể cập nhật trạng thái tour.");
         }
     };
@@ -171,10 +206,10 @@ const AdminToursPage = () => {
                                 </span>
                                 <input
                                     className="w-full rounded-lg border border-outline-variant bg-white py-1.5 pl-10 pr-3 text-body-sm outline-none focus:border-primary md:w-72"
-                                    onChange={(event) => updateFilter("search", event.target.value)}
+                                    onChange={(event) => setSearchInput(event.target.value)}
                                     placeholder="Tìm kiếm tour..."
                                     type="text"
-                                    value={filters.search}
+                                    value={searchInput}
                                 />
                             </div>
                             <select
@@ -190,7 +225,7 @@ const AdminToursPage = () => {
                     </section>
 
                     <section className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
-                        <div className="overflow-x-auto">
+                        <div className="min-h-[620px] overflow-x-auto">
                             <table className="w-full min-w-[900px] border-collapse text-left">
                                 <thead className="border-b border-outline-variant bg-surface-container-low">
                                     <tr>
@@ -212,7 +247,7 @@ const AdminToursPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant">
-                                    {loading ? (
+                                    {loading && tours.length === 0 ? (
                                         <tr>
                                             <td
                                                 className="px-6 py-10 text-center text-on-surface-variant"
@@ -307,10 +342,11 @@ const AdminToursPage = () => {
                                                         {action ? (
                                                             <button
                                                                 className={`rounded-lg border px-4 py-1.5 text-label-md font-bold transition-all hover:text-white ${action.tone}`}
+                                                                disabled={updatingTourId === tour.id}
                                                                 onClick={() => handleStatusAction(tour)}
                                                                 type="button"
                                                             >
-                                                                {action.label}
+                                                                {updatingTourId === tour.id ? "Đang cập nhật..." : action.label}
                                                             </button>
                                                         ) : (
                                                             <span className="text-label-sm text-outline">-</span>

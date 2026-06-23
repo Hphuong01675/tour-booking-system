@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAdminUsers, updateAdminUserStatus } from "../../api/adminApi";
+import { createAdminStaffUser, getAdminUsers, updateAdminUserStatus } from "../../api/adminApi";
 import AdminFooter from "../../components/admin/AdminFooter";
 import AdminHeader from "../../components/admin/AdminHeader";
 import { fetchCurrentUser, logoutUser } from "../../features/auth/authSlice";
@@ -26,6 +26,17 @@ const getInitials = (name = "") => {
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 };
 
+const initialStaffForm = {
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+    dateOfBirth: "",
+    address: "",
+    role: "operator",
+    isActive: true,
+};
+
 const AdminUsersPage = () => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
@@ -44,16 +55,30 @@ const AdminUsersPage = () => {
         status: "all",
         page: 1,
     });
+    const [searchInput, setSearchInput] = useState("");
+    const [usersVersion, setUsersVersion] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [updatingUserId, setUpdatingUserId] = useState("");
+    const [showCreateStaff, setShowCreateStaff] = useState(false);
+    const [staffForm, setStaffForm] = useState(initialStaffForm);
+    const [showStaffPassword, setShowStaffPassword] = useState(false);
+    const [savingStaff, setSavingStaff] = useState(false);
+    const [staffFormError, setStaffFormError] = useState("");
     const [error, setError] = useState("");
+    const hasLoadedOnce = useRef(false);
 
     useEffect(() => {
         dispatch(fetchCurrentUser());
     }, [dispatch]);
 
-    const loadUsers = async () => {
+    const loadUsers = async ({ keepPreviousData = false } = {}) => {
         try {
-            setLoading(true);
+            if (keepPreviousData || hasLoadedOnce.current) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             setError("");
             const data = await getAdminUsers({
                 group: filters.group,
@@ -66,18 +91,32 @@ const AdminUsersPage = () => {
             setUsers(data.users || []);
             setSummary(data.summary || {});
             setPagination(data.pagination || { page: 1, limit: 10, total: 0, totalPages: 1 });
+            hasLoadedOnce.current = true;
         } catch (err) {
-            setUsers([]);
+            if (!keepPreviousData && !hasLoadedOnce.current) setUsers([]);
             setError(err.message || "Không thể tải danh sách người dùng.");
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        loadUsers();
+        loadUsers({ keepPreviousData: hasLoadedOnce.current });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filters.group, filters.search, filters.role, filters.status, filters.page]);
+    }, [filters.group, filters.search, filters.role, filters.status, filters.page, usersVersion]);
+
+    useEffect(() => {
+        const debounceId = window.setTimeout(() => {
+            setFilters((current) =>
+                current.search === searchInput
+                    ? current
+                    : { ...current, search: searchInput, page: 1 },
+            );
+        }, 350);
+
+        return () => window.clearTimeout(debounceId);
+    }, [searchInput]);
 
     const groupLabel = filters.group === "staff" ? "nhân viên" : "khách hàng";
 
@@ -99,6 +138,7 @@ const AdminUsersPage = () => {
     };
 
     const updateFilter = (name, value) => {
+        if (name === "group") setSearchInput("");
         setFilters((current) => ({
             ...current,
             [name]: value,
@@ -110,10 +150,69 @@ const AdminUsersPage = () => {
     const handleToggleStatus = async (targetUser) => {
         try {
             setError("");
+            setUpdatingUserId(targetUser.id);
+            setUsers((currentUsers) =>
+                currentUsers.map((item) =>
+                    item.id === targetUser.id ? { ...item, isActive: !targetUser.isActive } : item,
+                ),
+            );
             await updateAdminUserStatus(targetUser.id, !targetUser.isActive);
-            await loadUsers();
+            loadUsers({ keepPreviousData: true });
         } catch (err) {
+            setUsers((currentUsers) =>
+                currentUsers.map((item) =>
+                    item.id === targetUser.id ? { ...item, isActive: targetUser.isActive } : item,
+                ),
+            );
             setError(err.message || "Không thể cập nhật trạng thái người dùng.");
+        } finally {
+            setUpdatingUserId("");
+        }
+    };
+
+    const updateStaffForm = (name, value) => {
+        setStaffForm((current) => ({
+            ...current,
+            [name]: value,
+        }));
+    };
+
+    const closeCreateStaff = () => {
+        if (savingStaff) return;
+        setShowCreateStaff(false);
+        setStaffForm(initialStaffForm);
+        setStaffFormError("");
+        setShowStaffPassword(false);
+    };
+
+    const handleCreateStaff = async (event) => {
+        event.preventDefault();
+
+        try {
+            setStaffFormError("");
+            setSavingStaff(true);
+            await createAdminStaffUser({
+                ...staffForm,
+                isActive: Boolean(staffForm.isActive),
+            });
+            setShowCreateStaff(false);
+            setStaffForm(initialStaffForm);
+            setStaffFormError("");
+            setShowStaffPassword(false);
+            setSearchInput("");
+            setFilters((current) => ({
+                ...current,
+                group: "staff",
+                search: "",
+                role: "all",
+                status: "all",
+                page: 1,
+            }));
+            setUsersVersion((current) => current + 1);
+        } catch (err) {
+            setStaffFormError(err.message || "Không thể tạo tài khoản nhân viên.");
+        } finally {
+            setSavingStaff(false);
         }
     };
 
@@ -125,12 +224,18 @@ const AdminUsersPage = () => {
                 <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
                     <div>
                         <h2 className="mb-2 text-headline-lg font-headline-lg text-on-surface">
-                            Quản lý Người dùng
+                            Quản lý người dùng
                         </h2>
-                        <p className="text-body-md text-on-surface-variant">
-                            Quản lý cơ sở dữ liệu nhân viên và khách hàng trong hệ thống.
-                        </p>
+                        
                     </div>
+                    <button
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-label-lg font-label-lg text-white shadow-sm transition-colors hover:bg-primary/90"
+                        onClick={() => setShowCreateStaff(true)}
+                        type="button"
+                    >
+                        <span className="material-symbols-outlined">person_add</span>
+                        Thêm nhân viên
+                    </button>
                 </div>
 
                 {error && (
@@ -199,10 +304,10 @@ const AdminUsersPage = () => {
                             <span className="material-symbols-outlined text-outline">search</span>
                             <input
                                 className="w-full border-none text-body-md outline-none focus:ring-0"
-                                onChange={(event) => updateFilter("search", event.target.value)}
+                                onChange={(event) => setSearchInput(event.target.value)}
                                 placeholder={`Tìm kiếm ${groupLabel} theo tên, email hoặc số điện thoại...`}
                                 type="text"
-                                value={filters.search}
+                                value={searchInput}
                             />
                         </div>
                         <select
@@ -227,7 +332,7 @@ const AdminUsersPage = () => {
                         </select>
                     </div>
 
-                    <div className="overflow-x-auto rounded-xl border border-outline-variant bg-white shadow-sm">
+                    <div className="min-h-[620px] overflow-x-auto rounded-xl border border-outline-variant bg-white shadow-sm">
                         <table className="w-full min-w-[820px] text-left">
                             <thead className="border-b border-outline-variant bg-surface-container-low">
                                 <tr>
@@ -256,7 +361,7 @@ const AdminUsersPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-outline-variant">
-                                {loading ? (
+                                {loading && users.length === 0 ? (
                                     <tr>
                                         <td
                                             className="px-6 py-10 text-center text-on-surface-variant"
@@ -344,6 +449,7 @@ const AdminUsersPage = () => {
                                                             ? "text-error hover:bg-error-container"
                                                             : "text-primary hover:bg-primary-fixed-dim"
                                                     }`}
+                                                    disabled={updatingUserId === item.id}
                                                     onClick={() => handleToggleStatus(item)}
                                                     type="button"
                                                 >
@@ -395,6 +501,148 @@ const AdminUsersPage = () => {
                     </div>
                 </div>
             </main>
+
+            {showCreateStaff && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+                    <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl border border-outline-variant bg-white shadow-xl">
+                        <form onSubmit={handleCreateStaff}>
+                            <div className="flex items-start justify-between gap-4 border-b border-outline-variant px-6 py-5">
+                                <div>
+                                    <h3 className="text-title-lg font-title-lg text-on-surface">
+                                        Thêm tài khoản nhân viên
+                                    </h3>
+                                   
+                                </div>
+                                <button
+                                    className="flex h-10 w-10 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-low"
+                                    onClick={closeCreateStaff}
+                                    type="button"
+                                >
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            {staffFormError && (
+                                <div className="mx-6 mt-5 rounded-lg border border-error-container bg-error-container px-4 py-3 text-body-sm text-on-error-container">
+                                    {staffFormError}
+                                </div>
+                            )}
+
+                            <div className="grid gap-4 px-6 py-5 md:grid-cols-2">
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Họ tên
+                                    <input
+                                        className="rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("fullName", event.target.value)}
+                                        required
+                                        type="text"
+                                        value={staffForm.fullName}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Email
+                                    <input
+                                        className="rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("email", event.target.value)}
+                                        required
+                                        type="email"
+                                        value={staffForm.email}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Mật khẩu
+                                    <div className="flex items-center rounded-lg border border-outline-variant focus-within:border-primary">
+                                        <input
+                                            className="min-w-0 flex-1 rounded-lg border-none px-4 py-2.5 text-body-md font-normal outline-none focus:ring-0"
+                                            minLength={8}
+                                            onChange={(event) => updateStaffForm("password", event.target.value)}
+                                            required
+                                            type={showStaffPassword ? "text" : "password"}
+                                            value={staffForm.password}
+                                        />
+                                        <button
+                                            aria-label={showStaffPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                            className="flex h-11 w-11 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-low"
+                                            onClick={() => setShowStaffPassword((current) => !current)}
+                                            type="button"
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                {showStaffPassword ? "visibility_off" : "visibility"}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Vai trò
+                                    <select
+                                        className="rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("role", event.target.value)}
+                                        value={staffForm.role}
+                                    >
+                                        <option value="operator">Điều hành</option>
+                                        <option value="guide">Hướng dẫn viên</option>
+                                        <option value="admin">Quản trị viên</option>
+                                    </select>
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Số điện thoại
+                                    <input
+                                        className="rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("phone", event.target.value)}
+                                        required
+                                        type="tel"
+                                        value={staffForm.phone}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface">
+                                    Ngày sinh
+                                    <input
+                                        className="rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("dateOfBirth", event.target.value)}
+                                        type="date"
+                                        value={staffForm.dateOfBirth}
+                                    />
+                                </label>
+                                <label className="flex flex-col gap-2 text-label-md font-label-md text-on-surface md:col-span-2">
+                                    Địa chỉ
+                                    <textarea
+                                        className="min-h-24 rounded-lg border border-outline-variant px-4 py-2.5 text-body-md font-normal outline-none focus:border-primary"
+                                        onChange={(event) => updateStaffForm("address", event.target.value)}
+                                        value={staffForm.address}
+                                    />
+                                </label>
+                                <label className="flex items-center gap-3 text-label-md font-label-md text-on-surface">
+                                    <input
+                                        checked={staffForm.isActive}
+                                        className="h-4 w-4 accent-primary"
+                                        onChange={(event) => updateStaffForm("isActive", event.target.checked)}
+                                        type="checkbox"
+                                    />
+                                    Kích hoạt tài khoản
+                                </label>
+                            </div>
+
+                            <div className="flex flex-col-reverse gap-3 border-t border-outline-variant px-6 py-5 sm:flex-row sm:justify-end">
+                                <button
+                                    className="rounded-lg border border-outline-variant px-5 py-2.5 text-label-lg font-label-lg text-on-surface transition-colors hover:bg-surface-container-low"
+                                    disabled={savingStaff}
+                                    onClick={closeCreateStaff}
+                                    type="button"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    className="rounded-lg bg-primary px-5 py-2.5 text-label-lg font-label-lg text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
+                                    disabled={savingStaff}
+                                    type="submit"
+                                >
+                                    {savingStaff ? "Đang tạo..." : "Tạo nhân viên"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <AdminFooter />
         </div>

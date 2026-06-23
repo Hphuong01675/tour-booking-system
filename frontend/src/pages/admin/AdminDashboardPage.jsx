@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAdminDashboard } from "../../api/adminApi";
 import AdminFooter from "../../components/admin/AdminFooter";
@@ -21,9 +21,200 @@ const getBarHeight = (value, maxValue) => {
 
 const monthLabel = (month) => `Th${String(month).padStart(2, "0")}`;
 
+const RANGE_OPTIONS = [
+    { value: "day", label: "Ngày cụ thể" },
+    { value: "month", label: "Tháng này" },
+    { value: "quarter", label: "Quý này" },
+    { value: "year", label: "Năm nay" },
+];
+
+const todayInputValue = () => new Date().toISOString().slice(0, 10);
+
+const currentMonthValue = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const currentQuarterValue = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`;
+};
+
+const getRangeParams = (filter, prefix = "") => {
+    const key = (name) => (prefix ? `${prefix}${name[0].toUpperCase()}${name.slice(1)}` : name);
+
+    if (filter.rangeType === "day") {
+        return { [key("rangeType")]: "day", [key("date")]: filter.date };
+    }
+
+    if (filter.rangeType === "month") {
+        const [year, month] = filter.monthValue.split("-");
+        return { [key("rangeType")]: "month", [key("year")]: year, [key("month")]: month };
+    }
+
+    if (filter.rangeType === "quarter") {
+        const [year, quarterToken] = filter.quarterValue.split("-Q");
+        return {
+            [key("rangeType")]: "quarter",
+            [key("year")]: year,
+            [key("quarter")]: quarterToken,
+        };
+    }
+
+    return { [key("rangeType")]: "year", [key("year")]: filter.year };
+};
+
+const getChartColor = (value, maxValue) => {
+    if (!value || !maxValue) return "rgba(66, 39, 179, 0.14)";
+
+    const intensity = Number(value) / maxValue;
+    if (intensity >= 0.8) return "rgba(66, 39, 179, 1)";
+    if (intensity >= 0.6) return "rgba(66, 39, 179, 0.78)";
+    if (intensity >= 0.4) return "rgba(66, 39, 179, 0.58)";
+    if (intensity >= 0.2) return "rgba(66, 39, 179, 0.38)";
+    return "rgba(66, 39, 179, 0.22)";
+};
+
+const getCircleDash = (rate, radius) => {
+    const circumference = 2 * Math.PI * radius;
+    return {
+        strokeDasharray: circumference,
+        strokeDashoffset: circumference - (circumference * Number(rate || 0)) / 100,
+    };
+};
+
 const EmptyState = ({ message }) => (
     <div className="rounded-lg border border-dashed border-outline-variant p-8 text-center text-body-sm text-on-surface-variant">
         {message}
+    </div>
+);
+
+const RangeFilterControls = ({ title, description, filter, onChange }) => (
+    <div className="flex flex-col gap-4 rounded-lg border border-outline-variant bg-surface-container-lowest p-4">
+        <div>
+            <h2 className="text-title-md font-title-md text-on-surface">
+                {title}
+            </h2>
+            <p className="text-body-sm text-on-surface-variant">
+                {description}
+            </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                Kỳ dữ liệu
+                <select
+                    className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                    value={filter.rangeType}
+                    onChange={(event) =>
+                        onChange((current) => ({
+                            ...current,
+                            rangeType: event.target.value,
+                        }))
+                    }
+                >
+                    {RANGE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+            </label>
+
+            {filter.rangeType === "day" && (
+                <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                    Ngày
+                    <input
+                        className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                        type="date"
+                        value={filter.date}
+                        onChange={(event) =>
+                            onChange((current) => ({
+                                ...current,
+                                date: event.target.value,
+                            }))
+                        }
+                    />
+                </label>
+            )}
+
+            {filter.rangeType === "month" && (
+                <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                    Tháng
+                    <input
+                        className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                        type="month"
+                        value={filter.monthValue}
+                        onChange={(event) =>
+                            onChange((current) => ({
+                                ...current,
+                                monthValue: event.target.value,
+                            }))
+                        }
+                    />
+                </label>
+            )}
+
+            {filter.rangeType === "quarter" && (
+                <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                    Quý
+                    <div className="flex gap-2">
+                        <input
+                            className="h-11 w-24 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                            min="2000"
+                            max="2100"
+                            type="number"
+                            value={filter.quarterValue.split("-Q")[0]}
+                            onChange={(event) =>
+                                onChange((current) => {
+                                    const quarter = current.quarterValue.split("-Q")[1] || "1";
+                                    return {
+                                        ...current,
+                                        quarterValue: `${event.target.value}-Q${quarter}`,
+                                    };
+                                })
+                            }
+                        />
+                        <select
+                            className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                            value={filter.quarterValue.split("-Q")[1] || "1"}
+                            onChange={(event) =>
+                                onChange((current) => {
+                                    const year = current.quarterValue.split("-Q")[0];
+                                    return {
+                                        ...current,
+                                        quarterValue: `${year}-Q${event.target.value}`,
+                                    };
+                                })
+                            }
+                        >
+                            <option value="1">Quý 1</option>
+                            <option value="2">Quý 2</option>
+                            <option value="3">Quý 3</option>
+                            <option value="4">Quý 4</option>
+                        </select>
+                    </div>
+                </label>
+            )}
+
+            {filter.rangeType === "year" && (
+                <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                    Năm
+                    <input
+                        className="h-11 w-28 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                        min="2000"
+                        max="2100"
+                        type="number"
+                        value={filter.year}
+                        onChange={(event) =>
+                            onChange((current) => ({
+                                ...current,
+                                year: event.target.value,
+                            }))
+                        }
+                    />
+                </label>
+            )}
+        </div>
     </div>
 );
 
@@ -32,7 +223,29 @@ const AdminDashboardPage = () => {
     const { user } = useSelector((state) => state.auth);
     const [dashboard, setDashboard] = useState(null);
     const [loadingDashboard, setLoadingDashboard] = useState(true);
+    const [refreshingDashboard, setRefreshingDashboard] = useState(false);
     const [dashboardError, setDashboardError] = useState("");
+    const hasLoadedDashboardOnce = useRef(false);
+    const [dashboardFilter, setDashboardFilter] = useState(() => {
+        const now = new Date();
+        return {
+            rangeType: "year",
+            date: todayInputValue(),
+            monthValue: currentMonthValue(),
+            quarterValue: currentQuarterValue(),
+            year: String(now.getFullYear()),
+        };
+    });
+    const [occupancyFilter, setOccupancyFilter] = useState(() => {
+        const now = new Date();
+        return {
+            rangeType: "year",
+            date: todayInputValue(),
+            monthValue: currentMonthValue(),
+            quarterValue: currentQuarterValue(),
+            year: String(now.getFullYear()),
+        };
+    });
 
     useEffect(() => {
         dispatch(fetchCurrentUser());
@@ -41,20 +254,29 @@ const AdminDashboardPage = () => {
     useEffect(() => {
         const loadDashboard = async () => {
             try {
-                setLoadingDashboard(true);
+                if (hasLoadedDashboardOnce.current) {
+                    setRefreshingDashboard(true);
+                } else {
+                    setLoadingDashboard(true);
+                }
                 setDashboardError("");
-                const data = await getAdminDashboard();
+                const data = await getAdminDashboard({
+                    ...getRangeParams(dashboardFilter),
+                    ...getRangeParams(occupancyFilter, "occupancy"),
+                });
                 setDashboard(data);
+                hasLoadedDashboardOnce.current = true;
             } catch (error) {
-                setDashboard(null);
+                if (!hasLoadedDashboardOnce.current) setDashboard(null);
                 setDashboardError(error.message || "Không thể tải dữ liệu dashboard.");
             } finally {
                 setLoadingDashboard(false);
+                setRefreshingDashboard(false);
             }
         };
 
         loadDashboard();
-    }, []);
+    }, [dashboardFilter, occupancyFilter]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -62,24 +284,26 @@ const AdminDashboardPage = () => {
 
     const summaryCards = useMemo(() => {
         const summary = dashboard?.summary || {};
+        const periodLabel = dashboard?.filter?.label || "kỳ chọn";
+        const occupancyLabel = dashboard?.occupancyFilter?.label || "kỳ chọn";
 
         return [
             {
-                label: "Doanh thu tháng",
-                value: formatCurrency(summary.monthRevenue),
+                label: `Doanh thu ${periodLabel}`,
+                value: formatCurrency(summary.periodRevenue ?? summary.monthRevenue),
                 tone: "text-primary",
                 icon: "payments",
                 iconClass: "bg-primary-container/10 text-primary",
             },
             {
                 label: "Số vé đã bán",
-                value: Number(summary.monthSoldTickets || 0).toLocaleString("vi-VN"),
+                value: Number(summary.periodSoldTickets ?? summary.monthSoldTickets ?? 0).toLocaleString("vi-VN"),
                 tone: "text-secondary",
                 icon: "confirmation_number",
                 iconClass: "bg-secondary-fixed text-secondary",
             },
             {
-                label: "Tỷ lệ lấp đầy",
+                label: `Tỷ lệ lấp đầy ${occupancyLabel}`,
                 value: formatPercent(summary.overallOccupancyRate),
                 tone: "text-tertiary",
                 icon: "group_add",
@@ -88,7 +312,7 @@ const AdminDashboardPage = () => {
         ];
     }, [dashboard]);
 
-    const monthlyRevenue = dashboard?.monthlyRevenue || [];
+    const monthlyRevenue = dashboard?.revenueChart || dashboard?.monthlyRevenue || [];
     const maxMonthlyRevenue = Math.max(
         ...monthlyRevenue.map((item) => Number(item.revenue || 0)),
         0,
@@ -108,14 +332,156 @@ const AdminDashboardPage = () => {
                     </div>
                 )}
 
+                <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <RangeFilterControls
+                        title="Bộ lọc doanh thu"
+                        description="Áp dụng cho doanh thu, số vé đã bán và biểu đồ doanh thu theo ngày đặt."
+                        filter={dashboardFilter}
+                        onChange={setDashboardFilter}
+                    />
+                    <RangeFilterControls
+                        title="Bộ lọc lấp đầy"
+                        description="Áp dụng cho tỷ lệ lấp đầy theo ngày khởi hành tour."
+                        filter={occupancyFilter}
+                        onChange={setOccupancyFilter}
+                    />
+                </section>
+
+                <section className="hidden">
+                    <div>
+                        <h2 className="text-title-md font-title-md text-on-surface">
+                            Bộ lọc dashboard
+                        </h2>
+                        <p className="text-body-sm text-on-surface-variant">
+                            Doanh thu và vé bán lọc theo ngày đặt; tỷ lệ lấp đầy lọc theo ngày khởi hành.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                        <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                            Kỳ dữ liệu
+                            <select
+                                className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                value={dashboardFilter.rangeType}
+                                onChange={(event) =>
+                                    setDashboardFilter((current) => ({
+                                        ...current,
+                                        rangeType: event.target.value,
+                                    }))
+                                }
+                            >
+                                {RANGE_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        {dashboardFilter.rangeType === "day" && (
+                            <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                                Ngày
+                                <input
+                                    className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                    type="date"
+                                    value={dashboardFilter.date}
+                                    onChange={(event) =>
+                                        setDashboardFilter((current) => ({
+                                            ...current,
+                                            date: event.target.value,
+                                        }))
+                                    }
+                                />
+                            </label>
+                        )}
+
+                        {dashboardFilter.rangeType === "month" && (
+                            <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                                Tháng
+                                <input
+                                    className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                    type="month"
+                                    value={dashboardFilter.monthValue}
+                                    onChange={(event) =>
+                                        setDashboardFilter((current) => ({
+                                            ...current,
+                                            monthValue: event.target.value,
+                                        }))
+                                    }
+                                />
+                            </label>
+                        )}
+
+                        {dashboardFilter.rangeType === "quarter" && (
+                            <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                                Quý
+                                <div className="flex gap-2">
+                                    <input
+                                        className="h-11 w-24 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                        min="2000"
+                                        max="2100"
+                                        type="number"
+                                        value={dashboardFilter.quarterValue.split("-Q")[0]}
+                                        onChange={(event) =>
+                                            setDashboardFilter((current) => {
+                                                const quarter = current.quarterValue.split("-Q")[1] || "1";
+                                                return {
+                                                    ...current,
+                                                    quarterValue: `${event.target.value}-Q${quarter}`,
+                                                };
+                                            })
+                                        }
+                                    />
+                                    <select
+                                        className="h-11 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                        value={dashboardFilter.quarterValue.split("-Q")[1] || "1"}
+                                        onChange={(event) =>
+                                            setDashboardFilter((current) => {
+                                                const year = current.quarterValue.split("-Q")[0];
+                                                return {
+                                                    ...current,
+                                                    quarterValue: `${year}-Q${event.target.value}`,
+                                                };
+                                            })
+                                        }
+                                    >
+                                        <option value="1">Quý 1</option>
+                                        <option value="2">Quý 2</option>
+                                        <option value="3">Quý 3</option>
+                                        <option value="4">Quý 4</option>
+                                    </select>
+                                </div>
+                            </label>
+                        )}
+
+                        {dashboardFilter.rangeType === "year" && (
+                            <label className="flex flex-col gap-1 text-label-md text-on-surface-variant">
+                                Năm
+                                <input
+                                    className="h-11 w-28 rounded-lg border border-outline-variant bg-surface-container-lowest px-3 text-body-md text-on-surface outline-none focus:border-primary"
+                                    min="2000"
+                                    max="2100"
+                                    type="number"
+                                    value={dashboardFilter.year}
+                                    onChange={(event) =>
+                                        setDashboardFilter((current) => ({
+                                            ...current,
+                                            year: event.target.value,
+                                        }))
+                                    }
+                                />
+                            </label>
+                        )}
+                    </div>
+                </section>
+
                 <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     {summaryCards.map((card) => (
                         <article
-                            className="group flex items-start justify-between rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm transition-all hover:shadow-md"
+                            className="group flex min-h-[140px] items-start justify-between rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm transition-all hover:shadow-md"
                             key={card.label}
                         >
                             <div className="flex flex-col gap-1">
-                                <span className="text-label-md font-label-md uppercase tracking-wider text-on-surface-variant">
+                                <span className="min-h-10 text-label-md font-label-md uppercase tracking-wider text-on-surface-variant">
                                     {card.label}
                                 </span>
                                 <h2 className={`text-headline-lg font-headline-lg ${card.tone}`}>
@@ -144,20 +510,21 @@ const AdminDashboardPage = () => {
                                     Biểu đồ doanh thu
                                 </h3>
                                 <p className="text-body-sm text-on-surface-variant">
-                                    Phân tích doanh thu theo dữ liệu đặt tour trong năm
+                                    Phân tích doanh thu theo dữ liệu đặt tour trong kỳ đã chọn
                                 </p>
                             </div>
                             <div className="rounded-lg bg-surface-container-low px-3 py-2 text-label-md text-on-surface-variant">
-                                Năm {dashboard?.year || new Date().getFullYear()}
+                                {dashboard?.filter?.label || `Năm ${dashboard?.year || new Date().getFullYear()}`}
                             </div>
                         </div>
 
-                        {loadingDashboard ? (
+                        <div className="min-h-[320px]">
+                            {loadingDashboard ? (
                             <EmptyState message="Đang tải dữ liệu doanh thu..." />
                         ) : monthlyRevenue.length === 0 || maxMonthlyRevenue === 0 ? (
-                            <EmptyState message="Chưa có dữ liệu doanh thu trong năm này." />
+                            <EmptyState message="Chưa có dữ liệu doanh thu trong kỳ đã chọn." />
                         ) : (
-                            <div className="relative flex h-[300px] items-end justify-between gap-3 border-b border-outline-variant px-2 pt-10 sm:gap-4 sm:px-4">
+                            <div className="relative flex h-[320px] items-end justify-between gap-3 border-b border-outline-variant px-2 pt-10 sm:gap-4 sm:px-4">
                                 <div className="absolute inset-x-0 top-10 h-0 border-t border-outline-variant/30" />
                                 <div className="absolute inset-x-0 top-[110px] h-0 border-t border-outline-variant/30" />
                                 <div className="absolute inset-x-0 top-[180px] h-0 border-t border-outline-variant/30" />
@@ -165,21 +532,23 @@ const AdminDashboardPage = () => {
 
                                 {monthlyRevenue.map((item) => (
                                     <div
-                                        className="group z-10 flex flex-1 flex-col items-center"
-                                        key={item.month}
+                                        className="group z-10 flex h-full flex-1 flex-col items-center justify-end"
+                                        key={item.key || item.month || item.label}
                                     >
-                                        <div
-                                            className={`relative w-full rounded-t-sm transition-all duration-500 ${
-                                                item.month === currentMonth
-                                                    ? "bg-primary-container"
-                                                    : "bg-primary-container/20"
-                                            }`}
-                                            style={{
-                                                height: getBarHeight(item.revenue, maxMonthlyRevenue),
-                                            }}
-                                        >
-                                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-inverse-surface px-2 py-1 text-[10px] text-inverse-on-surface opacity-0 transition-opacity group-hover:opacity-100">
-                                                {formatCurrency(item.revenue)}
+                                        <div className="flex h-[260px] w-full items-end">
+                                            <div
+                                                className="relative w-full rounded-t-sm transition-all duration-500"
+                                                style={{
+                                                    backgroundColor: getChartColor(
+                                                        item.revenue,
+                                                        maxMonthlyRevenue,
+                                                    ),
+                                                    height: getBarHeight(item.revenue, maxMonthlyRevenue),
+                                                }}
+                                            >
+                                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-inverse-surface px-2 py-1 text-[10px] text-inverse-on-surface opacity-0 transition-opacity group-hover:opacity-100">
+                                                    {formatCurrency(item.revenue)}
+                                                </div>
                                             </div>
                                         </div>
                                         <span
@@ -189,12 +558,13 @@ const AdminDashboardPage = () => {
                                                     : "text-on-surface-variant"
                                             }`}
                                         >
-                                            {monthLabel(item.month)}
+                                            {item.label || monthLabel(item.month)}
                                         </span>
                                     </div>
                                 ))}
                             </div>
-                        )}
+                            )}
+                        </div>
                     </section>
 
                     <section className="h-full rounded-xl border border-outline-variant bg-surface-container-lowest p-6 shadow-sm lg:col-span-4">
@@ -205,6 +575,7 @@ const AdminDashboardPage = () => {
                             Khách đăng ký trên tổng sức chứa theo dạng tour
                         </p>
 
+                        <div className="min-h-[360px]">
                         {loadingDashboard ? (
                             <EmptyState message="Đang tải tỷ lệ lấp đầy..." />
                         ) : !occupancy ? (
@@ -212,51 +583,39 @@ const AdminDashboardPage = () => {
                         ) : (
                             <>
                                 <div className="relative mb-8 flex justify-center">
-                                    <svg className="h-48 w-48 -rotate-90">
-                                        <circle
-                                            className="text-surface-container-low"
-                                            cx="96"
-                                            cy="96"
-                                            fill="transparent"
-                                            r="80"
-                                            stroke="currentColor"
-                                            strokeWidth="24"
-                                        />
-                                        <circle
-                                            className="text-primary"
-                                            cx="96"
-                                            cy="96"
-                                            fill="transparent"
-                                            r="80"
-                                            stroke="currentColor"
-                                            strokeDasharray="502"
-                                            strokeDashoffset={
-                                                502 -
-                                                (502 * Number(occupancy.normal?.rate || 0)) / 100
-                                            }
-                                            strokeWidth="24"
-                                        />
-                                        <circle
-                                            className="text-secondary"
-                                            cx="96"
-                                            cy="96"
-                                            fill="transparent"
-                                            r="80"
-                                            stroke="currentColor"
-                                            strokeDasharray="502"
-                                            strokeDashoffset={
-                                                502 -
-                                                (502 * Number(occupancy.hard?.rate || 0)) / 100
-                                            }
-                                            strokeWidth="24"
-                                        />
+                                    <svg className="h-56 w-56 -rotate-90">
+                                        {[
+                                            { rate: occupancy.total?.rate, radius: 88, color: "text-tertiary" },
+                                            { rate: occupancy.normal?.rate, radius: 64, color: "text-primary" },
+                                            { rate: occupancy.hard?.rate, radius: 40, color: "text-secondary" },
+                                        ].map((ring) => (
+                                            <g key={ring.radius}>
+                                                <circle
+                                                    className="text-surface-container-low"
+                                                    cx="112"
+                                                    cy="112"
+                                                    fill="transparent"
+                                                    r={ring.radius}
+                                                    stroke="currentColor"
+                                                    strokeWidth="14"
+                                                />
+                                                <circle
+                                                    className={ring.color}
+                                                    cx="112"
+                                                    cy="112"
+                                                    fill="transparent"
+                                                    r={ring.radius}
+                                                    stroke="currentColor"
+                                                    strokeLinecap="round"
+                                                    strokeWidth="14"
+                                                    {...getCircleDash(ring.rate, ring.radius)}
+                                                />
+                                            </g>
+                                        ))}
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                                         <span className="text-headline-md font-bold text-on-surface">
                                             {formatPercent(occupancy.total?.rate)}
-                                        </span>
-                                        <span className="text-[10px] uppercase tracking-widest text-on-surface-variant">
-                                            Tổng quan
                                         </span>
                                     </div>
                                 </div>
@@ -283,6 +642,7 @@ const AdminDashboardPage = () => {
                                 </div>
                             </>
                         )}
+                        </div>
                     </section>
                 </div>
 

@@ -51,18 +51,26 @@ const getLastEmailToken = (value) => {
     return parts[parts.length - 1].trim();
 };
 
+const getNextDateValue = (value) => {
+    if (!value) return undefined;
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return undefined;
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0, 10);
+};
+
 const buildVoucherPayload = (form) => ({
     name: form.name,
     code: form.code,
-    description: form.description || null,
+    description: form.description,
     discountType: form.discountType,
     discountValue: Number(form.discountValue),
-    maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : null,
-    minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : 0,
+    maxDiscountAmount: Number(form.maxDiscountAmount),
+    minOrderValue: Number(form.minOrderValue),
     validFrom: form.validFrom || null,
     validUntil: form.validUntil || null,
-    totalQuantity: form.totalQuantity ? Number(form.totalQuantity) : null,
-    usageLimitPerUser: form.usageLimitPerUser ? Number(form.usageLimitPerUser) : 1,
+    totalQuantity: Number(form.totalQuantity),
+    usageLimitPerUser: Number(form.usageLimitPerUser),
     targetType: form.targetType,
     emails: form.targetType === "specific" ? getEmailTokens(form.specificEmails) : [],
 });
@@ -172,7 +180,13 @@ const AdminVouchersPage = () => {
     };
 
     const updateForm = (name, value) => {
-        setForm((current) => ({ ...current, [name]: value }));
+        setForm((current) => {
+            const nextForm = { ...current, [name]: value };
+            if (name === "validFrom" && current.validUntil && current.validUntil <= value) {
+                nextForm.validUntil = "";
+            }
+            return nextForm;
+        });
     };
 
     const addSuggestedEmail = (email) => {
@@ -189,6 +203,33 @@ const AdminVouchersPage = () => {
         try {
             setSaving(true);
             setError("");
+            if (form.validFrom && form.validUntil && form.validUntil <= form.validFrom) {
+                setError("Ngày kết thúc phải sau ngày bắt đầu.");
+                setSaving(false);
+                return;
+            }
+            if (form.maxDiscountAmount === "" || form.minOrderValue === "") {
+                setError("Vui lòng nhập giảm tối đa và giá trị đơn tối thiểu.");
+                setSaving(false);
+                return;
+            }
+            if (
+                !form.name.trim() ||
+                !form.code.trim() ||
+                !form.description.trim() ||
+                !form.discountType ||
+                form.discountValue === "" ||
+                !form.validFrom ||
+                !form.validUntil ||
+                form.totalQuantity === "" ||
+                form.usageLimitPerUser === "" ||
+                !form.targetType ||
+                (form.targetType === "specific" && getEmailTokens(form.specificEmails).length === 0)
+            ) {
+                setError("Vui lòng nhập đầy đủ tất cả thông tin voucher.");
+                setSaving(false);
+                return;
+            }
             await createAdminVoucher(buildVoucherPayload(form));
             setForm(initialForm);
             setIsFormOpen(false);
@@ -220,9 +261,6 @@ const AdminVouchersPage = () => {
                         <h2 className="text-headline-lg font-headline-lg text-on-surface">
                             Danh sách Voucher
                         </h2>
-                        <p className="mt-1 text-body-md text-on-surface-variant">
-                            Quản lý và theo dõi các chương trình khuyến mãi đang triển khai.
-                        </p>
                     </div>
                     <button
                         className="flex items-center justify-center gap-2 rounded-xl bg-secondary-container px-6 py-3 font-label-md text-on-secondary-fixed shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-95"
@@ -291,9 +329,6 @@ const AdminVouchersPage = () => {
                             <h3 className="text-headline-sm font-headline-sm text-on-surface">
                                 Tạo Voucher mới
                             </h3>
-                            <p className="text-body-sm text-on-surface-variant">
-                                Thiết lập thông số ưu đãi và đối tượng áp dụng.
-                            </p>
                         </div>
 
                         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -330,6 +365,7 @@ const AdminVouchersPage = () => {
                                     <select
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         onChange={(event) => updateForm("discountType", event.target.value)}
+                                        required
                                         value={form.discountType}
                                     >
                                         <option value="percent">Phần trăm (%)</option>
@@ -359,12 +395,13 @@ const AdminVouchersPage = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Giảm tối đa
+                                        Giảm tối đa <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         min="0"
                                         onChange={(event) => updateForm("maxDiscountAmount", event.target.value)}
+                                        required
                                         type="number"
                                         value={form.maxDiscountAmount}
                                     />
@@ -374,22 +411,25 @@ const AdminVouchersPage = () => {
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Ngày bắt đầu
+                                        Ngày bắt đầu <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         onChange={(event) => updateForm("validFrom", event.target.value)}
+                                        required
                                         type="date"
                                         value={form.validFrom}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Ngày kết thúc
+                                        Ngày kết thúc <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         onChange={(event) => updateForm("validUntil", event.target.value)}
+                                        min={getNextDateValue(form.validFrom)}
+                                        required
                                         type="date"
                                         value={form.validUntil}
                                     />
@@ -399,36 +439,39 @@ const AdminVouchersPage = () => {
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Số lượng phát hành
+                                        Số lượng phát hành <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         min="0"
                                         onChange={(event) => updateForm("totalQuantity", event.target.value)}
+                                        required
                                         type="number"
                                         value={form.totalQuantity}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Lượt dùng mỗi tài khoản
+                                        Lượt dùng mỗi tài khoản <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         min="1"
                                         onChange={(event) => updateForm("usageLimitPerUser", event.target.value)}
+                                        required
                                         type="number"
                                         value={form.usageLimitPerUser}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="font-label-md text-label-md text-on-surface">
-                                        Giá trị đơn tối thiểu
+                                        Giá trị đơn tối thiểu <span className="text-error">*</span>
                                     </label>
                                     <input
                                         className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                         min="0"
                                         onChange={(event) => updateForm("minOrderValue", event.target.value)}
+                                        required
                                         type="number"
                                         value={form.minOrderValue}
                                     />
@@ -436,17 +479,20 @@ const AdminVouchersPage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="font-label-md text-label-md text-on-surface">Mô tả</label>
+                                <label className="font-label-md text-label-md text-on-surface">
+                                    Mô tả <span className="text-error">*</span>
+                                </label>
                                 <textarea
                                     className="min-h-[96px] w-full rounded-lg border border-outline-variant bg-surface p-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                     onChange={(event) => updateForm("description", event.target.value)}
+                                    required
                                     value={form.description}
                                 />
                             </div>
 
                             <div className="space-y-4">
                                 <p className="font-label-md text-label-md text-on-surface">
-                                    Đối tượng áp dụng
+                                    Đối tượng áp dụng <span className="text-error">*</span>
                                 </p>
                                 <div className="flex flex-col gap-4 md:flex-row">
                                     <label className="flex cursor-pointer items-center gap-2">
@@ -455,6 +501,7 @@ const AdminVouchersPage = () => {
                                             className="h-5 w-5 border-outline-variant text-primary focus:ring-primary"
                                             name="targetType"
                                             onChange={() => updateForm("targetType", "all")}
+                                            required
                                             type="radio"
                                         />
                                         <span className="text-body-md text-on-surface">Toàn hệ thống</span>
@@ -465,6 +512,7 @@ const AdminVouchersPage = () => {
                                             className="h-5 w-5 border-outline-variant text-primary focus:ring-primary"
                                             name="targetType"
                                             onChange={() => updateForm("targetType", "specific")}
+                                            required
                                             type="radio"
                                         />
                                         <span className="text-body-md text-on-surface">Đối tượng cụ thể</span>
@@ -474,12 +522,13 @@ const AdminVouchersPage = () => {
                                 {form.targetType === "specific" && (
                                     <div className="relative space-y-2">
                                         <label className="font-label-md text-label-md text-on-surface">
-                                            Danh sách Email
+                                            Danh sách Email <span className="text-error">*</span>
                                         </label>
                                         <input
                                             className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                                             onChange={(event) => updateForm("specificEmails", event.target.value)}
                                             placeholder="email1@example.com, email2@example.com"
+                                            required
                                             type="text"
                                             value={form.specificEmails}
                                         />

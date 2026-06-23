@@ -1,8 +1,8 @@
 import axiosInstance from "./axiosInstance";
 
-export const getAdminDashboard = async (year) => {
+export const getAdminDashboard = async (params) => {
     const response = await axiosInstance.get("/api/admin/dashboard", {
-        params: year ? { year } : undefined,
+        params,
     });
     return response.data;
 };
@@ -33,6 +33,11 @@ export const suggestCustomerEmails = async (email) => {
 
 export const getAdminUsers = async (params) => {
     const response = await axiosInstance.get("/api/admin/users", { params });
+    return response.data;
+};
+
+export const createAdminStaffUser = async (payload) => {
+    const response = await axiosInstance.post("/api/admin/users", payload);
     return response.data;
 };
 
