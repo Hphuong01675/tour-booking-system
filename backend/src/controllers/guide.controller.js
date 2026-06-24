@@ -37,25 +37,25 @@ const getAge = (birthDate, today = new Date()) => {
 };
 
 const validateGuideDateOfBirth = (dateOfBirth) => {
-  if (!dateOfBirth) return 'Vui lĂ²ng nháº­p ngĂ y sinh.';
+  if (!dateOfBirth) return 'Vui lòng nhập ngày sinh.';
 
   const birthDate = new Date(dateOfBirth);
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  if (Number.isNaN(birthDate.getTime())) return 'NgĂ y sinh khĂ´ng há»£p lá»‡.';
-  if (birthDate > today) return 'NgĂ y sinh khĂ´ng Ä‘Æ°á»£c lá»›n hÆ¡n ngĂ y hiá»‡n táº¡i hoáº·c náº±m trong tÆ°Æ¡ng lai.';
+  if (Number.isNaN(birthDate.getTime())) return 'Ngày sinh không hợp lệ.';
+  if (birthDate > today) return 'Ngày sinh không được lớn hơn ngày hiện tại hoặc nằm trong tương lai.';
 
   const age = getAge(birthDate, new Date());
-  if (age < 18) return 'Tuá»•i khĂ´ng há»£p lá»‡, Ä‘á»™ tuá»•i pháº£i tá»« Ä‘á»§ 18 Ä‘áº¿n dÆ°á»›i 62 tuá»•i.';
-  if (age >= 62) return 'Tuá»•i khĂ´ng há»£p lá»‡, Ä‘á»™ tuá»•i pháº£i tá»« Ä‘á»§ 18 Ä‘áº¿n dÆ°á»›i 62 tuá»•i';;
+  if (age < 18) return 'Tuổi không hợp lệ, độ tuổi phải từ đủ 18 đến dưới 62 tuổi.';
+  if (age >= 62) return 'Tuổi không hợp lệ, độ tuổi phải từ đủ 18 đến dưới 62 tuổi';;
 
   return null;
 };
 
 const validatePasswordStrength = (password) => {
   if (!password || String(password).length < 8) {
-    return 'Máº­t kháº©u má»›i pháº£i cĂ³ Ă­t nháº¥t 8 kĂ½ tá»±.';
+    return 'Mật khẩu mới phải có ít nhất 8 ký tự.';
   }
 
   const hasUpper = /[A-Z]/.test(password);
@@ -64,7 +64,7 @@ const validatePasswordStrength = (password) => {
   const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password);
 
   if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-    return 'Máº­t kháº©u má»›i pháº£i gá»“m chá»¯ hoa, chá»¯ thÆ°á»ng, sá»‘ vĂ  kĂ½ tá»± Ä‘áº·c biá»‡t.';
+    return 'Mật khẩu mới phải gồm chữ hoa, chữ thường, số và ký tự đặc biệt.';
   }
 
   return null;
@@ -291,7 +291,7 @@ export const exportAssignedTours = async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (err) {
     console.error('Export assigned tours error:', err);
-    res.status(500).json({ error: 'KhĂ´ng thá»ƒ xuáº¥t file. Vui lĂ²ng thá»­ láº¡i sau.' });
+    res.status(500).json({ error: 'Không thể xuất file. Vui lòng thử lại sau.' });
   }
 };
 
@@ -884,7 +884,7 @@ export const changeGuidePassword = async (req, res) => {
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Dá»¯ liá»‡u khĂ´ng há»£p lá»‡. Vui lĂ²ng kiá»ƒm tra láº¡i thĂ´ng tin.',
+        message: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.',
         errors
       });
     }
@@ -893,7 +893,7 @@ export const changeGuidePassword = async (req, res) => {
     if (!guide) {
       return res.status(404).json({
         success: false,
-        error: 'KhĂ´ng tĂ¬m tháº¥y há»“ sÆ¡ hÆ°á»›ng dáº«n viĂªn.'
+        error: 'Không tìm thấy hồ sơ hướng dẫn viên.'
       });
     }
 
@@ -902,7 +902,7 @@ export const changeGuidePassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         errors: {
-          currentPassword: 'Máº­t kháº©u hiá»‡n táº¡i khĂ´ng chĂ­nh xĂ¡c.'
+          currentPassword: 'Mật khẩu hiện tại không chính xác.'
         }
       });
     }
@@ -911,12 +911,12 @@ export const changeGuidePassword = async (req, res) => {
     guide.passwordHash = await bcrypt.hash(newPassword, salt);
     await guide.save();
 
-    res.json({ success: true, message: 'ÄĂ£ Ä‘á»•i máº­t kháº©u thĂ nh cĂ´ng.' });
+    res.json({ success: true, message: 'Đã đổi mật khẩu thành công.' });
   } catch (err) {
     console.error('Change guide password error:', err);
     res.status(500).json({
       success: false,
-      error: 'KhĂ´ng thá»ƒ Ä‘á»•i máº­t kháº©u. Vui lĂ²ng thá»­ láº¡i.'
+      error: 'Không thể đổi mật khẩu. Vui lòng thử lại.'
     });
   }
 };
@@ -1418,7 +1418,7 @@ export const checkinParticipant = async (req, res) => {
     }
   } catch (err) {
     console.error('Checkin error:', err);
-    res.status(500).json({ error: 'KhĂ´ng thá»ƒ check-in. Vui lĂ²ng thá»­ láº¡i sau.' });
+    res.status(500).json({ error: 'Không thể check-in. Vui lòng thử lại sau.' });
   }
 };
 

@@ -81,10 +81,6 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
   };
 
   const openSendModal = () => {
-    if (selectedIds.size === 0) {
-      alert('Vui lòng chọn ít nhất 1 vật dụng để gửi nhắc nhở!');
-      return;
-    }
     setMandatoryNote('');
     setShowSendModal(true);
   };
@@ -250,7 +246,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
           </button>
           <button 
             onClick={openSendModal}
-            disabled={isSendingReminder || selectedIds.size === 0}
+            disabled={isSendingReminder}
             className="flex items-center gap-xs px-md py-sm bg-primary text-on-primary font-label-md rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
           >
             <span className="material-symbols-outlined">send</span>
@@ -480,6 +476,16 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
               Gửi lời nhắc hành trang
             </h4>
             <div className="space-y-md">
+              {/* Cảnh báo khi chưa chọn vật dụng nào */}
+              {selectedIds.size === 0 && (
+                <div className="flex items-start gap-sm p-md rounded-lg bg-yellow-50 border border-yellow-300">
+                  <span className="material-symbols-outlined text-yellow-600 text-[22px] mt-px" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                  <div>
+                    <p className="font-label-md text-yellow-800 font-semibold">Chưa chọn vật dụng nào!</p>
+                    <p className="font-body-sm text-yellow-700 mt-xs">Vui lòng quay lại và chọn ít nhất 1 vật dụng trước khi gửi nhắc nhở hành trang.</p>
+                  </div>
+                </div>
+              )}
               <p className="font-body-sm text-on-surface-variant">
                 Bạn đang chuẩn bị gửi thông báo nhắc nhở chuẩn bị hành trang gồm <strong>{selectedIds.size} vật dụng</strong> tới toàn bộ hành khách của chuyến đi.
               </p>
@@ -504,7 +510,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
                 </button>
                 <button 
                   onClick={confirmSendReminder}
-                  disabled={isSendingReminder}
+                  disabled={isSendingReminder || selectedIds.size === 0}
                   className="flex items-center gap-xs px-md py-sm rounded-lg font-label-md bg-primary text-on-primary hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-[18px]">send</span>
