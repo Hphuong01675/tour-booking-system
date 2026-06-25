@@ -32,7 +32,7 @@ const Homepage = () => {
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [totalTours, setTotalTours] = useState(0);
-    const itemsPerPage = 2;
+    const itemsPerPage = 3;
 
     // Reset pagination to page 1 when search filters change
     useEffect(() => {
