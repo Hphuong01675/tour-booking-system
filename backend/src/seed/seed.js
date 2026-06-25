@@ -240,7 +240,7 @@ export const seedDatabase = async () => {
             createdBy: "operator-1",
         });
 
-        // Tour 5: Closed, Normal
+        // Tour 5: Open, Normal
         await Tour.create({
             id: "tour-5",
             tourCode: "GE-VN-1102",
@@ -256,7 +256,7 @@ export const seedDatabase = async () => {
             difficulty: "normal",
             thumbnailUrl: "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&h=250&fit=crop",
             isPublished: true,
-            status: "closed",
+            status: "open",
             createdBy: "operator-1",
         });
 
@@ -280,7 +280,7 @@ export const seedDatabase = async () => {
             createdBy: "operator-1",
         });
 
-        // Tour 7: Upcoming, Normal
+        // Tour 7: Upcoming, Normal (Set to open/published)
         await Tour.create({
             id: "tour-7",
             tourCode: "GE-VN-8877",
@@ -295,8 +295,8 @@ export const seedDatabase = async () => {
             durationNights: 3,
             difficulty: "normal",
             thumbnailUrl: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400&h=250&fit=crop",
-            isPublished: false,
-            status: "upcoming",
+            isPublished: true,
+            status: "open",
             createdBy: "operator-1",
         });
 
@@ -400,7 +400,7 @@ export const seedDatabase = async () => {
             status: "open",
         });
 
-        // Schedule 4: Sept 01 - Sept 05 (for Tour 5 - closed)
+        // Schedule 4: Sept 01 - Sept 05 (for Tour 5 - open)
         await TourSchedule.create({
             id: "schedule-4",
             tourId: "tour-5",
@@ -410,7 +410,20 @@ export const seedDatabase = async () => {
             price: 3800000.0,
             maxCapacity: 25,
             registered: 25,
-            status: "closed",
+            status: "open",
+        });
+
+        // Schedule 5: Nov 20 - Nov 24 (for Tour 7 - open)
+        await TourSchedule.create({
+            id: "schedule-5",
+            tourId: "tour-7",
+            scheduleCode: "SCH-8877-001",
+            departureDate: new Date("2026-11-20T08:00:00Z"),
+            returnDate: new Date("2026-11-24T17:00:00Z"),
+            price: 6800000.0,
+            maxCapacity: 30,
+            registered: 5,
+            status: "open",
         });
 
         // Seeding Vouchers
