@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GuideHeader from '../../components/guide/GuideHeader';
 import GuideFooter from '../../components/guide/GuideFooter';
 import { getChecklistTemplates, getPackingItems, createPackingItem, updatePackingItem, deletePackingItem, getGuideProfile } from '../../api/guideApi';
@@ -19,6 +20,7 @@ const GuidePackingListPage = () => {
 
   // State
   const [currentUser, setCurrentUser] = useState(null);
+  const [templates, setTemplates] = useState([]);
   const [packingItems, setPackingItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
