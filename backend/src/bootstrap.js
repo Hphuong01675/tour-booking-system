@@ -9,6 +9,16 @@ export const initializeDatabaseAndStartServer = async (app, port) => {
         // Sync database schema
         await db.sequelize.sync();
 
+        // Alter ENUM type for booking status to support 'rejected'
+        try {
+            await db.sequelize.query(
+                "ALTER TABLE bookings MODIFY COLUMN status ENUM('pending_approval', 'pending_payment', 'paid', 'cancelled', 'refunded', 'rejected') NOT NULL DEFAULT 'pending_payment';"
+            );
+            console.log("Successfully altered bookings status ENUM to support 'rejected'.");
+        } catch (e) {
+            console.warn("Failed to alter bookings status ENUM:", e.message);
+        }
+
         // Seed default records if empty
         await seedDatabase();
 

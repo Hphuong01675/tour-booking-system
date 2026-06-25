@@ -432,7 +432,6 @@ class CustomerService {
             return { destroyed: true };
         }
     }
-
     async updateBookingTraveler(userId, bookingId, { fullName, phone, participants }) {
         const booking = await Booking.findOne({
             where: { id: bookingId, customerId: userId },
@@ -440,6 +439,13 @@ class CustomerService {
         });
         if (!booking) {
             throw new Error("BOOKING_NOT_FOUND");
+        }
+
+        // Reset status to pending_approval if the booking is currently rejected
+        if (booking.status === "rejected") {
+            booking.status = "pending_approval";
+            booking.cancellationReason = null;
+            await booking.save();
         }
 
         if (participants && participants.length > 0) {

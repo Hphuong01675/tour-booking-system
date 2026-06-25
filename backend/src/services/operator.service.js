@@ -715,7 +715,7 @@ class OperatorService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
-        booking.status = "cancelled";
+        booking.status = "rejected";
         booking.cancellationReason = reason || "Giấy tờ xác minh không hợp lệ.";
         await booking.save();
 
