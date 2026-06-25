@@ -43,6 +43,9 @@ import TourDetailPage from "./pages/customer/TourDetailPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import Homepage from "./pages/Homepage";
+import AdminVouchersPage from "./pages/admin/AdminVouchersPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminToursPage from "./pages/admin/AdminToursPage";
 
 function App() {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -88,6 +91,30 @@ function App() {
                     element={
                         <ProtectedRoute allowedRoles={["admin"]}>
                             <AdminDashboardPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/vouchers"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminVouchersPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminUsersPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/tours"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminToursPage />
                         </ProtectedRoute>
                     }
                 />

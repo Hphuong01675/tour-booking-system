@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import db from "../models";
 
-export const verifyAccessToken = (req, res, next) => {
+export const verifyAccessToken = async (req, res, next) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader?.split(" ")[1];
 
@@ -17,6 +18,26 @@ export const verifyAccessToken = (req, res, next) => {
             token,
             process.env.JWT_ACCESS_SECRET || "default_access_secret",
         );
+
+        const user = await db.User.findByPk(decoded.id, {
+            attributes: ["id", "email", "role", "isActive"],
+        });
+
+        if (!user || !user.isActive) {
+            return res.status(401).json({
+                success: false,
+                error: "Tai khoan khong ton tai hoac da bi khoa.",
+                code: "ACCOUNT_INACTIVE",
+            });
+        }
+
+        if (user.role !== decoded.role) {
+            return res.status(401).json({
+                success: false,
+                error: "Thong tin phien dang nhap khong con hop le.",
+                code: "STALE_ACCESS_TOKEN",
+            });
+        }
 
         req.user = decoded;
         next();

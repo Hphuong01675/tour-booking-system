@@ -37,6 +37,27 @@ export const seedDatabase = async () => {
             ]);
         }
 
+        // Seed admin user
+        const adminPasswordHash = bcrypt.hashSync("Admin@123", 10);
+        const [admin, adminCreated] = await User.findOrCreate({
+            where: { email: "admin@chip3chip.com" },
+            defaults: {
+                id: "admin-1",
+                fullName: "Quan tri vien",
+                email: "admin@chip3chip.com",
+                passwordHash: adminPasswordHash,
+                phone: "0900000000",
+                role: "admin",
+                isActive: true,
+            },
+        });
+
+        if (!adminCreated && (!admin.isActive || admin.role !== "admin")) {
+            admin.role = "admin";
+            admin.isActive = true;
+            await admin.save();
+        }
+
         // Check if Guide user exists
         const guideCount = await User.count({ where: { role: "guide" } });
         if (guideCount > 0) {
