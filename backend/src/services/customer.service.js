@@ -432,6 +432,7 @@ class CustomerService {
             return { destroyed: true };
         }
     }
+
     async updateBookingTraveler(userId, bookingId, { fullName, phone, participants }) {
         const booking = await Booking.findOne({
             where: { id: bookingId, customerId: userId },

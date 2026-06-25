@@ -14,6 +14,7 @@ import pendingBookingRoutes from "./routes/pendingBooking.routes";
 import customerRoutes from "./routes/customer.routes";
 import uploadRoutes from "./routes/upload.routes";
 import chatRoutes from "./routes/chat.routes";
+import guideRoutes from "./routes/guide.routes";
 import { seedDatabase } from "./seed/seed";
 import http from "http";
 import { Server } from "socket.io";
@@ -37,6 +38,7 @@ app.use("/", pendingBookingRoutes);
 app.use("/", customerRoutes);
 app.use("/", uploadRoutes);
 app.use("/", chatRoutes);
+app.use("/api/guides", guideRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // ==================== API ROUTING ====================

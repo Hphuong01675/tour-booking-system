@@ -538,7 +538,7 @@ const Homepage = () => {
                         <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                             Với hơn 15 năm kinh nghiệm trong ngành du lịch, Chip3Chip tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 max-w-xl mx-auto text-left">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 w-full max-w-xl mx-auto text-left">
                             <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
                                 <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                                     <span className="material-symbols-outlined text-[28px]">verified</span>
@@ -702,7 +702,7 @@ const Homepage = () => {
             {/* Step 1: Interactive Booking Configuration Modal */}
             {bookingConfigTour && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[32px] max-w-lg w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8 text-neutral-800">
+                    <div className="app-modal-panel app-modal-panel-lg bg-white rounded-[32px] p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8 text-neutral-800">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-black text-neutral-900">Thông Tin Đặt Tour</h3>
                             <button 
@@ -829,7 +829,7 @@ const Homepage = () => {
             {/* Step 3: Payment Mock Simulators */}
             {showPaymentSimulator === 'vnpay' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-blue-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
+                    <div className="app-modal-panel app-modal-panel-lg bg-white rounded-2xl overflow-hidden shadow-2xl border border-blue-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
                         <div className="bg-blue-600 text-white p-6 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-3xl">account_balance</span>
@@ -890,7 +890,7 @@ const Homepage = () => {
 
             {showPaymentSimulator === 'momo' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-pink-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-850">
+                    <div className="app-modal-panel app-modal-panel-sm bg-white rounded-2xl overflow-hidden shadow-2xl border border-pink-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-850">
                         <div className="bg-pink-600 text-white p-6 text-center relative">
                             <span className="material-symbols-outlined text-4xl animate-pulse">qr_code_2</span>
                             <h3 className="font-extrabold text-lg tracking-tight mt-1">THANH TOÁN QUA VÍ MOMO</h3>
@@ -931,7 +931,7 @@ const Homepage = () => {
             {/* Booking Success Modal */}
             {bookingSuccessModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] max-w-md w-full p-8 shadow-2xl border border-neutral-100 text-center animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
+                    <div className="app-modal-panel bg-white rounded-[32px] p-8 shadow-2xl border border-neutral-100 text-center animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
                         <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-100 animate-bounce">
                             <span className="material-symbols-outlined text-3xl">check_circle</span>
                         </div>

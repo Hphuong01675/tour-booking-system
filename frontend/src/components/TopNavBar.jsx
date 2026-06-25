@@ -24,7 +24,7 @@ const TopNavBar = () => {
     };
 
     const getLinkClass = (isActive) => {
-        return `px-3 py-1 text-sm font-bold transition-all duration-200 flex items-center gap-1.5 relative border-b-2 ${
+        return `px-3 py-1 text-[15px] font-bold transition-all duration-200 flex items-center gap-1.5 relative border-b-2 ${
             isActive
                 ? "text-primary border-secondary"
                 : "text-neutral-600 border-transparent hover:text-primary hover:border-secondary/40"
@@ -65,18 +65,18 @@ const TopNavBar = () => {
                     {isAuthenticated ? (
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10">
-                                <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm">
+                                <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-[15px] font-bold uppercase shadow-sm">
                                     {user?.fullName?.charAt(0) || "U"}
                                 </div>
-                                <span className="hidden lg:inline text-xs font-semibold text-neutral-800">
+                                <span className="hidden lg:inline text-[15px] font-semibold text-neutral-800">
                                     {user?.fullName}
                                 </span>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="px-3 py-2 text-xs font-bold text-neutral-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
+                                className="px-3 py-2 text-[15px] font-bold text-neutral-500 hover:text-rose-600 transition-colors flex items-center gap-1 cursor-pointer"
                             >
-                                <span className="material-symbols-outlined text-[16px]">logout</span>
+                                <span className="material-symbols-outlined text-[18px]">logout</span>
                                 <span className="hidden md:inline">Đăng xuất</span>
                             </button>
                         </div>
@@ -84,13 +84,13 @@ const TopNavBar = () => {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => navigate("/login")}
-                                className="text-primary font-bold text-sm px-4 py-2 hover:bg-primary/5 rounded-full transition-all duration-200 cursor-pointer"
+                                className="text-primary font-bold text-[15px] px-4 py-2 hover:bg-primary/5 rounded-full transition-all duration-200 cursor-pointer"
                             >
                                 Đăng nhập
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
-                                className="bg-primary text-white font-bold text-sm px-5 py-2 rounded-full shadow-sm hover:bg-primary-container active:scale-95 transition-all duration-200 cursor-pointer"
+                                className="bg-primary text-white font-bold text-[15px] px-5 py-2 rounded-full shadow-sm hover:bg-primary-container active:scale-95 transition-all duration-200 cursor-pointer"
                             >
                                 Đăng ký
                             </button>

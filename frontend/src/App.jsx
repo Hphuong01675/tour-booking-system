@@ -15,8 +15,8 @@ import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
 import VerifyOTPPage from "./pages/Auth/VerifyOTPPage";
 import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
 
-// Guide Pages
 import GuideDashboardPage from "./pages/Guide/GuideDashboardPage";
+import GuideLayout from "./components/Guide/GuideLayout";
 import GuideAssignedToursPage from "./pages/Guide/GuideAssignedToursPage";
 import GuideTourDetailPage from "./pages/Guide/GuideTourDetailPage";
 import GuideChatPage from "./pages/Guide/GuideChatPage";
@@ -133,48 +133,49 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                <Route
-                    path="/guide/dashboard"
-                    element={
-                        <ProtectedRoute allowedRoles={["guide"]}>
-                            <GuideDashboardPage />
-                        </ProtectedRoute>
-                    }
-                />
-
                 {/* Guide routes */}
-                <Route
-                    path="/guides/tours"
-                    element={
-                        <ProtectedRoute allowedRoles={["guide"]}>
-                            <GuideAssignedToursPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/guides/tours/:id"
-                    element={
-                        <ProtectedRoute allowedRoles={["guide"]}>
-                            <GuideTourDetailPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/guides/consultations"
-                    element={
-                        <ProtectedRoute allowedRoles={["guide"]}>
-                            <GuideChatPage />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/guide/profile"
-                    element={
-                        <ProtectedRoute allowedRoles={["guide"]}>
-                            <GuideProfilePage />
-                        </ProtectedRoute>
-                    }
-                />
+                <Route element={<GuideLayout />}>
+                    <Route
+                        path="/guide/dashboard"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideDashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guides/tours"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideAssignedToursPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guides/tours/:id"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideTourDetailPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guides/consultations"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideChatPage />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/guide/profile"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideProfilePage />
+                            </ProtectedRoute>
+                        }
+                    />
+                </Route>
 
                 {/* Operator routes */}
                 <Route

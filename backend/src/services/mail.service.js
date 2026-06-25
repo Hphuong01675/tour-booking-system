@@ -4,14 +4,23 @@ class MailService {
   constructor() {
     this.transporter = null;
     this.user = null;
+    this.from = null;
   }
 
   getTransporter() {
-    const host = process.env.EMAIL_HOST || process.env.SMTP_HOST;
-    const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
-    const user = process.env.EMAIL_USER || process.env.SMTP_USER;
-    const pass = process.env.EMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+    const host = process.env.EMAIL_HOST || process.env.SMTP_HOST || process.env.MAIL_HOST;
+    const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || process.env.MAIL_PORT || 587;
+    const user = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.MAIL_USER || process.env.GMAIL_USER;
+    const pass = process.env.EMAIL_APP_PASSWORD
+      || process.env.EMAIL_PASSWORD
+      || process.env.EMAIL_PASS
+      || process.env.SMTP_PASS
+      || process.env.SMTP_PASSWORD
+      || process.env.MAIL_PASS
+      || process.env.MAIL_PASSWORD
+      || process.env.GMAIL_APP_PASSWORD;
     this.user = user;
+    this.from = process.env.EMAIL_FROM || process.env.SMTP_FROM || process.env.MAIL_FROM || user;
 
     if (this.transporter) return this.transporter;
 
@@ -20,7 +29,7 @@ class MailService {
         this.transporter = nodemailer.createTransport({
           host,
           port: parseInt(port),
-          secure: parseInt(port) === 465,
+          secure: String(process.env.EMAIL_SECURE || '').toLowerCase() === 'true' || parseInt(port) === 465,
           auth: { user, pass },
         });
         console.log('[MAIL SERVICE] Nodemailer SMTP Transporter configured successfully.');
@@ -33,6 +42,43 @@ class MailService {
     }
     return null;
   }
+
+  async sendMail({ to, subject, html, text }) {
+    const transporter = this.getTransporter();
+
+    if (!to) {
+      console.warn('[MAIL SERVICE] Missing recipient email.');
+      return false;
+    }
+
+    if (!transporter) {
+      console.warn(`[MAIL SERVICE] SMTP disabled. Email not sent to ${to}: ${subject}`);
+      return false;
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: `"Chip3Chip" <${this.from || this.user}>`,
+        to,
+        subject,
+        text,
+        html,
+        headers: {
+          'Content-Type': 'text/html; charset=UTF-8',
+        },
+      });
+      return {
+        ok: Array.isArray(info.accepted) ? info.accepted.length > 0 : true,
+        messageId: info.messageId,
+        accepted: info.accepted || [],
+        rejected: info.rejected || [],
+      };
+    } catch (error) {
+      console.error(`[MAIL SERVICE] Error sending email to ${to}:`, error.message);
+      return { ok: false, error: error.message };
+    }
+  }
+
   async sendOTP(email, otp) {
     const subject = 'Mã xác thực OTP - Chip3Chip';
     const text = `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn sau 5 phút.`;

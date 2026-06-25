@@ -68,13 +68,21 @@
 
   /* Spacing */
   --spacing-s-xs: 0.25rem;
+  --spacing-xs: 0.25rem;
   --spacing-s-sm: 0.5rem;
+  --spacing-sm: 0.5rem;
   --spacing-s-md: 0.75rem;
+  --spacing-md: 0.75rem;
   --spacing-s-lg: 1rem;
+  --spacing-lg: 1rem;
   --spacing-s-xl: 1.5rem;
+  --spacing-xl: 1.5rem;
   --spacing-s-xxl: 2rem;
+  --spacing-xxl: 2rem;
   --spacing-s-margin-mobile: 1rem;
+  --spacing-margin-mobile: 1rem;
   --spacing-s-margin-desktop: 4rem;
+  --spacing-margin-desktop: 4rem;
 }
 
 /* ========================================
@@ -139,6 +147,58 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.guide-modal-panel {
+  width: min(100%, 32rem);
+  min-width: 20rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+
+.app-modal-panel {
+  width: min(100%, 32rem);
+  min-width: 20rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  flex: 0 1 auto;
+}
+
+.app-modal-panel-sm {
+  width: min(100%, 24rem);
+}
+
+.app-modal-panel-lg {
+  width: min(100%, 40rem);
+}
+
+.app-modal-panel-xl {
+  width: min(100%, 48rem);
+}
+
+.guide-chat-empty {
+  width: 100%;
+  min-width: 0;
+}
+
+.guide-chat-empty-copy {
+  width: 24rem;
+  max-width: calc(100vw - 3rem);
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  line-height: 1.5rem;
+}
+
+@media (max-width: 380px) {
+  .guide-modal-panel,
+  .app-modal-panel {
+    min-width: 0;
+  }
+
+  .guide-chat-empty-copy {
+    width: 100%;
+  }
 }
 
 /* OTP input – hide number spinners */
