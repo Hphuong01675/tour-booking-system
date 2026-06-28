@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_Xc thc OTP</name>
+   <tag></tag>
+   <elementGuidId>72360634-0587-42eb-8978-e41849021222</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//button[@type='submit']</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;Xác thực OTP&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>4538753e-efd6-47ea-a5c4-61b2b3f56a14</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>type</name>
+      <type>Main</type>
+      <value>submit</value>
+      <webElementGuid>0ac9fc04-4a87-479b-b84e-1879a40135d5</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>w-full py-4 bg-[#fe6b00] hover:bg-[#a04100] text-white font-semibold rounded-lg shadow-md transition-all transform active:scale-[0.98] flex justify-center items-center gap-2</value>
+      <webElementGuid>809f164b-7f8b-41ed-8788-23d93df7c81a</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Xác thực OTP</value>
+      <webElementGuid>b2200299-43bd-43d9-be07-31a43d6cbd3b</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-[#f8f9fb] text-[#191c1e] min-h-screen flex flex-col font-sans&quot;]/main[@class=&quot;flex-grow flex items-center justify-center pt-24 pb-12 px-4&quot;]/div[@class=&quot;max-w-6xl w-full grid md:grid-cols-2 bg-white rounded-xl overflow-hidden shadow-lg border border-[#c3c6d6]&quot;]/div[@class=&quot;p-6 md:p-8 flex flex-col&quot;]/form[@class=&quot;space-y-4&quot;]/div[@class=&quot;pt-2&quot;]/button[@class=&quot;w-full py-4 bg-[#fe6b00] hover:bg-[#a04100] text-white font-semibold rounded-lg shadow-md transition-all transform active:scale-[0.98] flex justify-center items-center gap-2&quot;]</value>
+      <webElementGuid>36a4884c-92d2-4fad-bc3c-c680882bbd5a</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>//button[@type='submit']</value>
+      <webElementGuid>8e5e1557-260c-4b14-b653-688c86bf9d8f</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div/div[2]/form/div[6]/button</value>
+      <webElementGuid>ed93966d-d4b3-4056-aa3e-ca8afaf0e9de</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='visibility'])[2]/following::button[1]</value>
+      <webElementGuid>c0da98dd-62e3-4157-ba65-75399ee0c0be</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='lock_reset'])[1]/following::button[2]</value>
+      <webElementGuid>ffb27543-dcf3-4b34-a932-df01649ea0aa</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Chip3Chip'])[2]/preceding::button[1]</value>
+      <webElementGuid>3babd346-c62a-4094-8c4f-fcf15dfd72b0</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='Xác thực OTP']/parent::*</value>
+      <webElementGuid>d8848e52-90d8-4717-9d47-9752fe29a2ec</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[6]/button</value>
+      <webElementGuid>ffac1565-7c25-4c9b-a1f8-b87bf4a60836</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[@type = 'submit' and (text() = 'Xác thực OTP' or . = 'Xác thực OTP')]</value>
+      <webElementGuid>0e697ee5-d003-4aec-a24f-b6a988d9eef3</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

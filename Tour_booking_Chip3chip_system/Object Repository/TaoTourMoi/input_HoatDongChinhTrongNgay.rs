@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>input_HoatDongChinhTrongNgay</name>
+   <tag></tag>
+   <elementGuidId>bd9859ae-dbda-4558-87e2-0742cad6228f</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//input[@value='Dinh Độc Lập']</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:attr=[placeholder=&quot;Ví dụ: Di chuyển, Check-in khách sạn, Ăn tối phố cổ...&quot;i] >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>input</value>
+      <webElementGuid>71fea17b-b7c0-40a8-bb56-271bdfa3e7b0</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>placeholder</name>
+      <type>Main</type>
+      <value>Ví dụ: Di chuyển, Check-in khách sạn, Ăn tối phố cổ...</value>
+      <webElementGuid>224e7031-88a6-4e82-aa33-e2c970b67714</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>w-full px-3 py-2 border border-outline-variant rounded-lg text-xs focus:outline-none</value>
+      <webElementGuid>9e0ab667-41d6-4564-9e91-c4cf69b1828e</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>type</name>
+      <type>Main</type>
+      <value>text</value>
+      <webElementGuid>566b2bb2-809a-4fc2-8c27-79583a5224c4</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;space-y-6&quot;]/div[@class=&quot;border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm bg-white&quot;]/div[@class=&quot;p-5 space-y-4&quot;]/div[@class=&quot;grid grid-cols-1 md:grid-cols-[1fr_200px] gap-4&quot;]/div[@class=&quot;space-y-3&quot;]/div[1]/input[@class=&quot;w-full px-3 py-2 border border-outline-variant rounded-lg text-xs focus:outline-none&quot;]</value>
+      <webElementGuid>c51e1d31-8f74-43ed-a99e-b957b79986b8</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>(//input[@value=''])[14]</value>
+      <webElementGuid>d7950c03-3f8d-4ee9-ac76-df8f2868c919</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section[4]/div[2]/div/div[2]/div/div/div/input</value>
+      <webElementGuid>379023d3-8db0-46c7-b5ce-ddd1606ecdf0</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[2]/div/div[2]/div/div/div/input</value>
+      <webElementGuid>c0f59720-d49e-4124-9332-78179cdc01e3</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//input[@placeholder = 'Ví dụ: Di chuyển, Check-in khách sạn, Ăn tối phố cổ...' and @type = 'text']</value>
+      <webElementGuid>e9a655fd-835d-4c9b-8915-c54ddd351f39</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

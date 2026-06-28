@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>textarea_TxtUuDai</name>
+   <tag></tag>
+   <elementGuidId>d59cc980-f4c4-4530-8210-e16fc3d0708c</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div[2]/div/section[6]/div[3]/div[7]/textarea</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:attr=[placeholder=&quot;Nhập thông tin chi tiết về ưu đãi...&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>textarea</value>
+      <webElementGuid>02b7ec60-2514-4b38-8024-f04b11ee8765</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>placeholder</name>
+      <type>Main</type>
+      <value>Nhập thông tin chi tiết về ưu đãi...</value>
+      <webElementGuid>50dbf8c4-0d0d-4b4b-a25b-e9ab1bba27a3</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>rows</name>
+      <type>Main</type>
+      <value>3</value>
+      <webElementGuid>64538a3a-9d60-4270-831f-556e2ac5d3c7</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>w-full p-3 border border-outline-variant rounded-lg text-xs focus:outline-none resize-none focus:ring-2 focus:ring-primary/20 bg-white</value>
+      <webElementGuid>32779786-b8f5-4de8-9eb5-84177ed83f21</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;space-y-4&quot;]/div[@class=&quot;p-4 border border-outline-variant/20 rounded-xl bg-surface-container-lowest&quot;]/textarea[@class=&quot;w-full p-3 border border-outline-variant rounded-lg text-xs focus:outline-none resize-none focus:ring-2 focus:ring-primary/20 bg-white&quot;]</value>
+      <webElementGuid>8145408d-e1e4-482f-b2ce-78c59c79b0a5</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section[6]/div[3]/div[8]/textarea</value>
+      <webElementGuid>e53a12eb-c6bf-4a97-a851-1567ae3cb649</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[8]/textarea</value>
+      <webElementGuid>405b1ec9-39d1-41bf-abd7-cd58fea2f857</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//textarea[@placeholder = 'Nhập thông tin chi tiết về ưu đãi...']</value>
+      <webElementGuid>49728019-c476-432b-8265-90ac90842f44</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

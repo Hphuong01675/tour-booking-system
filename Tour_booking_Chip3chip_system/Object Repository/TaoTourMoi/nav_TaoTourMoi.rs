@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>nav_TaoTourMoi</name>
+   <tag></tag>
+   <elementGuidId>95382726-1036-48f2-bc3f-a99129c0e652</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/nav</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value>nav.flex.items-center.gap-2.text-xs.text-on-surface-variant.mb-4.pt-4</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:text=&quot;Operator Dashboardchevron_rightTất cả Tourchevron_rightTạo Tour Mới&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>nav</value>
+      <webElementGuid>8b6fa90c-e469-4246-a798-86e860c8bd20</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>flex items-center gap-2 text-xs text-on-surface-variant mb-4 pt-4</value>
+      <webElementGuid>887a5641-75e8-4a83-8509-8e730ea019ff</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Operator Dashboardchevron_rightTất cả Tourchevron_rightTạo Tour Mới</value>
+      <webElementGuid>00a07912-6e63-4c2a-b477-1efb45f0faf0</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/nav[@class=&quot;flex items-center gap-2 text-xs text-on-surface-variant mb-4 pt-4&quot;]</value>
+      <webElementGuid>f2df2b03-fb68-4e4e-a60f-ab3340ff5794</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/nav</value>
+      <webElementGuid>ef099ac0-f388-443b-90ba-f710c6aecb8c</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Quản lý khách hàng'])[1]/following::nav[1]</value>
+      <webElementGuid>720580a0-f098-41ec-aec5-e034436f04f0</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Phê duyệt khách hàng'])[1]/following::nav[1]</value>
+      <webElementGuid>b91a7d82-f728-4b61-a1a2-cfa94021c057</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//main/nav</value>
+      <webElementGuid>02b92a9a-44e0-48bb-a23f-59c94a48caaf</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//nav[(text() = 'Operator Dashboardchevron_rightTất cả Tourchevron_rightTạo Tour Mới' or . = 'Operator Dashboardchevron_rightTất cả Tourchevron_rightTạo Tour Mới')]</value>
+      <webElementGuid>a0ab27c3-8ea2-44d6-9367-d1cf1e06e15f</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>
