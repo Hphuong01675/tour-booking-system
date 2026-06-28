@@ -51,6 +51,13 @@ router.get(
     adminController.getUsers.bind(adminController),
 );
 
+router.post(
+    "/api/admin/users",
+    verifyAccessToken,
+    authorizeRoles("admin"),
+    adminController.createUser.bind(adminController),
+);
+
 router.patch(
     "/api/admin/users/:id/status",
     verifyAccessToken,
