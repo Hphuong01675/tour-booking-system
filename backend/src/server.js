@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import path from "path";
 import os from "os";
 import fs from "fs";
+import bcrypt from "bcryptjs";
 import db from "./models";
 import authRoutes from "./routes/auth.routes";
 import operatorRoutes from "./routes/operator/operator.routes";
@@ -15,12 +16,14 @@ import customerRoutes from "./routes/customer.routes";
 import uploadRoutes from "./routes/upload.routes";
 import chatRoutes from "./routes/chat.routes";
 import guideRoutes from "./routes/guide.routes";
+import adminRoutes from "./routes/admin/admin.routes";
 import { seedDatabase } from "./seed/seed";
 import http from "http";
 import { Server } from "socket.io";
 import socketManager from "./sockets/socketManager";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 
 const app = express();
 const PORT = process.env.PORT || 8080; // Changed default port to 8080 to match configuration
@@ -40,6 +43,8 @@ app.use("/", uploadRoutes);
 app.use("/", chatRoutes);
 app.use("/api/guides", guideRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/", adminRoutes);
+
 
 // ==================== API ROUTING ====================
 

@@ -32,7 +32,7 @@ const TopNavBar = () => {
     };
 
     return (
-        <nav className="sticky top-0 z-50 w-full h-16 bg-white border-b border-outline-variant shadow-sm text-neutral-800">
+        <nav className="sticky top-0 z-50 w-full h-16 bg-white/80 backdrop-blur-md border-b border-outline-variant shadow-sm text-neutral-800">
             <div className="max-w-[1440px] mx-auto flex justify-between items-center h-full px-margin-mobile md:px-margin-desktop">
                 {/* Logo */}
                 <div className="flex items-center">

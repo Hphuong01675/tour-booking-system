@@ -15,8 +15,8 @@ import ForgotPasswordPage from "./pages/Auth/ForgotPasswordPage";
 import VerifyOTPPage from "./pages/Auth/VerifyOTPPage";
 import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
 
-// Guide Pages
-import GuideLayout from "./components/guide/GuideLayout";
+import GuideDashboardPage from "./pages/Guide/GuideDashboardPage";
+import GuideLayout from "./components/Guide/GuideLayout";
 import GuideAssignedToursPage from "./pages/Guide/GuideAssignedToursPage";
 import GuideTourDetailPage from "./pages/Guide/GuideTourDetailPage";
 import GuideChatPage from "./pages/Guide/GuideChatPage";
@@ -43,6 +43,9 @@ import TourDetailPage from "./pages/customer/TourDetailPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import Homepage from "./pages/Homepage";
+import AdminVouchersPage from "./pages/admin/AdminVouchersPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminToursPage from "./pages/admin/AdminToursPage";
 
 function App() {
     const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -92,6 +95,30 @@ function App() {
                     }
                 />
                 <Route
+                    path="/admin/vouchers"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminVouchersPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/users"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminUsersPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/tours"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]}>
+                            <AdminToursPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/operator/dashboard"
                     element={
                         <ProtectedRoute allowedRoles={["operator"]}>
@@ -135,6 +162,14 @@ function App() {
                 />
                 {/* Guide routes */}
                 <Route element={<GuideLayout />}>
+                    <Route
+                        path="/guide/dashboard"
+                        element={
+                            <ProtectedRoute allowedRoles={["guide"]}>
+                                <GuideDashboardPage />
+                            </ProtectedRoute>
+                        }
+                    />
                     <Route
                         path="/guides/tours"
                         element={

@@ -442,6 +442,13 @@ class CustomerService {
             throw new Error("BOOKING_NOT_FOUND");
         }
 
+        // Reset status to pending_approval if the booking is currently rejected
+        if (booking.status === "rejected") {
+            booking.status = "pending_approval";
+            booking.cancellationReason = null;
+            await booking.save();
+        }
+
         if (participants && participants.length > 0) {
             for (const p of participants) {
                 const ep = booking.participants?.find((part) => part.id === p.id);

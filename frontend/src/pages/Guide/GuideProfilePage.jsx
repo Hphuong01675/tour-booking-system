@@ -1,5 +1,5 @@
-﻿import { useRef, useState, useEffect } from 'react';
-import GuideFooter from '../../components/guide/GuideFooter';
+import { useRef, useState, useEffect } from 'react';
+import GuideFooter from '../../components/Guide/GuideFooter';
 import { getGuideProfile, updateGuideProfile, uploadGuideAvatar, changeGuidePassword } from '../../api/guideApi';
 
 const GuideProfilePage = () => {
@@ -139,10 +139,10 @@ const GuideProfilePage = () => {
         e.preventDefault();
 
         const errors = {};
-        if (false && !securityForm.currentPassword) {
+        if (!securityForm.currentPassword) {
             errors.currentPassword = 'Vui lòng nhập mật khẩu hiện tại.';
         }
-        if (false && (!securityForm.newPassword || securityForm.newPassword.length < 6)) {
+        if (!securityForm.newPassword || securityForm.newPassword.length < 6) {
             errors.newPassword = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
         }
         if (securityForm.newPassword !== securityForm.confirmPassword) {
@@ -573,7 +573,6 @@ const GuideProfilePage = () => {
                                 </form>
                             </div>
                         )}
-
                     </section>
                 </div>
             </main>
@@ -585,4 +584,3 @@ const GuideProfilePage = () => {
 };
 
 export default GuideProfilePage;
-

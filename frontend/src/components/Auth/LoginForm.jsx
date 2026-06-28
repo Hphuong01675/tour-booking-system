@@ -76,8 +76,9 @@ const LoginForm = () => {
                     navigate("/", { replace: true });
                 }
             } else {
-                // If the user role is customer, redirect them to the Homepage ("/")
-                if (result.payload.user?.role === "customer") {
+                if (result.payload.user?.role === "operator") {
+                    navigate("/operator/tours", { replace: true });
+                } else if (result.payload.user?.role === "customer") {
                     navigate("/", { replace: true });
                 } else {
                     navigate(result.payload.redirectUrl || "/customer/profile", { replace: true });
@@ -181,7 +182,12 @@ const LoginForm = () => {
                 </button>
             </form>
 
-            <div className="mt-6 grid grid-cols-2 gap-4" />
+            <div className="mt-6 text-center text-sm font-body-sm">
+                <span className="text-on-surface-variant">Chưa có tài khoản? </span>
+                <Link to="/register" className="text-primary font-bold hover:underline">
+                    Đăng ký ngay
+                </Link>
+            </div>
         </div>
     );
 };

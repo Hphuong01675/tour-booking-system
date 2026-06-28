@@ -48,27 +48,6 @@ apiClient.interceptors.response.use(
  * @param {number} filters.limit - Số item/trang (default: 10)
  *
  * @returns {Promise<Object>}
- * {
- *   tours: [
- *     {
- *       id: schedule_id,
- *       assignmentId: tour_assignment.id,
- *       tourId: tours.id,
- *       title: tours.title,
- *       destination: tours.destination,
- *       thumbnailUrl: tours.thumbnail_url,
- *       departureDate: tour_schedules.departure_date,
- *       returnDate: tour_schedules.return_date,
- *       status: tour_schedules.status,
- *       maxCapacity: tour_schedules.max_capacity,
- *       registered: tour_schedules.registered,
- *       scheduleCode: tour_schedules.schedule_code
- *     }
- *   ],
- *   total: number,
- *   page: number,
- *   limit: number
- * }
  */
 export const getAssignedTours = async (filters = {}) => {
   try {
@@ -110,7 +89,6 @@ export const getTourAssignmentDetail = async (assignmentId, filters = {}) => {
 /**
  * Lấy thống kê tổng quan cho guide
  * @returns {Promise<Object>}
- * { totalTours: number, upcomingTours: number, completedTours: number, ... }
  */
 export const getGuideStats = async () => {
   try {
@@ -339,8 +317,6 @@ export const changeGuidePassword = async (currentPassword, newPassword) => {
     throw error;
   }
 };
-
-
 
 export const saveChecklistTemplate = async (data) => {
   try {

@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../../features/auth/authSlice';
 
 const GuideHeader = ({ currentUser, onLogoutClick }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -14,6 +18,16 @@ const GuideHeader = ({ currentUser, onLogoutClick }) => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const handleLogout = () => {
+        if (onLogoutClick) {
+            onLogoutClick();
+        } else {
+            dispatch(logoutUser());
+            navigate("/login", { replace: true });
+        }
+    };
+
     const activeClass = "text-[16px] leading-6 text-primary border-b-2 border-primary pb-1 font-semibold transition-all duration-200";
     const inactiveClass = "text-[16px] leading-6 text-slate-600 hover:text-primary transition-colors";
 
@@ -46,7 +60,7 @@ const GuideHeader = ({ currentUser, onLogoutClick }) => {
                         alt="Guide profile avatar"
                         className="w-10 h-10 rounded-full object-cover border-2 border-primary-fixed cursor-pointer"
                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        src={currentUser?.avatar || "https://lh3.googleusercontent.com/aida-public/AB6AXuBREwJ-JeJZx87z66kS657dVoUH0ED91CpDA2K37pcfEqiwRUjg8XKp_qq__pTS6g_evItYcZ-x_ZeU3GtJRGBrxiXW7tR9nXeuV8zHz_v8hW8tX_AInRYL-9DB6eDolmH8gDaUkK1SyQlyHDexZunz5nftL8HIBdK5TzC_ibblNSVeCxSQxPft_Da9oQopCeKqQ5DujWtrwbazZ9lZwU3Ylr71y1wAkfikRqhpH0PDX4d7VQzs7pRsUD-TNJcYUFCzzb43PrRq90kH"}
+                        src={currentUser?.avatarUrl || currentUser?.avatar || "https://lh3.googleusercontent.com/aida-public/AB6AXuBREwJ-JeJZx87z66kS657dVoUH0ED91CpDA2K37pcfEqiwRUjg8XKp_qq__pTS6g_evItYcZ-x_ZeU3GtJRGBrxiXW7tR9nXeuV8zHz_v8hW8tX_AInRYL-9DB6eDolmH8gDaUkK1SyQlyHDexZunz5nftL8HIBdK5TzC_ibblNSVeCxSQxPft_Da9oQopCeKqQ5DujWtrwbazZ9lZwU3Ylr71y1wAkfikRqhpH0PDX4d7VQzs7pRsUD-TNJcYUFCzzb43PrRq90kH"}
                     />
 
                     <div className={`absolute right-0 top-full mt-2 w-48 bg-white border border-outline-variant/30 rounded-lg shadow-lg transition-all duration-200 z-50 overflow-hidden ${isDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
@@ -58,17 +72,15 @@ const GuideHeader = ({ currentUser, onLogoutClick }) => {
                             >
                                 Thông tin cá nhân
                             </Link>
-                            {onLogoutClick && (
-                                <button
-                                    onClick={() => {
-                                        setIsDropdownOpen(false);
-                                        onLogoutClick();
-                                    }}
-                                    className="w-full text-left px-md py-sm hover:bg-surface-container-low text-body-sm text-error transition-colors"
-                                >
-                                    Đăng xuất
-                                </button>
-                            )}
+                            <button
+                                onClick={() => {
+                                    setIsDropdownOpen(false);
+                                    handleLogout();
+                                }}
+                                className="w-full text-left px-md py-sm hover:bg-surface-container-low text-body-sm text-error transition-colors"
+                            >
+                                Đăng xuất
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -78,4 +90,3 @@ const GuideHeader = ({ currentUser, onLogoutClick }) => {
 };
 
 export default GuideHeader;
-

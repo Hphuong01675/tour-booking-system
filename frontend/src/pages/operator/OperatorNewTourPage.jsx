@@ -261,23 +261,22 @@ const OperatorNewTourPage = () => {
             focusAndScroll("tour-destination");
             return;
         }
+        if (basePrice === "") {
+            setErrorMsg("Vui lòng nhập giá cơ bản.");
+            focusAndScroll("tour-base-price");
+            return;
+        }
         const parsedPrice = parseFloat(basePrice);
+        if (isNaN(parsedPrice) || parsedPrice < 0) {
+            setErrorMsg("Giá cơ bản không hợp lệ (phải là số không âm).");
+            focusAndScroll("tour-base-price");
+            return;
+        }
+
         if (submitStatus === "pending") {
-            if (basePrice === "" || isNaN(parsedPrice) || parsedPrice < 0) {
-                setErrorMsg("Giá cơ bản không hợp lệ (phải là số không âm khi gửi duyệt).");
-                focusAndScroll("tour-base-price");
-                return;
-            }
             if (!thumbnailFile) {
                 setErrorMsg("Vui lòng tải lên ảnh đại diện của tour (thumbnail) khi gửi duyệt.");
                 focusAndScroll("tour-thumbnail");
-                return;
-            }
-        } else {
-            // For draft, allow empty or 0, but if entered, must be non-negative
-            if (basePrice !== "" && (isNaN(parsedPrice) || parsedPrice < 0)) {
-                setErrorMsg("Giá cơ bản không hợp lệ (phải là số không âm).");
-                focusAndScroll("tour-base-price");
                 return;
             }
         }
@@ -292,6 +291,11 @@ const OperatorNewTourPage = () => {
 
         for (let i = 0; i < schedules.length; i++) {
             const sch = schedules[i];
+            if (sch.price === "") {
+                setErrorMsg(`Vui lòng nhập giá cho lịch khởi hành thứ ${i + 1}.`);
+                focusAndScroll(`schedule-price-${i}`);
+                return;
+            }
             if (sch.departureDate && sch.returnDate) {
                 const dep = new Date(sch.departureDate);
                 const ret = new Date(sch.returnDate);
@@ -305,6 +309,27 @@ const OperatorNewTourPage = () => {
                 if (diffDays !== nights) {
                     setErrorMsg(`Ngày đi và ngày về ở lịch khởi hành thứ ${i + 1} không khớp với cấu hình số ngày đêm của tour (${days} ngày, ${nights} đêm).`);
                     focusAndScroll(`schedule-ret-${i}`);
+                    return;
+                }
+            }
+        }
+
+        for (let i = 0; i < itinerary.length; i++) {
+            if (!itinerary[i].title.trim()) {
+                setErrorMsg(`Vui lòng nhập tiêu đề cho ngày thứ ${i + 1}.`);
+                focusAndScroll(`day-title-${i}`);
+                return;
+            }
+            for (let j = 0; j < itinerary[i].locations.length; j++) {
+                const loc = itinerary[i].locations[j];
+                if (loc.latitude === "") {
+                    setErrorMsg(`Vui lòng nhập vĩ độ cho địa điểm thứ ${j + 1} của ngày ${i + 1}.`);
+                    focusAndScroll(`loc-lat-${i}-${j}`);
+                    return;
+                }
+                if (loc.longitude === "") {
+                    setErrorMsg(`Vui lòng nhập kinh độ cho địa điểm thứ ${j + 1} của ngày ${i + 1}.`);
+                    focusAndScroll(`loc-lng-${i}-${j}`);
                     return;
                 }
             }
@@ -593,7 +618,7 @@ const OperatorNewTourPage = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-on-surface mb-1.5">
-                                            Giá cơ bản (VNĐ)
+                                            Giá cơ bản (VNĐ) <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             id="tour-base-price"
@@ -704,8 +729,9 @@ const OperatorNewTourPage = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-on-surface-variant mb-1">Giá (VNĐ)</label>
+                                            <label className="block text-xs font-medium text-on-surface-variant mb-1">Giá (VNĐ) <span className="text-rose-500">*</span></label>
                                             <input
+                                                id={`schedule-price-${i}`}
                                                 type="number"
                                                 placeholder={basePrice || "Giá riêng"}
                                                 value={sch.price}
@@ -766,13 +792,17 @@ const OperatorNewTourPage = () => {
                                                 <span className="w-7 h-7 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
                                                     {day.dayNumber}
                                                 </span>
-                                                <input
-                                                    type="text"
-                                                    value={day.title}
-                                                    onChange={(e) => updateDay(idx, "title", e.target.value)}
-                                                    placeholder="Tên chặng / Tiêu đề ngày (ví dụ: Hà Nội - Hà Giang)"
-                                                    className="bg-transparent text-sm font-semibold text-on-surface focus:outline-none border-b border-dashed border-outline-variant/40 focus:border-primary w-full max-w-md"
-                                                />
+                                                <div className="relative w-full max-w-md">
+                                                    <input
+                                                        id={`day-title-${idx}`}
+                                                        type="text"
+                                                        value={day.title}
+                                                        onChange={(e) => updateDay(idx, "title", e.target.value)}
+                                                        placeholder="Tên chặng / Tiêu đề ngày (ví dụ: Hà Nội - Hà Giang)"
+                                                        className="bg-transparent text-sm font-semibold text-on-surface focus:outline-none border-b border-dashed border-outline-variant/40 focus:border-primary w-full pr-4"
+                                                    />
+                                                    <span className="absolute right-0 top-1/2 -translate-y-1/2 text-rose-500 font-bold">*</span>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 {itinerary.length > 1 && (
@@ -878,22 +908,30 @@ const OperatorNewTourPage = () => {
                                                                 onChange={(e) => updateLocation(idx, locIdx, "name", e.target.value)}
                                                                 className="px-2.5 py-1.5 border border-outline-variant rounded text-xs focus:outline-none"
                                                             />
-                                                            <input
-                                                                type="number"
-                                                                step="any"
-                                                                placeholder="Vĩ độ (Lat)"
-                                                                value={loc.latitude}
-                                                                onChange={(e) => updateLocation(idx, locIdx, "latitude", e.target.value)}
-                                                                className="px-2.5 py-1.5 border border-outline-variant rounded text-xs focus:outline-none"
-                                                            />
-                                                            <input
-                                                                type="number"
-                                                                step="any"
-                                                                placeholder="Kinh độ (Lng)"
-                                                                value={loc.longitude}
-                                                                onChange={(e) => updateLocation(idx, locIdx, "longitude", e.target.value)}
-                                                                className="px-2.5 py-1.5 border border-outline-variant rounded text-xs focus:outline-none"
-                                                            />
+                                                            <div className="relative">
+                                                                <input
+                                                                    id={`loc-lat-${idx}-${locIdx}`}
+                                                                    type="number"
+                                                                    step="any"
+                                                                    placeholder="Vĩ độ (Lat)"
+                                                                    value={loc.latitude}
+                                                                    onChange={(e) => updateLocation(idx, locIdx, "latitude", e.target.value)}
+                                                                    className="w-full px-2.5 py-1.5 border border-outline-variant rounded text-xs focus:outline-none pr-4"
+                                                                />
+                                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 font-bold">*</span>
+                                                            </div>
+                                                            <div className="relative">
+                                                                <input
+                                                                    id={`loc-lng-${idx}-${locIdx}`}
+                                                                    type="number"
+                                                                    step="any"
+                                                                    placeholder="Kinh độ (Lng)"
+                                                                    value={loc.longitude}
+                                                                    onChange={(e) => updateLocation(idx, locIdx, "longitude", e.target.value)}
+                                                                    className="w-full px-2.5 py-1.5 border border-outline-variant rounded text-xs focus:outline-none pr-4"
+                                                                />
+                                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-rose-500 font-bold">*</span>
+                                                            </div>
                                                             
                                                             {/* Location image upload */}
                                                             <div className="relative h-8 w-12 rounded border border-dashed border-outline-variant bg-surface-container-low flex items-center justify-center overflow-hidden hover:border-primary">

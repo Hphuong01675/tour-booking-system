@@ -1,9 +1,19 @@
+// Đường dẫn: frontend/src/features/guideTours/GuideFilterGroup.jsx
+/**
+ * GuideFilterGroup Component
+ * Bộ lọc với dropdown Trạng thái, Tháng, nút Xuất báo cáo và nút Xem lịch trình
+ */
+
+import React from 'react';
+
 const GuideFilterGroup = ({
   filters = { status: 'all', month: 'all' },
   onFilterChange,
+  onExportReport,
   onScheduleClick,
   isLoading = false,
 }) => {
+  // Xử lý thay đổi status
   const handleStatusChange = (e) => {
     onFilterChange({
       ...filters,
@@ -11,6 +21,7 @@ const GuideFilterGroup = ({
     });
   };
 
+  // Xử lý thay đổi month
   const handleMonthChange = (e) => {
     onFilterChange({
       ...filters,
@@ -18,6 +29,15 @@ const GuideFilterGroup = ({
     });
   };
 
+  // Xử lý click nút xuất báo cáo
+  const handleExportClick = (e) => {
+    e.preventDefault();
+    if (onExportReport && !isLoading) {
+      onExportReport();
+    }
+  };
+
+  // Xử lý click nút xem lịch trình
   const handleScheduleClick = (e) => {
     e.preventDefault();
     if (onScheduleClick) {
@@ -81,28 +101,40 @@ const GuideFilterGroup = ({
       </select>
 
       <div className="ml-auto flex gap-s-sm">
-        <button
-          type="button"
-          onClick={handleScheduleClick}
-          className={`
-            flex items-center gap-s-xs
-            px-s-md
-            py-s-sm
-            rounded-lg
-            text-primary
-            font-label-md
-            transition-all
-            duration-200
-            ${
-              isLoading
-                ? 'opacity-70'
-                : 'hover:bg-primary/5 active:scale-95'
-            }
-          `}
-        >
-          <span className="material-symbols-outlined text-body-md">calendar_month</span>
-          Lịch trình
-        </button>
+        {onScheduleClick && (
+          <button
+            type="button"
+            onClick={handleScheduleClick}
+            className="flex items-center gap-s-xs px-s-md py-s-sm rounded-lg text-primary font-label-md transition-all duration-200 hover:bg-primary/5 active:scale-95"
+          >
+            <span className="material-symbols-outlined text-body-md">calendar_month</span>
+            Lịch trình
+          </button>
+        )}
+
+        {onExportReport && (
+          <button
+            type="button"
+            onClick={handleExportClick}
+            disabled={isLoading}
+            className={`
+              flex items-center gap-s-xs
+              px-s-md
+              py-s-sm
+              rounded-lg
+              text-primary
+              font-label-md
+              transition-all
+              duration-200
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/5 active:scale-95'}
+            `}
+          >
+            <span className="material-symbols-outlined text-body-md">
+              {isLoading ? 'hourglass_empty' : 'download'}
+            </span>
+            {isLoading ? 'Đang xuất...' : 'Xuất báo cáo'}
+          </button>
+        )}
       </div>
     </div>
   );

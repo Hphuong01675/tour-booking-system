@@ -42,11 +42,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
   const [showSendModal, setShowSendModal] = useState(false);
   const [mandatoryNote, setMandatoryNote] = useState('');
 
-  useEffect(() => {
-    loadItems();
-  }, []);
-
-  const loadItems = async () => {
+  async function loadItems() {
     try {
       setIsLoading(true);
       const data = await getPackingItems();
@@ -59,7 +55,11 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
 
   const handleToggleItem = (id) => {
     setSelectedIds(prev => {

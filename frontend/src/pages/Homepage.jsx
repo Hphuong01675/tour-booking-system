@@ -32,7 +32,7 @@ const Homepage = () => {
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [totalTours, setTotalTours] = useState(0);
-    const itemsPerPage = 2;
+    const itemsPerPage = 3;
 
     // Reset pagination to page 1 when search filters change
     useEffect(() => {
@@ -528,33 +528,92 @@ const Homepage = () => {
             </section>
 
             {/* About Us Section */}
-            <section id="about-us-section" className="py-24 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
-                <div className="max-w-[1200px] mx-auto px-6 text-center">
-                    <div className="max-w-3xl mx-auto space-y-6">
-                        <span className="text-primary font-bold text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
-                            Về Chúng Tôi
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Về Chip3Chip</h2>
-                        <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-                            Với hơn 15 năm kinh nghiệm trong ngành du lịch, Chip3Chip tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 w-full max-w-xl mx-auto text-left">
-                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
-                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-[28px]">verified</span>
+            <section id="about-us-section" className="py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50 border-t border-slate-100 relative overflow-hidden">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-1/3 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        {/* Left Side: Content & Statistics */}
+                        <div className="lg:col-span-6 space-y-6 text-left">
+                            <span className="text-primary font-black text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 inline-block">
+                                Về Chúng Tôi
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                                Về <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">Chip3Chip</span>
+                            </h2>
+                            <p className="text-slate-600 font-body-md text-body-md leading-relaxed">
+                                Với hơn 15 năm kinh nghiệm trong ngành du lịch, Chip3Chip tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi không ngừng cải tiến dịch vụ để mang lại những giá trị trải nghiệm trọn vẹn và an tâm nhất cho mỗi hành trình của bạn.
+                            </p>
+                            
+                            {/* Stats Cards */}
+                            <div className="grid grid-cols-3 gap-4 pt-4">
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-primary">15+</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Năm kinh nghiệm</div>
                                 </div>
-                                <div>
-                                    <div className="font-bold text-slate-800 text-sm">Uy tín hàng đầu</div>
-                                    <p className="text-xs text-slate-500 mt-1">Hơn 1 triệu lượt khách hàng hài lòng và quay lại.</p>
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-secondary">1M+</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Khách hài lòng</div>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-emerald-600">99.8%</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Đánh giá 5 sao</div>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
-                                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-[28px]">support_agent</span>
+                        </div>
+
+                        {/* Right Side: Features Grid */}
+                        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {/* Feature Card 1 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">verified</span>
                                 </div>
                                 <div>
-                                    <div className="font-bold text-slate-800 text-sm">Hỗ trợ 24/7</div>
-                                    <p className="text-xs text-slate-500 mt-1">Hỗ trợ khách hàng mọi lúc, mọi nơi trên toàn cầu.</p>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Uy tín hàng đầu</h3>
+                                    <p className="text-xs text-slate-550 mt-2 leading-relaxed">
+                                        Chúng tôi được tin tưởng bởi hơn 1 triệu lượt khách hàng. Cam kết bảo đảm quyền lợi tối đa cho mọi chuyến đi.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 2 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">support_agent</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Hỗ trợ 24/7</h3>
+                                    <p className="text-xs text-slate-550 mt-2 leading-relaxed">
+                                        Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ khách hàng mọi lúc, mọi nơi trên phạm vi toàn cầu.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 3 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">security</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">An toàn tuyệt đối</h3>
+                                    <p className="text-xs text-slate-555 mt-2 leading-relaxed">
+                                        Lịch trình được khảo sát kỹ lưỡng, hướng dẫn viên chuyên nghiệp và bảo hiểm du lịch toàn diện.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 4 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">local_activity</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Trải nghiệm độc bản</h3>
+                                    <p className="text-xs text-slate-555 mt-2 leading-relaxed">
+                                        Các hoạt động khám phá độc quyền, dịch vụ lưu trú thượng hạng chuẩn quốc tế.
+                                    </p>
                                 </div>
                             </div>
                         </div>

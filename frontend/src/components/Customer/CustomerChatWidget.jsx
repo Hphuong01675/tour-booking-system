@@ -344,7 +344,6 @@ const CustomerChatWidget = () => {
       setCccdFrontFile(null);
       setCccdBackFile(null);
       setShowCccdModal(false);
-      // No alert - just close modal and message is sent
     } catch (err) {
       alert(err.response?.data?.error || err.message || 'Không thể gửi CCCD cho HDV. Vui lòng thử lại.');
     } finally {
@@ -575,6 +574,7 @@ const CustomerChatWidget = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
+
           {/* Input Area */}
           <form onSubmit={handleSendMessage} className="p-3 border-t border-outline-variant/30 bg-white space-y-2">
             <div className="flex items-center gap-1">
@@ -654,7 +654,6 @@ const CustomerChatWidget = () => {
         </div>
       )}
 
-
       {previewImage && (
         <div className="fixed inset-0 z-[90] bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
           <div className="relative max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
@@ -686,6 +685,3 @@ const CustomerChatWidget = () => {
 };
 
 export default CustomerChatWidget;
-
-
-

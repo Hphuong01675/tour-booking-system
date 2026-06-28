@@ -110,7 +110,6 @@ export const getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const messages = await findMessages(conversationId);
-        
         res.json(messages);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -329,7 +328,6 @@ export const initGuestChat = async (req, res) => {
         }
         
         const messages = await findMessages(conversation.id);
-        
         res.json({ conversation, messages });
     } catch (error) {
         res.status(500).json({ error: error.message });

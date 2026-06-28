@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router-dom';
@@ -14,14 +15,7 @@ const QUICK_REPLIES_GUIDE = [
   'Rất vui được hỗ trợ 😊',
   'OK, hiểu rồi ✅'
 ];
-const QUICK_REPLIES_CUSTOMER = [
-  'Cảm ơn bạn 🙏',
-  'Tôi vẫn chưa rõ 🤔',
-  'Có thể liên hệ được không? 📞',
-  'Cần hỗ trợ thêm 😊',
-  'OK, hiểu rồi ✅',
-  'Tối nay gọi lại được không? ⏰'
-];
+
 const MAX_ACTIVE_CONVERSATIONS = 5;
 
 const parseChatContent = (content) => {
@@ -98,11 +92,9 @@ const ChatMessageContent = ({ content, isGuide, onPreviewImage, onCCCDApproval }
         <p className="text-[11px] opacity-75 border-t border-outline-variant/30 pt-2 mt-2">
           Sau khi kiểm tra, HDV cập nhật ảnh chính thức tại danh sách hành khách của tour.
         </p>
-        <>
-          <div className="text-center pt-1">
-            <span className="text-xs font-semibold text-primary">Nhấn để Xem & Duyệt</span>
-          </div>
-        </>
+        <div className="text-center pt-1">
+          <span className="text-xs font-semibold text-primary">Nhấn để Xem & Duyệt</span>
+        </div>
       </div>
     );
   }
@@ -160,9 +152,9 @@ const GuideChatPage = () => {
     scrollToBottom();
   }, [activeConversationId, conversations]);
 
-  // Khá»Ÿi táº¡o Socket vĂ  Fetch danh sách hội thoại
+  // Khởi tạo Socket và Fetch danh sách hội thoại
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000');
+    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:8080');
     setSocket(newSocket);
 
     fetchConversations();
@@ -171,7 +163,6 @@ const GuideChatPage = () => {
     newSocket.on('receive_message', (message) => {
       setConversations(prev => prev.map(conv => {
         if (conv.id === message.conversationId) {
-          // Check if message already exists
           const exists = (conv.messages || []).find(m => m.id === message.id);
           if (exists) return conv;
 
@@ -220,7 +211,7 @@ const GuideChatPage = () => {
     };
   }, [fetchConversations]);
 
-  // Fetch messages khi chá»n 1 conversation
+  // Fetch messages khi chọn 1 conversation
   useEffect(() => {
     if (activeConversationId) {
       if (socket) {
@@ -301,6 +292,7 @@ const GuideChatPage = () => {
       }
     }
   };
+
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInputText.trim() || !activeConversationId || !socket) return;
@@ -394,7 +386,6 @@ const GuideChatPage = () => {
         return;
       }
 
-      // Helper function to convert data URL to Blob
       const dataUrlToBlob = (dataUrl) => {
         const parts = dataUrl.split(',');
         const mime = parts[0].match(/:(.*?);/)[1];
@@ -407,16 +398,10 @@ const GuideChatPage = () => {
         return new Blob([u8arr], { type: mime });
       };
 
-      // Helper function to fetch URL and convert to Blob
       const urlToBlob = async (url) => {
-        // Check if it's a data URL
         if (url.startsWith('data:')) {
-          console.log('Converting data URL to blob');
           return dataUrlToBlob(url);
         }
-        
-        // Otherwise fetch from URL
-        console.log('Fetching URL:', url);
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
         const blob = await response.blob();
@@ -429,9 +414,7 @@ const GuideChatPage = () => {
       
       if (selectedCCCDMessage.frontUrl) {
         try {
-          console.log('Processing front image:', selectedCCCDMessage.frontUrl.substring(0, 100));
           const frontBlob = await urlToBlob(selectedCCCDMessage.frontUrl);
-          console.log('Front blob size:', frontBlob.size, 'type:', frontBlob.type);
           formData.append('front', frontBlob, 'cccd_front.jpg');
           hasFiles = true;
         } catch (err) {
@@ -444,9 +427,7 @@ const GuideChatPage = () => {
       
       if (selectedCCCDMessage.backUrl) {
         try {
-          console.log('Processing back image:', selectedCCCDMessage.backUrl.substring(0, 100));
           const backBlob = await urlToBlob(selectedCCCDMessage.backUrl);
-          console.log('Back blob size:', backBlob.size, 'type:', backBlob.type);
           formData.append('back', backBlob, 'cccd_back.jpg');
           hasFiles = true;
         } catch (err) {
@@ -463,13 +444,12 @@ const GuideChatPage = () => {
         return;
       }
 
-      console.log('Form data keys:', Array.from(formData.keys()));
       await guideApi.uploadParticipantCccd(assignmentId, participantId, formData);
 
       setAlertModal({ isOpen: true, title: 'Thành công', message: 'Đã duyệt và upload CCCD thành công!', type: 'info' });
       setShowCCCDModal(false);
       setSelectedCCCDMessage(null);
-      // Scroll to bottom to keep user on current conversation
+
       setTimeout(() => {
         const chatContainer = document.querySelector('.chat-scrollbar');
         if (chatContainer) {
@@ -486,7 +466,7 @@ const GuideChatPage = () => {
 
   return (
       <>
-        <main className="flex-grow flex overflow-hidden h-[calc(100vh-160px)] w-full min-w-0">
+        <main className="flex-grow flex overflow-hidden h-[calc(100vh-160px)] w-full min-w-0 font-sans">
           <aside className="w-full max-w-[400px] min-h-0 shrink-0 border-r border-outline-variant bg-surface flex flex-col">
             <div className="p-lg space-y-md border-b border-outline-variant">
               <div className="flex items-center justify-between">
@@ -551,31 +531,31 @@ const GuideChatPage = () => {
                             }`}
                         >
                           <div className="flex justify-between items-start mb-xs">
-                      <span className={`font-label-md text-label-md ${isActiveItem ? 'text-primary' : 'text-on-surface'}`}>
-                        {displayName || 'Khách Vô Danh'}
-                      </span>
+                            <span className={`font-label-md text-label-md ${isActiveItem ? 'text-primary' : 'text-on-surface'}`}>
+                              {displayName || 'Khách Vô Danh'}
+                            </span>
                             <span className="text-label-sm text-outline">
-                        {new Date(conv.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                              {new Date(conv.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                           </div>
                           <p className="text-body-sm text-on-surface-variant truncate mb-sm">
                             {getMessagePreview(conv.lastMessage)}
                           </p>
 
                           <div className="flex justify-between items-center">
-                      <span className="inline-flex items-center gap-xs text-label-sm text-outline">
-                        {conv.status === 'waiting' ? (
-                            <>
-                              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                              Đang chờ tiếp nhận
-                            </>
-                        ) : (
-                            <>
-                              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                              Đang tư vấn
-                            </>
-                        )}
-                      </span>
+                            <span className="inline-flex items-center gap-xs text-label-sm text-outline">
+                              {conv.status === 'waiting' ? (
+                                  <>
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                    Đang chờ tiếp nhận
+                                  </>
+                              ) : (
+                                  <>
+                                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                    Đang tư vấn
+                                  </>
+                              )}
+                            </span>
 
                             {conv.status === 'waiting' && (
                                 <button
@@ -636,7 +616,7 @@ const GuideChatPage = () => {
                     </div>
                   </header>
 
-                  <div className="flex-1 min-h-0 overflow-y-auto p-lg space-y-lg chat-scrollbar bg-surface-container-lowest">
+                  <div className="flex-grow min-h-0 overflow-y-auto p-lg space-y-lg chat-scrollbar bg-surface-container-lowest">
                     {activeConv.messages && activeConv.messages.map((msg, index) => {
                       const isGuide = msg.senderType === 'guide';
                       const isGuestSender = msg.senderType === 'guest';
@@ -683,8 +663,8 @@ const GuideChatPage = () => {
                                 />
                               </div>
                               <span className="text-label-sm text-outline ml-1">
-                          {new Date(msg.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                                {new Date(msg.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
                             </div>
                           </div>
                       );
@@ -695,18 +675,18 @@ const GuideChatPage = () => {
                   <footer className="p-lg bg-surface-container-lowest border-t border-outline-variant">
                     {activeConv.status === 'active' ? (
                         <form onSubmit={handleSendMessage} className="bg-surface-container-low rounded-2xl p-sm shadow-sm border border-outline-variant focus-within:border-primary transition-all">
-                    <textarea
-                        value={chatInputText}
-                        onChange={(e) => setChatInputText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage(e);
-                          }
-                        }}
-                        className="w-full bg-transparent border-none focus:ring-0 text-body-md resize-none h-[60px] p-md chat-scrollbar outline-none"
-                        placeholder="Nhập tin nhắn hỗ trợ..."
-                    ></textarea>
+                          <textarea
+                              value={chatInputText}
+                              onChange={(e) => setChatInputText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendMessage(e);
+                                }
+                              }}
+                              className="w-full bg-transparent border-none focus:ring-0 text-body-md resize-none h-[60px] p-md chat-scrollbar outline-none"
+                              placeholder="Nhập tin nhắn hỗ trợ..."
+                          ></textarea>
 
                           {/* Quick Replies */}
                           <div className="px-md pb-xs overflow-x-auto chat-scrollbar">
@@ -801,14 +781,14 @@ const GuideChatPage = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-body-sm text-outline">Hành khách</span>
                       <span className="text-body-sm font-semibold text-on-surface">
-                    {activeConv.customer ? activeConv.customer.fullName : activeConv.guestName}
-                  </span>
+                        {activeConv.customer ? activeConv.customer.fullName : activeConv.guestName}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-body-sm text-outline">Số điện thoại</span>
                       <span className="text-body-sm font-semibold text-on-surface">
-                    {activeConv.customer?.phone || 'Chưa cập nhật'}
-                  </span>
+                        {activeConv.customer?.phone || 'Chưa cập nhật'}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -971,4 +951,3 @@ const GuideChatPage = () => {
 };
 
 export default GuideChatPage;
-
