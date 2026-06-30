@@ -5,7 +5,7 @@ const db = require("../../models");
 const { Op } = db.Sequelize;
 
 class AdminDashboardRepository {
-    getDashboardData({ revenueRange, occupancyRange, paidStatuses, refundStatuses }) {
+    getDashboardData({ revenueRange, occupancyRange, paidStatuses, revenueStatuses }) {
         const {
             Booking,
             Participant,
@@ -28,7 +28,7 @@ class AdminDashboardRepository {
             }),
             Booking.findAll({
                 where: {
-                    status: { [Op.in]: refundStatuses },
+                    status: { [Op.in]: revenueStatuses },
                     bookedAt: {
                         [Op.gte]: revenueRange.start,
                         [Op.lt]: revenueRange.end,
@@ -38,7 +38,7 @@ class AdminDashboardRepository {
             }),
             Booking.findAll({
                 where: {
-                    status: { [Op.in]: paidStatuses },
+                    status: { [Op.in]: revenueStatuses },
                     bookedAt: {
                         [Op.gte]: revenueRange.start,
                         [Op.lt]: revenueRange.end,

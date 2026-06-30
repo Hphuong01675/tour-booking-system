@@ -290,7 +290,7 @@ const AdminDashboardPage = () => {
         return [
             {
                 label: `Doanh thu ${periodLabel}`,
-                value: formatCurrency(summary.periodRevenue ?? summary.monthRevenue),
+                value: formatCurrency(summary.netRevenue ?? summary.periodRevenue ?? summary.monthRevenue),
                 tone: "text-primary",
                 icon: "payments",
                 iconClass: "bg-primary-container/10 text-primary",

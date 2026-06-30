@@ -3,9 +3,19 @@
 const dashboardRepository = require("../../repositories/admin/dashboard.repository");
 
 const PAID_BOOKING_STATUSES = ["paid"];
-const REFUND_BOOKING_STATUSES = ["cancelled", "refunded"];
+const REVENUE_BOOKING_STATUSES = ["paid", "cancelled", "refunded"];
 
 const toNumber = (value) => Number(value || 0);
+
+const getRefundAmount = (booking) => toNumber(booking.refundAmount);
+
+const getGrossRevenue = (booking) => (
+    toNumber(booking.finalPrice) + getRefundAmount(booking)
+);
+
+const getNetRevenue = (booking) => (
+    getGrossRevenue(booking) - getRefundAmount(booking)
+);
 
 const toDateOrNull = (value) => {
     if (!value) return null;
@@ -93,6 +103,8 @@ const createRevenueChart = (range, bookings) => {
             key: `hour-${hour}`,
             label: `${String(hour).padStart(2, "0")}:00`,
             revenue: 0,
+            grossRevenue: 0,
+            refundAmount: 0,
         }));
     } else if (range.type === "month") {
         const daysInMonth = new Date(range.year, range.month, 0).getDate();
@@ -100,6 +112,8 @@ const createRevenueChart = (range, bookings) => {
             key: `day-${index + 1}`,
             label: String(index + 1),
             revenue: 0,
+            grossRevenue: 0,
+            refundAmount: 0,
         }));
     } else if (range.type === "quarter") {
         const startMonth = (range.quarter - 1) * 3;
@@ -108,6 +122,8 @@ const createRevenueChart = (range, bookings) => {
             month: startMonth + index + 1,
             label: `Th${String(startMonth + index + 1).padStart(2, "0")}`,
             revenue: 0,
+            grossRevenue: 0,
+            refundAmount: 0,
         }));
     } else {
         buckets = Array.from({ length: 12 }, (_, index) => ({
@@ -115,6 +131,8 @@ const createRevenueChart = (range, bookings) => {
             month: index + 1,
             label: `Th${String(index + 1).padStart(2, "0")}`,
             revenue: 0,
+            grossRevenue: 0,
+            refundAmount: 0,
         }));
     }
 
@@ -127,7 +145,12 @@ const createRevenueChart = (range, bookings) => {
         if (range.type === "quarter") index = bookedAt.getMonth() - (range.quarter - 1) * 3;
 
         if (buckets[index]) {
-            buckets[index].revenue += toNumber(booking.finalPrice);
+            const grossRevenue = getGrossRevenue(booking);
+            const refundAmount = getRefundAmount(booking);
+
+            buckets[index].grossRevenue += grossRevenue;
+            buckets[index].refundAmount += refundAmount;
+            buckets[index].revenue += getNetRevenue(booking);
         }
     });
 
@@ -150,18 +173,18 @@ class AdminDashboardService {
             revenueRange,
             occupancyRange,
             paidStatuses: PAID_BOOKING_STATUSES,
-            refundStatuses: REFUND_BOOKING_STATUSES,
+            revenueStatuses: REVENUE_BOOKING_STATUSES,
         });
 
         const periodRefund = refundBookings.reduce(
             (sum, booking) => sum + toNumber(booking.refundAmount),
             0,
         );
-        const periodRevenue = periodBookings.reduce(
-            (sum, booking) => sum + toNumber(booking.finalPrice),
+        const periodGrossRevenue = periodBookings.reduce(
+            (sum, booking) => sum + getGrossRevenue(booking),
             0,
         );
-        const netRevenue = periodRevenue - periodRefund;
+        const netRevenue = periodGrossRevenue - periodRefund;
         const soldTickets = paidBookings.reduce(
             (sum, booking) => sum + (booking.participants?.length || 0),
             0,
@@ -212,11 +235,18 @@ class AdminDashboardService {
                 thumbnailUrl: tour.thumbnailUrl,
                 soldTickets: 0,
                 revenue: 0,
+                grossRevenue: 0,
+                refundAmount: 0,
             };
 
             const ticketCount = booking.participants?.length || 0;
+            const grossRevenue = getGrossRevenue(booking);
+            const refundAmount = getRefundAmount(booking);
+
             current.soldTickets += ticketCount;
-            current.revenue += toNumber(booking.finalPrice);
+            current.grossRevenue += grossRevenue;
+            current.refundAmount += refundAmount;
+            current.revenue += getNetRevenue(booking);
             topTourMap.set(tour.id, current);
         });
 
@@ -227,8 +257,10 @@ class AdminDashboardService {
 
         return {
             summary: {
-                periodRevenue,
-                monthRevenue: periodRevenue,
+                periodRevenue: netRevenue,
+                monthRevenue: netRevenue,
+                grossRevenue: periodGrossRevenue,
+                periodGrossRevenue,
                 netRevenue,
                 totalRefund: periodRefund,
                 soldTickets,
