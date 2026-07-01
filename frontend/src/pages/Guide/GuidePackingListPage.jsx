@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import GuideHeader from '../../components/guide/GuideHeader';
-import GuideFooter from '../../components/guide/GuideFooter';
-import { useAppModal } from '../../components/guide/AppModal';
+import GuideHeader from '../../components/Guide/GuideHeader';
+import GuideFooter from '../../components/Guide/GuideFooter';
+import { useAppModal } from '../../components/Guide/AppModal';
 import { getChecklistTemplates, getPackingItems, createPackingItem, updatePackingItem, deletePackingItem, getGuideProfile } from '../../api/guideApi';
 
 const CATEGORY_MAP = {
