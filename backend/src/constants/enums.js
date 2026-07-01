@@ -42,6 +42,7 @@ const BOOKING_STATUS = {
   PAID: 'paid',                            // Đã thanh toán
   CANCELLED: 'cancelled',                  // Đã hủy
   REFUNDED: 'refunded',                    // Đã hoàn tiền
+  REJECTED: 'rejected',                    // Từ chối duyệt hồ sơ
 };
 
 // ==========================================

@@ -32,7 +32,20 @@ const Homepage = () => {
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [totalTours, setTotalTours] = useState(0);
-    const itemsPerPage = 2;
+    const itemsPerPage = 3;
+    const [showAll, setShowAll] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = "success") => {
+        setToast({ message, type });
+    };
+
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
 
     // Reset pagination to page 1 when search filters change
     useEffect(() => {
@@ -55,8 +68,9 @@ const Homepage = () => {
     const fetchTours = async () => {
         setLoading(true);
         try {
+            const limit = showAll ? 1000 : itemsPerPage;
             const response = await axiosInstance.get(
-                `/api/tours?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}&priceRange=${priceRange}&date=${searchDate}`
+                `/api/tours?page=${currentPage}&limit=${limit}&search=${searchTerm}&priceRange=${priceRange}&date=${searchDate}`
             );
             setTours(response.data.tours || []);
             setTotalTours(response.data.total || 0);
@@ -70,7 +84,7 @@ const Homepage = () => {
 
     useEffect(() => {
         fetchTours();
-    }, [currentPage, searchTerm, searchDate, priceRange]);
+    }, [currentPage, searchTerm, searchDate, priceRange, showAll]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -83,7 +97,7 @@ const Homepage = () => {
 
     const handleAddToWishlist = async (e, tourId) => {
         if (!isAuthenticated) {
-            alert("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.");
+            showToast("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.", "info");
             navigate("/login");
             return;
         }
@@ -104,10 +118,10 @@ const Homepage = () => {
             setMascotAnimation(null);
             try {
                 await axiosInstance.post("/api/customer/wishlist", { tourId });
-                alert("Đã thêm tour vào danh sách yêu thích thành công!");
+                showToast("Đã thêm tour vào danh sách yêu thích thành công!", "success");
             } catch (err) {
                 console.error("Lỗi khi thêm wishlist:", err);
-                alert("Không thể lưu tour. Vui lòng thử lại.");
+                showToast("Không thể lưu tour. Vui lòng thử lại.", "error");
             }
         }, 3000);
     };
@@ -116,7 +130,7 @@ const Homepage = () => {
         const scheduleId = selectedSchedules[tour.id] || (tour.schedules && tour.schedules[0]?.id);
 
         if (!scheduleId) {
-            alert("Xin lỗi, tour này hiện tại chưa có lịch trình mở đăng ký.");
+            showToast("Xin lỗi, tour này hiện tại chưa có lịch trình mở đăng ký.", "info");
             return;
         }
 
@@ -132,11 +146,11 @@ const Homepage = () => {
                 }
             } catch (err) {
                 console.error("Lỗi khi lưu thông tin đặt tour tạm thời:", err);
-                alert("Đã xảy ra lỗi. Vui lòng thử lại.");
+                showToast("Đã xảy ra lỗi. Vui lòng thử lại.", "error");
             }
         } else {
             if (user.role !== "customer") {
-                alert("Tài khoản của bạn không phải là Khách hàng. Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.");
+                showToast("Tài khoản của bạn không phải là Khách hàng. Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.", "warning");
                 return;
             }
 
@@ -196,7 +210,7 @@ const Homepage = () => {
             }
         } catch (err) {
             console.error("Lỗi tạo booking:", err);
-            alert(err.response?.data?.error || "Không thể hoàn tất đơn đặt tour.");
+            showToast(err.response?.data?.error || "Không thể hoàn tất đơn đặt tour.", "error");
         }
     };
 
@@ -276,7 +290,7 @@ const Homepage = () => {
                 </div>
                 <div className="relative h-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop flex flex-col justify-center items-center text-center pb-16 z-10">
                     <h1 className="text-white text-2xl md:text-4xl font-black tracking-tight leading-tight animate-fade-in-up">
-                        Khám Phá Thế Giới Cùng GlobalExplore
+                        Khám Phá Thế Giới Cùng Chip3Chip
                     </h1>
                     <p className="text-neutral-300 text-xs md:text-sm mt-2 max-w-xl animate-fade-in-up stagger-1">
                         Hành trình trải nghiệm đẳng cấp dành cho gia đình và chuyên gia du lịch.
@@ -349,10 +363,23 @@ const Homepage = () => {
                             <p className="text-on-surface-variant font-body-md text-body-md mt-1">Những hành trình được yêu thích nhất bởi du khách</p>
                         </div>
                         <button 
-                            onClick={() => { setSearchTerm(""); setSearchDate(""); setPriceRange("all"); }}
+                            onClick={() => {
+                                if (showAll) {
+                                    setShowAll(false);
+                                } else {
+                                    setSearchTerm("");
+                                    setSearchDate("");
+                                    setPriceRange("all");
+                                    setShowAll(true);
+                                }
+                            }}
                             className="text-primary font-bold text-label-md flex items-center gap-xs hover:underline cursor-pointer"
                         >
-                            Xem tất cả <span className="material-symbols-outlined">chevron_right</span>
+                            {showAll ? (
+                                <>Thu gọn <span className="material-symbols-outlined">expand_less</span></>
+                            ) : (
+                                <>Xem tất cả <span className="material-symbols-outlined">chevron_right</span></>
+                            )}
                         </button>
                     </div>
 
@@ -528,33 +555,92 @@ const Homepage = () => {
             </section>
 
             {/* About Us Section */}
-            <section id="about-us-section" className="py-24 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
-                <div className="max-w-[1200px] mx-auto px-6 text-center">
-                    <div className="max-w-3xl mx-auto space-y-6">
-                        <span className="text-primary font-bold text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
-                            Về Chúng Tôi
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Về GlobalExplore</h2>
-                        <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-                            Với hơn 15 năm kinh nghiệm trong ngành du lịch, GlobalExplore tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi cam kết mang lại giá trị tốt nhất cho mọi khách hàng.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-10 border-t border-slate-200/60 max-w-xl mx-auto text-left">
-                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
-                                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-[28px]">verified</span>
+            <section id="about-us-section" className="py-24 bg-gradient-to-b from-slate-50 via-white to-slate-50 border-t border-slate-100 relative overflow-hidden">
+                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-72 h-72 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-1/3 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                        {/* Left Side: Content & Statistics */}
+                        <div className="lg:col-span-6 space-y-6 text-left">
+                            <span className="text-primary font-black text-xs uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 inline-block">
+                                Về Chúng Tôi
+                            </span>
+                            <h2 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                                Về <span className="bg-gradient-to-r from-primary to-primary-container bg-clip-text text-transparent">Chip3Chip</span>
+                            </h2>
+                            <p className="text-slate-600 font-body-md text-body-md leading-relaxed">
+                                Với hơn 15 năm kinh nghiệm trong ngành du lịch, Chip3Chip tự hào là đơn vị tiên phong mang đến những hành trình khám phá thế giới chuyên nghiệp, an toàn và đẳng cấp. Chúng tôi không ngừng cải tiến dịch vụ để mang lại những giá trị trải nghiệm trọn vẹn và an tâm nhất cho mỗi hành trình của bạn.
+                            </p>
+                            
+                            {/* Stats Cards */}
+                            <div className="grid grid-cols-3 gap-4 pt-4">
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-primary">15+</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Năm kinh nghiệm</div>
                                 </div>
-                                <div>
-                                    <div className="font-bold text-slate-800 text-sm">Uy tín hàng đầu</div>
-                                    <p className="text-xs text-slate-500 mt-1">Hơn 1 triệu lượt khách hàng hài lòng và quay lại.</p>
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-secondary">1M+</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Khách hài lòng</div>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm text-center transition-all duration-300 hover:shadow-md">
+                                    <div className="text-2xl md:text-3xl font-black text-emerald-600">99.8%</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Đánh giá 5 sao</div>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-md">
-                                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-[28px]">support_agent</span>
+                        </div>
+
+                        {/* Right Side: Features Grid */}
+                        <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {/* Feature Card 1 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">verified</span>
                                 </div>
                                 <div>
-                                    <div className="font-bold text-slate-800 text-sm">Hỗ trợ 24/7</div>
-                                    <p className="text-xs text-slate-500 mt-1">Hỗ trợ khách hàng mọi lúc, mọi nơi trên toàn cầu.</p>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Uy tín hàng đầu</h3>
+                                    <p className="text-xs text-slate-550 mt-2 leading-relaxed">
+                                        Chúng tôi được tin tưởng bởi hơn 1 triệu lượt khách hàng. Cam kết bảo đảm quyền lợi tối đa cho mọi chuyến đi.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 2 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">support_agent</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Hỗ trợ 24/7</h3>
+                                    <p className="text-xs text-slate-550 mt-2 leading-relaxed">
+                                        Đội ngũ chuyên nghiệp luôn sẵn sàng hỗ trợ khách hàng mọi lúc, mọi nơi trên phạm vi toàn cầu.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 3 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">security</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">An toàn tuyệt đối</h3>
+                                    <p className="text-xs text-slate-555 mt-2 leading-relaxed">
+                                        Lịch trình được khảo sát kỹ lưỡng, hướng dẫn viên chuyên nghiệp và bảo hiểm du lịch toàn diện.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Feature Card 4 */}
+                            <div className="flex flex-col gap-4 p-6 rounded-3xl bg-white shadow-sm border border-slate-100/80 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-inner">
+                                    <span className="material-symbols-outlined text-[26px]">local_activity</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-800 text-base">Trải nghiệm độc bản</h3>
+                                    <p className="text-xs text-slate-555 mt-2 leading-relaxed">
+                                        Các hoạt động khám phá độc quyền, dịch vụ lưu trú thượng hạng chuẩn quốc tế.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -575,7 +661,7 @@ const Homepage = () => {
                         {/* Testimonial 1 */}
                         <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                             <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
-                                "Dịch vụ tuyệt vời! Tour Sapa của GlobalExplore tổ chức rất chu đáo, hướng dẫn viên nhiệt tình và khách sạn 5 sao cực kỳ đẳng cấp. Gia đình tôi rất hài lòng."
+                                "Dịch vụ tuyệt vời! Tour Sapa của Chip3Chip tổ chức rất chu đáo, hướng dẫn viên nhiệt tình và khách sạn 5 sao cực kỳ đẳng cấp. Gia đình tôi rất hài lòng."
                             </p>
                             <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Nguyễn Văn Nam avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyYDTaLlcjUSexakPA_46fM-8-WdqU_dtNwTlsfsT1iO7aFkPUpj_wsFjnQgBJPN8P74-7Ut_swk6zZ73sWAb-kToL8HPg3XRLzfbr5X-jd78naVcp8O6-fq5doWfJ854C-s4vlxxEfZY2IfH4pmVbdsyPtxjrv35xaA2CN9Yhjl6d_U-jNDPR3VyOeGEQ0ksQjr5OjYGcQlyw-ggX0QFoUwqKCfYGlje8fyylJoMH8zreDud10K5znyU_ZTF17UqQnwF0iPrQCnpK" />
@@ -605,7 +691,7 @@ const Homepage = () => {
                         {/* Testimonial 3 */}
                         <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-200/60 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                             <p className="text-slate-650 font-medium text-xs leading-relaxed mb-6 italic">
-                                "Sự an tâm là điều tôi tìm kiếm và GlobalExplore đã đáp ứng hoàn hảo. Lịch trình hợp lý cho người lớn tuổi, không quá dồn dập."
+                                "Sự an tâm là điều tôi tìm kiếm và Chip3Chip đã đáp ứng hoàn hảo. Lịch trình hợp lý cho người lớn tuổi, không quá dồn dập."
                             </p>
                             <div className="flex items-center gap-4 border-t border-slate-200/50 pt-4">
                                 <img className="w-12 h-12 rounded-full object-cover border border-primary/10 shadow-sm" alt="Phạm Minh Đức avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc1JW0LzjP55KRD_9x-zl9Qz8QvYS05IxZ_F-SCS6DwXKYXD0Dc_xVnvxKwPASEjONZSq7L_nGf-nJXO0424cS5MjruxwEbYa_G8vu0m4JVdAnU_n_wG9LH6BriFxBCBnEz7XVqIWTCSx-ba6g9nJJhM41yAc5cSaOkxQJoWsURtuctf8pkc13ZfuJe5pZqxmNTko_57oiH3r-5vfPSkY4i8EE_E3kkwCgIiNTEoyVxlSTBk0VpqZemKK8aUOytEK1vj500k7Hgax2" />
@@ -643,18 +729,18 @@ const Homepage = () => {
                                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                     <span className="material-symbols-outlined text-primary text-[20px]">location_on</span>
                                 </div>
-                                <span className="font-bold text-xs md:text-sm text-slate-700">Địa chỉ: 123 Đường Lê Lợi, Quận 1, TP. HCM</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Địa chỉ: Số 1, đường Võ Văn Ngân, phường Thủ Đức, Thành phố Hồ Chí Minh</span>
                             </div>
                             <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md">
                                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                     <span className="material-symbols-outlined text-primary text-[20px]">mail</span>
                                 </div>
-                                <span className="font-bold text-xs md:text-sm text-slate-700">Email: contact@globalexplore.com</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Email: contact@chip3chip.com</span>
                             </div>
                         </div>
                     </div>
                     <div className="lg:col-span-7 bg-white p-8 rounded-[32px] text-slate-800 shadow-xl border border-slate-100">
-                        <form onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất."); e.target.reset(); }} className="space-y-4">
+                        <form onSubmit={(e) => { e.preventDefault(); showToast("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất.", "success"); e.target.reset(); }} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Họ và tên" type="text" />
                                 <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Email" type="email" />
@@ -670,7 +756,7 @@ const Homepage = () => {
             {/* Footer - Clean light style */}
             <footer className="w-full py-16 px-6 bg-slate-50 grid grid-cols-1 md:grid-cols-4 gap-8 border-t border-slate-200">
                 <div className="flex flex-col gap-4">
-                    <div className="text-xl font-black text-primary tracking-tight">GlobalExplore</div>
+                    <div className="text-xl font-black text-primary tracking-tight">Chip3Chip</div>
                     <p className="text-slate-500 font-semibold text-xs leading-relaxed">
                         Đồng hành cùng bạn trên mọi nẻo đường thế giới. Chất lượng và uy tín là kim chỉ nam của chúng tôi.
                     </p>
@@ -694,7 +780,7 @@ const Homepage = () => {
                         <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:scale-105 transition cursor-pointer shadow-sm"><span className="material-symbols-outlined text-[18px]">share</span></span>
                     </div>
                     <div className="mt-3 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                        © 2026 Hệ sinh thái du lịch GlobalExplore. Bảo lưu mọi quyền.
+                        © 2026 Hệ sinh thái du lịch Chip3Chip. Bảo lưu mọi quyền.
                     </div>
                 </div>
             </footer>
@@ -702,7 +788,7 @@ const Homepage = () => {
             {/* Step 1: Interactive Booking Configuration Modal */}
             {bookingConfigTour && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[32px] max-w-lg w-full p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8 text-neutral-800">
+                    <div className="app-modal-panel app-modal-panel-lg bg-white rounded-[32px] p-8 shadow-2xl border border-neutral-100 animate-in fade-in zoom-in-95 duration-200 my-8 text-neutral-800">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-black text-neutral-900">Thông Tin Đặt Tour</h3>
                             <button 
@@ -829,7 +915,7 @@ const Homepage = () => {
             {/* Step 3: Payment Mock Simulators */}
             {showPaymentSimulator === 'vnpay' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-blue-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
+                    <div className="app-modal-panel app-modal-panel-lg bg-white rounded-2xl overflow-hidden shadow-2xl border border-blue-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
                         <div className="bg-blue-600 text-white p-6 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-3xl">account_balance</span>
@@ -845,7 +931,7 @@ const Homepage = () => {
                             <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-3.5 text-sm">
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Đơn vị thụ hưởng:</span>
-                                    <span className="font-black text-neutral-800">GLOBALEXPLORE TRAVELS CO.</span>
+                                    <span className="font-black text-neutral-800">CHIP3CHIP TRAVELS CO.</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Khách hàng:</span>
@@ -876,7 +962,7 @@ const Homepage = () => {
                                 <button
                                     onClick={() => {
                                         setShowPaymentSimulator(null);
-                                        alert("Giao dịch thanh toán mô phỏng đã bị hủy.");
+                                        showToast("Giao dịch thanh toán mô phỏng đã bị hủy.", "info");
                                     }}
                                     className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
                                 >
@@ -890,7 +976,7 @@ const Homepage = () => {
 
             {showPaymentSimulator === 'momo' && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-pink-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-850">
+                    <div className="app-modal-panel app-modal-panel-sm bg-white rounded-2xl overflow-hidden shadow-2xl border border-pink-200 animate-in fade-in zoom-in-95 duration-200 text-neutral-850">
                         <div className="bg-pink-600 text-white p-6 text-center relative">
                             <span className="material-symbols-outlined text-4xl animate-pulse">qr_code_2</span>
                             <h3 className="font-extrabold text-lg tracking-tight mt-1">THANH TOÁN QUA VÍ MOMO</h3>
@@ -917,7 +1003,7 @@ const Homepage = () => {
                             <button
                                 onClick={() => {
                                     setShowPaymentSimulator(null);
-                                    alert("Giao dịch thanh toán MoMo mô phỏng đã hủy.");
+                                    showToast("Giao dịch thanh toán MoMo mô phỏng đã hủy.", "info");
                                 }}
                                 className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
                             >
@@ -931,7 +1017,7 @@ const Homepage = () => {
             {/* Booking Success Modal */}
             {bookingSuccessModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[32px] max-w-md w-full p-8 shadow-2xl border border-neutral-100 text-center animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
+                    <div className="app-modal-panel bg-white rounded-[32px] p-8 shadow-2xl border border-neutral-100 text-center animate-in fade-in zoom-in-95 duration-200 text-neutral-800">
                         <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-100 animate-bounce">
                             <span className="material-symbols-outlined text-3xl">check_circle</span>
                         </div>
@@ -965,6 +1051,33 @@ const Homepage = () => {
                 </div>
             )}
 
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-[10000] animate-in fade-in slide-in-from-bottom-5 duration-300">
+                    <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md ${
+                        toast.type === 'success' 
+                            ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800' 
+                            : toast.type === 'error' 
+                            ? 'bg-rose-50/90 border-rose-200 text-rose-800' 
+                            : 'bg-blue-50/90 border-blue-200 text-blue-800'
+                    }`}>
+                        <span className="material-symbols-outlined text-[22px]">
+                            {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
+                        </span>
+                        <div className="flex flex-col text-left">
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                                {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Thất bại' : 'Thông báo'}
+                            </span>
+                            <span className="text-[13px] font-semibold mt-0.5">{toast.message}</span>
+                        </div>
+                        <button 
+                            onClick={() => setToast(null)} 
+                            className="ml-2 hover:opacity-75 transition-opacity cursor-pointer flex items-center justify-center"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

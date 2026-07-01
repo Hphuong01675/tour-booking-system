@@ -34,6 +34,7 @@ axiosInstance.interceptors.response.use(
         const message =
             error.response?.data?.error ||
             error.response?.data?.message ||
+            error.message ||
             "Lỗi kết nối. Vui lòng thử lại.";
         
         const customError = new Error(message);

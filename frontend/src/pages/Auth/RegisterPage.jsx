@@ -75,7 +75,7 @@ function RegisterPage() {
     <div className="bg-[#f8f9fb] text-[#191c1e] min-h-screen flex flex-col font-sans">
       {/* TopAppBar */}
       <header className="fixed top-0 z-50 w-full h-16 flex justify-between items-center px-4 md:px-16 bg-white border-b border-[#c3c6d6]">
-        <div className="text-xl md:text-2xl font-bold text-[#003d9b] tracking-tight">Chip3Chip</div>
+        <Link to="/" className="text-xl md:text-2xl font-bold text-[#003d9b] tracking-tight hover:opacity-80 transition">Chip3Chip</Link>
         <div className="flex items-center gap-4">
           <span className="text-sm text-[#434654] hidden md:block">Bạn đã có tài khoản?</span>
           <Link className="text-sm text-[#003d9b] font-bold hover:text-[#0052cc] transition-colors" to="/login">

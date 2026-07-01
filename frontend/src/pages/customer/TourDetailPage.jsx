@@ -13,6 +13,17 @@ const TourDetailPage = () => {
     const { user, isAuthenticated, loading: authLoading } = useSelector((state) => state.auth);
 
     const [tour, setTour] = useState(null);
+    const [toast, setToast] = useState(null);
+    const showToast = (message, type = "success") => {
+        setToast({ message, type });
+    };
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
+    const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -50,7 +61,7 @@ const TourDetailPage = () => {
     // Chat Bubble States
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([
-        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm GlobalExplore. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
+        { id: 1, sender: "bot", text: "Xin chào! Cảm ơn bạn đã ghé thăm Chip3Chip. Mình có thể giúp gì cho bạn hôm nay?", time: "Vừa xong" }
     ]);
     const [currentChatMessage, setCurrentChatMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -66,6 +77,7 @@ const TourDetailPage = () => {
             if (response.data.success) {
                 const tourData = response.data.tour;
                 setTour(tourData);
+                setReviews(response.data.reviews || []);
                 setSelectedImage(tourData.thumbnailUrl || "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&h=500&fit=crop");
                 if (tourData.schedules && tourData.schedules.length > 0) {
                     setSelectedScheduleId(tourData.schedules[0].id);
@@ -146,7 +158,7 @@ const TourDetailPage = () => {
 
     const handleAddToWishlist = async (e) => {
         if (!isAuthenticated) {
-            alert("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.");
+            showToast("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.", "info");
             navigate("/login");
             return;
         }
@@ -175,11 +187,11 @@ const TourDetailPage = () => {
                     tourId: tour.id
                 });
                 if (response.data.success) {
-                    alert("Đã lưu tour vào yêu thích thành công!");
+                    showToast("Đã lưu tour vào yêu thích thành công!", "success");
                 }
             } catch (err) {
                 console.error("Lỗi khi thêm wishlist:", err);
-                alert("Không thể lưu tour. Vui lòng thử lại.");
+                showToast("Không thể lưu tour. Vui lòng thử lại.", "error");
             }
         }, 3000);
     };
@@ -230,24 +242,24 @@ const TourDetailPage = () => {
                 list[index][side === 'front' ? 'cccdFrontUrl' : 'cccdBackUrl'] = `${baseUrl}${response.data.url}`;
                 setParticipantsList(list);
             } else {
-                alert("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định"));
+                showToast("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định", "error"));
             }
         } catch (err) {
             console.error("Lỗi upload file:", err);
-            alert("Lỗi kết nối khi tải lên file.");
+            showToast("Lỗi kết nối khi tải lên file.", "error");
         }
     };
 
     const handleBookTour = () => {
         if (!selectedScheduleId) {
-            alert("Hiện tại chưa có lịch khởi hành mở đăng ký cho tour này.");
+            showToast("Hiện tại chưa có lịch khởi hành mở đăng ký cho tour này.", "error");
             return;
         }
 
         const selectedSchedule = tour?.schedules?.find(sch => String(sch.id) === String(selectedScheduleId));
         const isSoldOut = selectedSchedule ? (selectedSchedule.maxCapacity - selectedSchedule.registered <= 0) : false;
         if (isSoldOut) {
-            alert("Lịch khởi hành này đã hết chỗ.");
+            showToast("Lịch khởi hành này đã hết chỗ.", "info");
             return;
         }
 
@@ -263,11 +275,11 @@ const TourDetailPage = () => {
                 }
             }).catch((err) => {
                 console.error("Lỗi đặt tạm thời:", err);
-                alert("Đã xảy ra lỗi. Vui lòng thử lại.");
+                showToast("Đã xảy ra lỗi. Vui lòng thử lại.", "error");
             });
         } else {
             if (user.role !== "customer") {
-                alert("Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.");
+                showToast("Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.", "info");
                 return;
             }
 
@@ -303,15 +315,15 @@ const TourDetailPage = () => {
         for (let i = 0; i < participantsList.length; i++) {
             const p = participantsList[i];
             if (!p.fullName || !p.fullName.trim()) {
-                alert(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
             if (!p.dateOfBirth) {
-                alert(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
             if (!p.address || !p.address.trim()) {
-                alert(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
 
@@ -329,36 +341,36 @@ const TourDetailPage = () => {
 
             if (tour.difficulty === "hard") {
                 if (type !== "adult") {
-                    alert(`Tour thám hiểm (Hard) chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của hành khách thứ ${i + 1}.`);
+                    showToast(`Tour thám hiểm (Hard, "info") chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của hành khách thứ ${i + 1}.`);
                     return;
                 }
                 if (age < 18) {
-                    alert(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard) phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
+                    showToast(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard, "info") phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
                     return;
                 }
                 if (!p.phone || !p.phone.trim()) {
-                    alert(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard).`);
+                    showToast(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard, "info").`);
                     return;
                 }
                 if (!p.cccdFrontUrl || !p.cccdBackUrl) {
-                    alert(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard).`);
+                    showToast(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard, "error").`);
                     return;
                 }
             } else {
                 // Tour Normal
                 if (type === "adult") {
                     if (age < 18) {
-                        alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi, "error"). Vui lòng kiểm tra lại ngày sinh.`);
                         return;
                     }
                 } else if (type === "child") {
                     if (age >= 18 || age < 2) {
-                        alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi, "info") không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
                         return;
                     }
                 } else if (type === "infant") {
                     if (age >= 2) {
-                        alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi, "info") không phù hợp (phải dưới 2 tuổi).`);
                         return;
                     }
                 }
@@ -442,7 +454,7 @@ const TourDetailPage = () => {
             }
         }).catch((err) => {
             console.error("Lỗi tạo đơn đặt tour:", err);
-            alert(err.response?.data?.error || "Không thể thực hiện đặt tour.");
+            showToast(err.response?.data?.error || "Không thể thực hiện đặt tour.", "error");
         });
     };
 
@@ -459,7 +471,7 @@ const TourDetailPage = () => {
             }
         } catch (err) {
             console.error("Lỗi thanh toán:", err);
-            alert(err.response?.data?.error || "Không thể hoàn tất giao dịch.");
+            showToast(err.response?.data?.error || "Không thể hoàn tất giao dịch.", "error");
         }
     };
 
@@ -480,7 +492,7 @@ const TourDetailPage = () => {
         setIsTyping(true);
 
         setTimeout(() => {
-            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên GlobalExplore sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6789 nhé!";
+            let replyText = "Cảm ơn thông tin của bạn. Hỗ trợ viên Chip3Chip sẽ phản hồi ngay lập tức hoặc bạn có thể liên hệ hotline 1900.6789 nhé!";
             const textLower = userText.toLowerCase();
             if (textLower.includes("tour") || textLower.includes("lộ trình") || textLower.includes("ngày")) {
                 replyText = `Bạn đang xem chi tiết tour: ${tour?.title || "Tour đặc sắc"}. Lịch trình diễn ra trong ${tour?.durationDays} ngày ${tour?.durationNights} đêm.`;
@@ -750,6 +762,56 @@ const TourDetailPage = () => {
                                 </div>
                             )}
                         </section>
+
+                        {/* Reviews/Testimonials Section */}
+                        <section className="space-y-6 pt-6 border-t border-neutral-200">
+                            <h2 className="text-lg font-black text-neutral-900 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-rose-500">rate_review</span>
+                                Đánh giá từ khách hàng ({reviews.length})
+                            </h2>
+
+                            {reviews && reviews.length > 0 ? (
+                                <div className="space-y-4">
+                                    {reviews.map((rev) => (
+                                        <div key={rev.id} className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm space-y-3">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={rev.booking?.customer?.avatarUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuAyYDTaLlcjUSexakPA_46fM-8-WdqU_dtNwTlsfsT1iO7aFkPUpj_wsFjnQgBJPN8P74-7Ut_swk6zZ73sWAb-kToL8HPg3XRLzfbr5X-jd78naVcp8O6-fq5doWfJ854C-s4vlxxEfZY2IfH4pmVbdsyPtxjrv35xaA2CN9Yhjl6d_U-jNDPR3VyOeGEQ0ksQjr5OjYGcQlyw-ggX0QFoUwqKCfYGlje8fyylJoMH8zreDud10K5znyU_ZTF17UqQnwF0iPrQCnpK"}
+                                                        alt={rev.booking?.customer?.fullName || "Khách hàng"}
+                                                        className="w-10 h-10 rounded-full object-cover border border-neutral-200"
+                                                    />
+                                                    <div>
+                                                        <h4 className="text-xs font-black text-neutral-800">
+                                                            {rev.booking?.customer?.fullName || "Ẩn danh"}
+                                                        </h4>
+                                                        <p className="text-[9px] text-neutral-400 font-bold">
+                                                            Đã đi: {rev.booking?.schedule?.departureDate ? formatDate(rev.booking.schedule.departureDate) : "Gần đây"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex text-amber-500">
+                                                    {Array.from({ length: rev.overallRating || 5 }).map((_, idx) => (
+                                                        <span key={idx} className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
+                                                    ))}
+                                                    {Array.from({ length: 5 - (rev.overallRating || 5) }).map((_, idx) => (
+                                                        <span key={idx} className="material-symbols-outlined text-[15px]">star_border</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <p className="text-xs font-semibold text-neutral-600 leading-relaxed pl-13">
+                                                "{rev.generalComment || "Chuyến đi tuyệt vời!"}"
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-white p-8 rounded-2xl border border-neutral-200 text-center shadow-sm">
+                                    <span className="material-symbols-outlined text-4xl text-neutral-300 mb-2">sentiment_satisfied</span>
+                                    <p className="text-neutral-500 text-sm font-bold">Chưa có đánh giá nào cho tour này.</p>
+                                </div>
+                            )}
+                        </section>
                     </div>
 
                     {/* Right Column: Sticky Sidebar / Pricing Card */}
@@ -822,7 +884,7 @@ const TourDetailPage = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-rose-500 text-[18px]">mail</span>
-                                    <span className="font-bold">Email: support@globalexplore.com</span>
+                                    <span className="font-bold">Email: support@chip3chip.vn</span>
                                 </div>
                             </div>
                         </div>
@@ -836,7 +898,7 @@ const TourDetailPage = () => {
                     <div>
                         <div className="flex items-center gap-2 mb-4">
                             <span className="material-symbols-outlined text-rose-500 text-2xl font-black">explore</span>
-                            <span className="text-xl font-black text-white tracking-tight">GlobalExplore</span>
+                            <span className="text-xl font-black text-white tracking-tight">Chip3Chip</span>
                         </div>
                         <p className="text-xs leading-relaxed text-neutral-400">
                             Đồng hành cùng bạn trên mọi nẻo đường thế giới. Chất lượng và uy tín là kim chỉ nam hàng đầu của chúng tôi.
@@ -871,7 +933,7 @@ const TourDetailPage = () => {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto border-t border-neutral-800 pt-6 text-center text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
-                    © 2026 GlobalExplore Travel Ecosystem. All rights reserved.
+                    © 2026 Chip3Chip Travel Ecosystem. All rights reserved.
                 </div>
             </footer>
 
@@ -1237,7 +1299,7 @@ const TourDetailPage = () => {
                             <div className="bg-neutral-50 p-4.5 rounded-xl border border-neutral-200/60 space-y-2 text-xs">
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-semibold">Đơn vị thụ hưởng:</span>
-                                    <span className="font-black text-neutral-850">GLOBALEXPLORE CO.</span>
+                                    <span className="font-black text-neutral-850">CHIP3CHIP CO.</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-neutral-500 font-bold">Số tiền thanh toán:</span>
@@ -1289,7 +1351,7 @@ const TourDetailPage = () => {
                                         <button
                                             onClick={() => {
                                                 if (cardNumber !== "9704198526191432119") {
-                                                    alert("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)");
+                                                    showToast("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)", "info");
                                                     return;
                                                 }
                                                 setSandboxStep("otp");
@@ -1327,7 +1389,7 @@ const TourDetailPage = () => {
                                         <button
                                             onClick={() => {
                                                 if (otpCode !== "123456") {
-                                                    alert("Mã OTP không chính xác. Vui lòng nhập mã OTP test 123456.");
+                                                    showToast("Mã OTP không chính xác. Vui lòng nhập mã OTP test 123456.", "info");
                                                     return;
                                                 }
                                                 handleSimulatorPaymentSuccess();
@@ -1459,7 +1521,7 @@ const TourDetailPage = () => {
                                         <button
                                             onClick={() => {
                                                 if (momoOtp !== "123456") {
-                                                    alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                    showToast("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.", "info");
                                                     return;
                                                 }
                                                 handleSimulatorPaymentSuccess();
@@ -1603,6 +1665,33 @@ const TourDetailPage = () => {
                     </span>
                 </button>
             </div>
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 px-4.5 py-4 rounded-[20px] bg-white border border-neutral-100 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 min-w-[320px] max-w-[420px]">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+                        toast.type === 'success' 
+                            ? 'bg-emerald-50 text-emerald-600' 
+                            : toast.type === 'error' 
+                                ? 'bg-rose-50 text-rose-600' 
+                                : 'bg-blue-50 text-blue-600'
+                    }`}>
+                        <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>
+                            {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
+                        </span>
+                    </div>
+                    <div className="flex-grow flex flex-col text-left">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider leading-none">
+                            {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Thất bại' : 'Thông báo'}
+                        </span>
+                        <span className="text-[13px] font-semibold mt-1 text-neutral-750 leading-snug">{toast.message}</span>
+                    </div>
+                    <button 
+                        onClick={() => setToast(null)} 
+                        className="text-neutral-400 hover:text-neutral-600 shrink-0 cursor-pointer"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

@@ -24,6 +24,13 @@ export const getOperatorTours = async (params) => {
   return response.data;
 };
 
+export const exportOperatorToursCSV = async () => {
+  const response = await axiosInstance.get("/api/operator/tours/export", {
+    responseType: "blob",
+  });
+  return response.data;
+};
+
 export const getOperatorTourDetail = async (id) => {
   const response = await axiosInstance.get(`/api/operator/tours/${id}`);
   return response.data;
@@ -31,6 +38,35 @@ export const getOperatorTourDetail = async (id) => {
 
 export const updateOperatorTour = async (id, tourData) => {
   const response = await axiosInstance.patch(`/api/operator/tours/${id}`, tourData);
+  return response.data;
+};
+
+export const createOperatorTour = async (tourData) => {
+  const response = await axiosInstance.post("/api/operator/tours", tourData);
+  return response.data;
+};
+
+export const uploadTourImages = async (tourId, formData) => {
+  const response = await axiosInstance.post(`/api/operator/tours/${tourId}/images`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    timeout: 60000, // 60s timeout for image upload to avoid connection aborts
+  });
+  return response.data;
+};
+export const deleteTourImage = async (tourId, imageId) => {
+  const response = await axiosInstance.delete(`/api/operator/tours/${tourId}/images/${imageId}`);
+  return response.data;
+};
+
+export const getOperatorTourBySlug = async (slug) => {
+  const response = await axiosInstance.get(`/api/operator/tours/by-slug/${slug}`);
+  return response.data;
+};
+
+export const getInfoCategories = async () => {
+  const response = await axiosInstance.get("/api/operator/info-categories");
   return response.data;
 };
 
@@ -71,8 +107,26 @@ export const getBookingVerification = async (bookingId) => {
   return response.data;
 };
 
-export const approveBooking = async (bookingId) => {
-  const response = await axiosInstance.put(`/api/operator/bookings/${bookingId}/approve`);
+export const approveBooking = async (bookingId, approvedParticipantIds) => {
+  const response = await axiosInstance.put(`/api/operator/bookings/${bookingId}/approve`, { approvedParticipantIds });
+  return response.data;
+};
+
+export const updateParticipantCCCD = async (participantId, formData) => {
+  const response = await axiosInstance.put(`/api/operator/participants/${participantId}/cccd`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const addParticipantToBooking = async (bookingId, formData) => {
+  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/participants`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -97,12 +151,14 @@ export const getCustomerBookings = async (customerId) => {
   return response.data;
 };
 
-export const getRefundEstimate = async (bookingId) => {
-  const response = await axiosInstance.get(`/api/operator/bookings/${bookingId}/refund-estimate`);
+export const getRefundEstimate = async (bookingId, participantIds = []) => {
+  const response = await axiosInstance.get(`/api/operator/bookings/${bookingId}/refund-estimate`, {
+    params: { participantIds: participantIds.join(",") }
+  });
   return response.data;
 };
 
-export const cancelBooking = async (bookingId, reason) => {
-  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/cancel`, { reason });
+export const cancelBooking = async (bookingId, reason, participantIds = []) => {
+  const response = await axiosInstance.post(`/api/operator/bookings/${bookingId}/cancel`, { reason, participantIds });
   return response.data;
 };

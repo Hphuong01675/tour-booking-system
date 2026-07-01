@@ -409,7 +409,7 @@ const CustomerTransactionsPage = () => {
                                 <div>
                                     <h3 className="text-lg font-black tracking-tight flex items-center gap-1.5 text-teal-400">
                                         <span className="material-symbols-outlined text-2xl text-rose-500">explore</span>
-                                        GlobalExplore Receipt
+                                        Chip3Chip Receipt
                                     </h3>
                                     <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mt-1">HÓA ĐƠN ĐIỆN TỬ CỦA KHÁCH HÀNG</p>
                                 </div>

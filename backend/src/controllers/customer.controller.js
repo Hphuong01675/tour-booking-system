@@ -180,6 +180,15 @@ class CustomerController {
                 });
             }
 
+            // Backend password strength validation
+            const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (!passwordStrengthRegex.test(newPassword)) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt."
+                });
+            }
+
             await customerService.updatePassword(req.user.id, { currentPassword, newPassword });
             return res.status(200).json({
                 success: true,

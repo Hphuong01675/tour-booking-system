@@ -6,7 +6,7 @@ const LoginPage = () => {
         <div className="bg-surface text-on-surface min-h-screen flex flex-col">
             <header className="w-full bg-white border-b border-surface-container py-4 px-6 md:px-12 flex justify-between items-center shrink-0">
                 <div className="flex items-center">
-                    <Link className="text-primary font-bold text-xl tracking-tight" to="/login">
+                    <Link className="text-primary font-bold text-xl tracking-tight" to="/">
                         Chip3Chip
                     </Link>
                 </div>
@@ -32,7 +32,7 @@ const LoginPage = () => {
                             Khám phá thế giới theo cách của bạn.
                         </h2>
                         <p className="text-lg opacity-90 drop-shadow-sm">
-                            Bắt đầu hành trình của bạn với GlobalExplore ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
+                            Bắt đầu hành trình của bạn với Chip3Chip ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
                         </p>
                     </div>
                 </div>

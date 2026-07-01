@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import OperatorHeader from "../../components/operator/OperatorHeader";
 import OperatorFooter from "../../components/operator/OperatorFooter";
-import { getOperatorProfile, getOperatorTours, updateOperatorTour } from "../../api/operatorApi";
+import { getOperatorProfile, getOperatorTours, updateOperatorTour, exportOperatorToursCSV } from "../../api/operatorApi";
 
 const TABS = [
     { key: "all", label: "Tất cả" },
@@ -43,6 +43,7 @@ const OperatorToursPage = () => {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -96,6 +97,25 @@ const OperatorToursPage = () => {
         setCurrentPage(1);
     };
 
+    const handleExportReport = async () => {
+        setExporting(true);
+        try {
+            const blob = await exportOperatorToursCSV();
+            const url = window.URL.createObjectURL(new Blob([blob]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", `Báo_cáo_tours_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (err) {
+            console.error("Failed to export tours report", err);
+            alert("Lỗi khi tải xuống báo cáo.");
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const handleTabChange = (tabKey) => {
         setActiveTab(tabKey);
         setCurrentPage(1);
@@ -132,9 +152,15 @@ const OperatorToursPage = () => {
                         </p>
                     </div>
                     <div className="flex gap-3 flex-shrink-0">
-                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container-low transition-colors">
-                            <span className="material-symbols-outlined text-[18px]">download</span>
-                            Xuất báo cáo
+                        <button
+                            onClick={handleExportReport}
+                            disabled={exporting}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container-low transition-colors disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">
+                                {exporting ? "hourglass_empty" : "download"}
+                            </span>
+                            {exporting ? "Đang xuất..." : "Xuất báo cáo"}
                         </button>
                         <button
                             onClick={() => navigate("/operator/tours/new")}
@@ -256,7 +282,7 @@ const OperatorToursPage = () => {
                                         </div>
                                         <div className="min-w-0">
                                             <p
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="font-semibold text-sm text-primary hover:underline cursor-pointer truncate"
                                             >
                                                 {tour.title}
@@ -309,7 +335,7 @@ const OperatorToursPage = () => {
                                         )}
                                         {tour.status === "pending" && (
                                             <button
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="p-2 rounded-lg hover:bg-surface-container text-on-surface-variant transition"
                                                 title="Xem chi tiết"
                                             >
@@ -317,21 +343,23 @@ const OperatorToursPage = () => {
                                             </button>
                                         )}
                                         {tour.status === "closed" && (
-                                            <button
-                                                onClick={() => {
-                                                    const schId = tour.schedules?.[0]?.id;
-                                                    if (schId) navigate(`/operator/guides/assign?scheduleId=${schId}`);
-                                                    else alert("Không có lịch trình khả dụng của tour này để phân công.");
-                                                }}
-                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition"
-                                            >
-                                                <span className="material-symbols-outlined text-[14px]">person_add</span>
-                                                Giao cho HDV
-                                            </button>
+                                             <button
+                                                 onClick={() => {
+                                                     const schId = tour.schedules?.[0]?.id;
+                                                     if (schId) navigate(`/operator/guides/assign?scheduleId=${schId}`);
+                                                     else alert("Không có lịch trình khả dụng của tour này để phân công.");
+                                                 }}
+                                                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition"
+                                             >
+                                                 <span className="material-symbols-outlined text-[14px]">
+                                                     {tour.schedules?.[0]?.assignments?.length > 0 ? "edit" : "person_add"}
+                                                 </span>
+                                                 {tour.schedules?.[0]?.assignments?.length > 0 ? "Đổi phân công" : "Giao cho HDV"}
+                                             </button>
                                         )}
                                         {tour.status === "draft" && (
                                             <button
-                                                onClick={() => navigate(`/operator/tours/${tour.id}`)}
+                                                onClick={() => navigate(`/operator/tours/${tour.slug}`)}
                                                 className="text-primary text-xs font-semibold underline hover:opacity-70 transition"
                                             >
                                                 Tiếp tục chỉnh sửa

@@ -4,14 +4,23 @@ class MailService {
   constructor() {
     this.transporter = null;
     this.user = null;
+    this.from = null;
   }
 
   getTransporter() {
-    const host = process.env.EMAIL_HOST || process.env.SMTP_HOST;
-    const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || 587;
-    const user = process.env.EMAIL_USER || process.env.SMTP_USER;
-    const pass = process.env.EMAIL_APP_PASSWORD || process.env.SMTP_PASS;
+    const host = process.env.EMAIL_HOST || process.env.SMTP_HOST || process.env.MAIL_HOST;
+    const port = process.env.EMAIL_PORT || process.env.SMTP_PORT || process.env.MAIL_PORT || 587;
+    const user = process.env.EMAIL_USER || process.env.SMTP_USER || process.env.MAIL_USER || process.env.GMAIL_USER;
+    const pass = process.env.EMAIL_APP_PASSWORD
+      || process.env.EMAIL_PASSWORD
+      || process.env.EMAIL_PASS
+      || process.env.SMTP_PASS
+      || process.env.SMTP_PASSWORD
+      || process.env.MAIL_PASS
+      || process.env.MAIL_PASSWORD
+      || process.env.GMAIL_APP_PASSWORD;
     this.user = user;
+    this.from = process.env.EMAIL_FROM || process.env.SMTP_FROM || process.env.MAIL_FROM || user;
 
     if (this.transporter) return this.transporter;
 
@@ -20,7 +29,7 @@ class MailService {
         this.transporter = nodemailer.createTransport({
           host,
           port: parseInt(port),
-          secure: parseInt(port) === 465,
+          secure: String(process.env.EMAIL_SECURE || '').toLowerCase() === 'true' || parseInt(port) === 465,
           auth: { user, pass },
         });
         console.log('[MAIL SERVICE] Nodemailer SMTP Transporter configured successfully.');
@@ -33,6 +42,43 @@ class MailService {
     }
     return null;
   }
+
+  async sendMail({ to, subject, html, text }) {
+    const transporter = this.getTransporter();
+
+    if (!to) {
+      console.warn('[MAIL SERVICE] Missing recipient email.');
+      return false;
+    }
+
+    if (!transporter) {
+      console.warn(`[MAIL SERVICE] SMTP disabled. Email not sent to ${to}: ${subject}`);
+      return false;
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: `"Chip3Chip" <${this.from || this.user}>`,
+        to,
+        subject,
+        text,
+        html,
+        headers: {
+          'Content-Type': 'text/html; charset=UTF-8',
+        },
+      });
+      return {
+        ok: Array.isArray(info.accepted) ? info.accepted.length > 0 : true,
+        messageId: info.messageId,
+        accepted: info.accepted || [],
+        rejected: info.rejected || [],
+      };
+    } catch (error) {
+      console.error(`[MAIL SERVICE] Error sending email to ${to}:`, error.message);
+      return { ok: false, error: error.message };
+    }
+  }
+
   async sendOTP(email, otp) {
     const subject = 'Mã xác thực OTP - Chip3Chip';
     const text = `Mã OTP của bạn là: ${otp}. Mã này sẽ hết hạn sau 5 phút.`;
@@ -507,6 +553,77 @@ class MailService {
         return true;
       } catch (error) {
         console.error('[MAIL SERVICE] ✗ Error sending forgot password email:', error.message);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async sendCancellationEmail(email, { tourTitle, departureDate, bookingCode, cancelledNames, refundAmount, reason }) {
+    const subject = `Thông báo hủy chuyến đi và hoàn tiền - Booking ${bookingCode}`;
+    const text = `Chúng tôi xin thông báo yêu cầu hủy chuyến đi cho mã đặt chỗ ${bookingCode} đã được xử lý thành công. Số tiền hoàn lại là ${refundAmount.toLocaleString('vi-VN')} đ.`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .header { background-color: #003d9b; color: #fff; padding: 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+          .content { padding: 20px; line-height: 1.6; }
+          .highlight { font-weight: bold; color: #003d9b; }
+          .footer { text-align: center; font-size: 12px; color: #888; border-top: 1px solid #ddd; padding-top: 15px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Thông Báo Hủy Chuyến & Hoàn Tiền</h2>
+          </div>
+          <div class="content">
+            <p>Xin chào quý khách,</p>
+            <p>Hệ thống Chip3Chip xin thông báo yêu cầu hủy chuyến đi của quý khách đã được thực hiện thành công bởi điều hành viên.</p>
+            <h3>Thông tin chi tiết:</h3>
+            <ul>
+              <li><strong>Mã đặt chỗ:</strong> ${bookingCode}</li>
+              <li><strong>Tên Tour:</strong> ${tourTitle}</li>
+              <li><strong>Ngày khởi hành:</strong> ${departureDate}</li>
+              <li><strong>Danh sách hành khách hủy:</strong> ${cancelledNames.join(', ')}</li>
+              <li><strong>Lý do hủy:</strong> ${reason}</li>
+              <li><strong>Số tiền hoàn lại:</strong> <span class="highlight">${refundAmount.toLocaleString('vi-VN')} đ</span></li>
+            </ul>
+            <p>Số tiền hoàn trả sẽ được chuyển vào tài khoản thanh toán của quý khách trong vòng 3-5 ngày làm việc theo chính sách hoàn tiền.</p>
+            <p>Nếu có bất kỳ thắc mắc nào, quý khách vui lòng liên hệ với bộ phận hỗ trợ qua email <a href="mailto:support@chip3chip.vn">support@chip3chip.vn</a>.</p>
+          </div>
+          <div class="footer">
+            <p>© 2024 Chip3Chip. Tất cả các quyền được bảo lưu.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    console.log(`\n==================================================`);
+    console.log(`[MAIL SERVICE] Gửi email thông báo hủy/hoàn tiền tới ${email}`);
+    console.log(`Mã booking: ${bookingCode}, Hoàn tiền: ${refundAmount.toLocaleString('vi-VN')} đ`);
+    console.log(`==================================================\n`);
+
+    const transporter = this.getTransporter();
+    if (transporter) {
+      try {
+        await transporter.sendMail({
+          from: `"Chip3Chip" <${this.user}>`,
+          to: email,
+          subject,
+          text,
+          html,
+        });
+        return true;
+      } catch (error) {
+        console.error('[MAIL SERVICE] ✗ Lỗi khi gửi email SMTP thông báo hủy:', error.message);
         return false;
       }
     }

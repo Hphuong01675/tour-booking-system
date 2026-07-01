@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../../features/auth/authSlice';
 
-const GuideHeader = ({ currentUser }) => {
+const GuideHeader = ({ currentUser, onLogoutClick }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
-    const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    // Close dropdown on click outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -15,107 +16,75 @@ const GuideHeader = ({ currentUser }) => {
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem("guideProfile");
-        navigate("/");
+        if (onLogoutClick) {
+            onLogoutClick();
+        } else {
+            dispatch(logoutUser());
+            navigate("/login", { replace: true });
+        }
     };
 
-    const navItems = [
-        { path: "/guides/tours", label: "Lịch dẫn tour" },
-        { path: "/guides/consultations", label: "Tư vấn khách hàng" },
-        { path: "/guides/profile", label: "Thông tin cá nhân" },
-    ];
-
-    const avatarUrl = currentUser?.avatarUrl || "https://via.placeholder.com/150?text=Guide";
+    const activeClass = "text-[16px] leading-6 text-primary border-b-2 border-primary pb-1 font-semibold transition-all duration-200";
+    const inactiveClass = "text-[16px] leading-6 text-slate-600 hover:text-primary transition-colors";
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-outline-variant/30 px-s-margin-mobile md:px-s-margin-desktop shadow-sm flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-s-xxl">
-                <Link to="/guides/tours" className="text-2xl font-bold text-primary tracking-tight font-headline-lg flex items-center">
+        <header className="bg-white shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop h-[84px]">
+            <div className="flex items-center gap-xl">
+                <h1 className="text-[28px] leading-9 font-bold text-primary">
                     Chip3Chip
-                </Link>
-
-                {/* Desktop Navigation Tabs */}
-                <nav className="hidden md:flex items-center gap-s-xl h-16">
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`relative flex items-center h-full px-s-xs text-[15px] font-medium transition-colors hover:text-primary ${
-                                    isActive ? "text-primary font-bold" : "text-on-surface-variant/70"
-                                }`}
-                            >
-                                {item.label}
-                                {isActive && (
-                                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"></span>
-                                )}
-                            </Link>
-                        );
-                    })}
+                </h1>
+                <nav className="hidden md:flex items-center gap-lg">
+                    <NavLink
+                        className={({ isActive }) => isActive ? activeClass : inactiveClass}
+                        to="/guides/tours"
+                    >
+                        Lịch dẫn tour
+                    </NavLink>
+                    <NavLink
+                        className={({ isActive }) => isActive ? activeClass : inactiveClass}
+                        to="/guides/consultations"
+                    >
+                        Tư vấn khách hàng
+                    </NavLink>
                 </nav>
             </div>
 
-            {/* Right Side: Profile Dropdown */}
-            <div className="relative" ref={dropdownRef}>
-                <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center focus:outline-none hover:scale-105 active:scale-95 transition-transform"
-                >
+            <div className="flex items-center gap-md">
+                {/* User Avatar & Dropdown */}
+                <div className="flex items-center gap-sm relative" ref={dropdownRef}>
                     <img
-                        src={avatarUrl}
-                        alt={currentUser?.fullName || "Guide Avatar"}
-                        className="w-10 h-10 rounded-full object-cover border border-primary/20 shadow-sm"
+                        alt="Guide profile avatar"
+                        className="w-10 h-10 rounded-full object-cover border-2 border-primary-fixed cursor-pointer"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        src={currentUser?.avatarUrl || currentUser?.avatar || "https://lh3.googleusercontent.com/aida-public/AB6AXuBREwJ-JeJZx87z66kS657dVoUH0ED91CpDA2K37pcfEqiwRUjg8XKp_qq__pTS6g_evItYcZ-x_ZeU3GtJRGBrxiXW7tR9nXeuV8zHz_v8hW8tX_AInRYL-9DB6eDolmH8gDaUkK1SyQlyHDexZunz5nftL8HIBdK5TzC_ibblNSVeCxSQxPft_Da9oQopCeKqQ5DujWtrwbazZ9lZwU3Ylr71y1wAkfikRqhpH0PDX4d7VQzs7pRsUD-TNJcYUFCzzb43PrRq90kH"}
                     />
-                </button>
 
-                {/* Dropdown Menu */}
-                {isDropdownOpen && (
-                    <div className="absolute right-0 mt-s-sm w-48 bg-white border border-outline-variant/30 rounded-xl shadow-lg py-s-sm z-50 animate-fadeIn">
-                        {currentUser?.fullName && (
-                            <div className="px-s-md py-s-sm border-b border-outline-variant/20 mb-s-xs">
-                                <p className="font-semibold text-sm text-on-surface truncate">{currentUser.fullName}</p>
-                                <p className="text-xs text-on-surface-variant/80 truncate">Hướng dẫn viên</p>
-                            </div>
-                        )}
-                        <Link
-                            to="/guides/profile"
-                            onClick={() => setIsDropdownOpen(false)}
-                            className="flex items-center gap-s-sm px-s-md py-s-sm text-sm text-on-surface-variant hover:bg-surface-container-low hover:text-primary transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">person</span>
-                            Thông tin cá nhân
-                        </Link>
-                        <button
-                            onClick={() => {
-                                setIsDropdownOpen(false);
-                                handleLogout();
-                            }}
-                            className="w-full flex items-center gap-s-sm px-s-md py-s-sm text-sm text-error hover:bg-error-container/10 transition-colors text-left"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">logout</span>
-                            Đăng xuất
-                        </button>
+                    <div className={`absolute right-0 top-full mt-2 w-48 bg-white border border-outline-variant/30 rounded-lg shadow-lg transition-all duration-200 z-50 overflow-hidden ${isDropdownOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+                        <div className="flex flex-col py-1">
+                            <Link
+                                to="/guide/profile"
+                                onClick={() => setIsDropdownOpen(false)}
+                                className="w-full text-left px-md py-sm hover:bg-surface-container-low text-body-sm text-on-surface transition-colors"
+                            >
+                                Thông tin cá nhân
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    setIsDropdownOpen(false);
+                                    handleLogout();
+                                }}
+                                className="w-full text-left px-md py-sm hover:bg-surface-container-low text-body-sm text-error transition-colors"
+                            >
+                                Đăng xuất
+                            </button>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
-
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(-4px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fadeIn {
-                    animation: fadeIn 0.15s ease-out forwards;
-                }
-            `}</style>
         </header>
     );
 };

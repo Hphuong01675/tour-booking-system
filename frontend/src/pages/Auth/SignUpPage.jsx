@@ -29,7 +29,7 @@ const SignUpPage = () => {
             <div className="relative z-20 h-full flex flex-col justify-end p-s-xl text-white">
               <h2 className="text-display-lg font-display-lg mb-s-sm">Khám phá thế giới theo cách của bạn.</h2>
               <p className="text-body-lg font-body-lg opacity-90">
-                Bắt đầu hành trình của bạn với GlobalExplore ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
+                Bắt đầu hành trình của bạn với Chip3Chip ngay hôm nay. Hàng ngàn tour du lịch đang chờ đón bạn.
               </p>
             </div>
           </div>

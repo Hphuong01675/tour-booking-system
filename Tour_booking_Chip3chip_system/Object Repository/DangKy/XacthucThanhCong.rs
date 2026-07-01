@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>XacthucThanhCong</name>
+   <tag></tag>
+   <elementGuidId>9b6ec1bf-2d0d-45bc-af66-606dd42a5a17</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div/div</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>.hidden > div >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>div</value>
+      <webElementGuid>3351471a-6385-4620-b3ae-fdc1ec797e02</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>absolute inset-0 bg-black/10</value>
+      <webElementGuid>a1e2cf2e-f502-4783-a3d4-6055cf746766</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-surface text-on-surface min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow flex flex-col md:flex-row overflow-hidden&quot;]/div[@class=&quot;hidden md:block md:w-1/2 relative&quot;]/div[@class=&quot;absolute inset-0 bg-black/10&quot;]</value>
+      <webElementGuid>10a53be3-7493-4730-818e-1a439c6e07fb</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div/div</value>
+      <webElementGuid>ae42a073-c1c6-45d7-b0ab-e8fa393047a9</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//main/div/div</value>
+      <webElementGuid>d1cb754e-5bf5-462d-8e44-6be04a859acb</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>NutXacNhan</name>
+   <tag></tag>
+   <elementGuidId>6448159f-9e8c-4165-9767-c5957f6fc987</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value>main.flex-grow.flex.items-center.justify-center.pt-16.px-4</value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=main</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>main</value>
+      <webElementGuid>64abd2eb-22c9-4c3d-b2c3-5288e026bf82</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>flex-grow flex items-center justify-center pt-16 px-4</value>
+      <webElementGuid>6f90884d-3318-4c68-a273-e21d1acec8f1</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>verified_userXác thực OTPMã OTP đã được gửi đến email:ph816657@gmail.comVui lòng điền đầy đủ mã OTP 4 số.scheduleMã sẽ hết hạn sau03:49Xác nhậnBạn chưa nhận được mã?Gửi lại mãChip3Chip bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.</value>
+      <webElementGuid>ce509fd5-9c81-4e67-9040-095f83832d5e</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-[#f8f9fb] text-[#191c1e] font-sans min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow flex items-center justify-center pt-16 px-4&quot;]</value>
+      <webElementGuid>f5446db1-a055-4c13-b805-4d99356e43b0</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main</value>
+      <webElementGuid>be55329c-3163-4e25-ab72-de04d5d2b794</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Help'])[1]/following::main[1]</value>
+      <webElementGuid>bfdb59ac-863b-41e0-9966-68224f55276e</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Chip3Chip'])[1]/following::main[1]</value>
+      <webElementGuid>faa8869f-2618-4c51-a1a9-1f50c51b56af</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//main</value>
+      <webElementGuid>0fa4f65a-1865-4905-8cdf-cc27a4a9281e</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//main[(text() = 'verified_userXác thực OTPMã OTP đã được gửi đến email:ph816657@gmail.comVui lòng điền đầy đủ mã OTP 4 số.scheduleMã sẽ hết hạn sau03:49Xác nhậnBạn chưa nhận được mã?Gửi lại mãChip3Chip bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.' or . = 'verified_userXác thực OTPMã OTP đã được gửi đến email:ph816657@gmail.comVui lòng điền đầy đủ mã OTP 4 số.scheduleMã sẽ hết hạn sau03:49Xác nhậnBạn chưa nhận được mã?Gửi lại mãChip3Chip bảo vệ mọi chuyến đi của bạn với hệ thống bảo mật đa lớp.')]</value>
+      <webElementGuid>e911c24f-7ace-491b-898a-506406ab9a7c</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>
