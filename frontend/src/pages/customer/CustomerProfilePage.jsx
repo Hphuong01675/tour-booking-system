@@ -14,6 +14,51 @@ const CustomerProfilePage = () => {
     const [editMode, setEditMode] = useState(false);
     const [passwordMode, setPasswordMode] = useState(false);
 
+    const checkPasswordStrength = (password) => {
+        if (!password) return { label: "Yếu", color: "text-rose-600 bg-rose-50 border-rose-100", barColor: "bg-rose-500", width: "w-[25%]", missing: [] };
+        
+        const checks = {
+            length: password.length >= 8,
+            hasUpper: /[A-Z]/.test(password),
+            hasLower: /[a-z]/.test(password),
+            hasDigit: /[0-9]/.test(password),
+            hasSpecial: /[^A-Za-z0-9]/.test(password)
+        };
+
+        const metCount = Object.values(checks).filter(Boolean).length;
+
+        let label = "Yếu";
+        let color = "text-rose-600 bg-rose-50 border-rose-100";
+        let barColor = "bg-rose-500";
+        let width = "w-[25%]";
+        let missing = [];
+
+        if (!checks.length) missing.push("Mật khẩu phải từ 8 ký tự trở lên");
+        if (!checks.hasUpper) missing.push("Ít nhất 1 chữ cái viết hoa (A-Z)");
+        if (!checks.hasLower) missing.push("Ít nhất 1 chữ cái viết thường (a-z)");
+        if (!checks.hasDigit) missing.push("Ít nhất 1 chữ số (0-9)");
+        if (!checks.hasSpecial) missing.push("Ít nhất 1 ký tự đặc biệt (ví dụ: @, $, !, %, *, ?, &)");
+
+        if (metCount >= 5) {
+            label = "Tốt";
+            color = "text-emerald-700 bg-emerald-50 border-emerald-200";
+            barColor = "bg-emerald-500";
+            width = "w-full";
+        } else if (metCount === 4) {
+            label = "Khá";
+            color = "text-blue-700 bg-blue-50 border-blue-200";
+            barColor = "bg-blue-500";
+            width = "w-[75%]";
+        } else if (metCount === 3) {
+            label = "Trung bình";
+            color = "text-amber-700 bg-amber-50 border-amber-200";
+            barColor = "bg-amber-500";
+            width = "w-[50%]";
+        }
+
+        return { label, color, barColor, width, missing };
+    };
+
     const [profileData, setProfileData] = useState({
         fullName: "",
         phone: "",
@@ -55,6 +100,29 @@ const CustomerProfilePage = () => {
         setErrorMsg(null);
         setSuccessMsg(null);
 
+        // Validation: Full Name
+        if (!profileData.fullName || profileData.fullName.trim().length < 2) {
+            setErrorMsg("Họ và tên phải có ít nhất 2 ký tự.");
+            return;
+        }
+
+        // Validation: Phone Number
+        const phoneRegex = /^(0|\+84)[35789][0-9]{8}$/;
+        if (!phoneRegex.test(profileData.phone.trim())) {
+            setErrorMsg("Số điện thoại không hợp lệ. Phải gồm 10 chữ số (hoặc đầu +84) và bắt đầu bằng đầu số hợp lệ của Việt Nam (03, 05, 07, 08, 09).");
+            return;
+        }
+
+        // Validation: Date of birth
+        if (profileData.dateOfBirth) {
+            const birthDate = new Date(profileData.dateOfBirth);
+            const today = new Date();
+            if (birthDate > today) {
+                setErrorMsg("Ngày sinh không thể nằm ở tương lai.");
+                return;
+            }
+        }
+
         try {
             const response = await axiosInstance.put("/api/customer/profile", profileData);
             if (response.data.success) {
@@ -72,6 +140,13 @@ const CustomerProfilePage = () => {
         e.preventDefault();
         setErrorMsg(null);
         setSuccessMsg(null);
+
+        // Validation: Password strength (Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char)
+        const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordStrengthRegex.test(passwordData.newPassword)) {
+            setErrorMsg("Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (ví dụ: @, $, !, %, *, ?, &).");
+            return;
+        }
 
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setErrorMsg("Mật khẩu mới và xác nhận mật khẩu không khớp nhau.");
@@ -290,6 +365,32 @@ const CustomerProfilePage = () => {
                                         value={passwordData.newPassword}
                                         onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                                     />
+                                    {passwordData.newPassword && (() => {
+                                        const strength = checkPasswordStrength(passwordData.newPassword);
+                                        return (
+                                            <div className="mt-2.5 p-3 rounded-2xl bg-neutral-50 border border-neutral-200/50 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <div className="flex-grow h-1.5 bg-neutral-250 rounded-full overflow-hidden">
+                                                        <div className={`h-full transition-all duration-300 ${strength.barColor} ${strength.width}`} />
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border select-none ${strength.color}`}>
+                                                        {strength.label}
+                                                    </span>
+                                                </div>
+                                                {strength.missing.length > 0 && (
+                                                    <div className="text-[10px] text-rose-600 font-bold space-y-1 pt-1 border-t border-dashed border-neutral-250">
+                                                        <span className="block text-[9px] font-black text-neutral-400 uppercase tracking-wider">Yếu tố còn thiếu:</span>
+                                                        {strength.missing.map((msg, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1.5 leading-none">
+                                                                <span className="material-symbols-outlined text-[12px] text-rose-500" style={{ fontVariationSettings: '"FILL" 1' }}>cancel</span>
+                                                                {msg}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-black text-neutral-600 uppercase tracking-wider block">Nhập lại mật khẩu mới (xác nhận)</label>

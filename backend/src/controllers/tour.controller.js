@@ -1,4 +1,5 @@
 import tourService from "../services/tour.service";
+import db from "../models";
 
 class TourController {
     async getTours(req, res) {
@@ -35,9 +36,36 @@ class TourController {
                     error: "Tour khong ton tai hoac chua duoc xuat ban."
                 });
             }
+
+            // Get all reviews of this tour
+            const reviews = await db.Review.findAll({
+                include: [
+                    {
+                        model: db.Booking,
+                        as: "booking",
+                        required: true,
+                        include: [
+                            {
+                                model: db.TourSchedule,
+                                as: "schedule",
+                                where: { tourId: id },
+                                required: true
+                            },
+                            {
+                                model: db.User,
+                                as: "customer",
+                                attributes: ["id", "fullName", "avatarUrl"]
+                            }
+                        ]
+                    }
+                ],
+                order: [["createdAt", "DESC"]]
+            });
+
             return res.status(200).json({
                 success: true,
-                tour
+                tour,
+                reviews
             });
         } catch (error) {
             return res.status(500).json({
