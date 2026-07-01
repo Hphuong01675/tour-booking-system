@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     getTourAssignmentDetail,
@@ -8,8 +8,8 @@ import {
     uploadParticipantCccd
 } from '../../api/guideApi';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import ChecklistTab from '../../components/guide/ChecklistTab';
-import { useAppModal } from '../../components/guide/AppModal';
+import ChecklistTab from '../../components/Guide/ChecklistTab';
+import { useAppModal } from '../../components/Guide/AppModal';
 import * as chatApi from '../../api/chatApi';
 
 const formatChatPreview = (content) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import GuideHeader from '../components/guide/GuideHeader';
+import GuideHeader from '../components/Guide/GuideHeader';
 import { getGuideProfile } from '../api/guideApi';
 
 const GuideLayout = () => {
