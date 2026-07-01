@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_LuuNhap</name>
+   <tag></tag>
+   <elementGuidId>0af95f0b-408b-4bc9-8548-5a9a6b88a3de</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div/div[2]/button</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;Lưu bản nháp&quot;i] >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>c6c9afac-7761-4651-8ce3-1156ab5dbea4</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>px-5 py-2 rounded-lg border border-outline-variant text-on-surface text-sm font-medium hover:bg-surface-container-low transition disabled:opacity-50</value>
+      <webElementGuid>0ed2b989-2348-4b38-a9b0-c08634aa38eb</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Lưu bản nháp</value>
+      <webElementGuid>ab9fabee-000c-471b-aa96-483b3a247c16</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-s-xl&quot;]/div[@class=&quot;flex gap-3&quot;]/button[@class=&quot;px-5 py-2 rounded-lg border border-outline-variant text-on-surface text-sm font-medium hover:bg-surface-container-low transition disabled:opacity-50&quot;]</value>
+      <webElementGuid>a14b381f-6304-4564-8983-8db196d33a38</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div/div[2]/button</value>
+      <webElementGuid>39a9e5a1-ea1f-4ec7-b5de-b915f2828402</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Thiết kế Hành trình Tour mới'])[1]/following::button[1]</value>
+      <webElementGuid>0dd628f6-d7f9-4267-a54b-b3c045d852ac</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Tạo Tour Mới'])[1]/following::button[1]</value>
+      <webElementGuid>2bcb80c7-31e5-4c71-8d2a-d9447849a253</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Gửi duyệt'])[1]/preceding::button[1]</value>
+      <webElementGuid>01f7906b-7ef4-4107-b3b5-5dd9410ea3ec</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='ℹ'])[1]/preceding::button[2]</value>
+      <webElementGuid>31379067-c302-4190-8e71-3068d7f0e4b9</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='Lưu bản nháp']/parent::*</value>
+      <webElementGuid>d67af433-13c6-464a-83a4-6106d6b3a196</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div/div[2]/button</value>
+      <webElementGuid>198a5661-53e3-4b87-836d-8e9c0e9640c1</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[(text() = 'Lưu bản nháp' or . = 'Lưu bản nháp')]</value>
+      <webElementGuid>c42546ed-5061-46ae-94c1-bea67c0419c8</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

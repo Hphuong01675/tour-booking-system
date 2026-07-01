@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_GuiDuuyet</name>
+   <tag></tag>
+   <elementGuidId>93d6292f-1144-4eff-88e6-2d97dcae8689</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div/div[2]/button[2]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;Gửi duyệt&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>f55f12a6-fdd1-408f-9df3-b372a565868b</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>px-5 py-2 rounded-lg bg-secondary-container text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition shadow-sm disabled:opacity-50 flex items-center gap-2</value>
+      <webElementGuid>e8765ed9-4f0b-4bcb-837b-fecad361301b</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Gửi duyệt</value>
+      <webElementGuid>9e00ba11-ed5f-4c0b-a0f8-9b83861d6071</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-s-xl&quot;]/div[@class=&quot;flex gap-3&quot;]/button[@class=&quot;px-5 py-2 rounded-lg bg-secondary-container text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition shadow-sm disabled:opacity-50 flex items-center gap-2&quot;]</value>
+      <webElementGuid>fc60c45a-62f2-445a-ad05-047315695fe2</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div/div[2]/button[2]</value>
+      <webElementGuid>b2568bf6-f138-454a-b871-cd2adb75623f</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Lưu bản nháp'])[1]/following::button[1]</value>
+      <webElementGuid>c3f00ada-0e7f-45f3-bb06-18228e900bf5</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Thiết kế Hành trình Tour mới'])[1]/following::button[2]</value>
+      <webElementGuid>abb67838-0339-467c-8860-a01fb35ac748</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='ℹ'])[1]/preceding::button[1]</value>
+      <webElementGuid>8d9f3553-db4d-44bf-8b83-cdba32751af6</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Thông tin chung'])[1]/preceding::button[1]</value>
+      <webElementGuid>e9d0aead-b869-4254-8f12-c9d4408da5f3</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='Gửi duyệt']/parent::*</value>
+      <webElementGuid>885927fd-bd19-4a08-ad84-1be0b904b602</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[2]/button[2]</value>
+      <webElementGuid>e7005569-c593-4dc5-bf01-2670e304fa86</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[(text() = 'Gửi duyệt' or . = 'Gửi duyệt')]</value>
+      <webElementGuid>54b42483-181c-4943-978c-691fc4e404dd</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

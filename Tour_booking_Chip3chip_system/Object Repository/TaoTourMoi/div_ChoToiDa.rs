@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>div_ChoToiDa</name>
+   <tag></tag>
+   <elementGuidId>139224b5-19a3-40c1-b792-0565f1e1f692</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div[2]/div/section[3]/div</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:text=&quot;eventLịch khởi hành touradd_circleThêm lịch trình&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>div</value>
+      <webElementGuid>22e04774-1347-4191-b5c0-d55a73389bb4</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>flex items-center justify-between mb-s-lg</value>
+      <webElementGuid>2b2ea733-1fbe-4a55-bf08-df534e46e943</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>eventLịch khởi hành touradd_circleThêm lịch trình</value>
+      <webElementGuid>6ef60a2a-70c6-4fc7-affc-0f0ac8a74529</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;flex items-center justify-between mb-s-lg&quot;]</value>
+      <webElementGuid>794c61f8-afa3-4ca0-998d-f3748f8a4dea</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section[3]/div</value>
+      <webElementGuid>9c781bd5-0160-4d2a-a483-b18da8b6907a</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='delete'])[2]/following::div[1]</value>
+      <webElementGuid>9b4f278d-a770-44d3-95ee-cebb3f39d1c7</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='delete'])[1]/following::div[2]</value>
+      <webElementGuid>fd59efba-1744-4269-af48-359894d0fe14</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//section[3]/div</value>
+      <webElementGuid>a4eb8fe3-9c54-4864-a51e-59fdc9bf87cf</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//div[(text() = 'eventLịch khởi hành touradd_circleThêm lịch trình' or . = 'eventLịch khởi hành touradd_circleThêm lịch trình')]</value>
+      <webElementGuid>b85be3e6-29d8-4d31-92b1-223d38ae011e</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

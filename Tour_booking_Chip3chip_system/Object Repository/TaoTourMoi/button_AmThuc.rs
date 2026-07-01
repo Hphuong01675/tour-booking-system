@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_AmThuc</name>
+   <tag></tag>
+   <elementGuidId>a7a193d8-66dc-4f3c-889e-a8c5f1ee8f63</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>(//button[@type='button'])[21]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;restaurant Ẩm thực&quot;i]</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>6b4681b1-fbe6-4fbd-acc8-d971d4d5d186</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>type</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>68d070a3-c859-4c51-a8c9-c808bb8413fe</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>px-3 py-1.5 rounded-full border text-xs font-semibold transition-all flex items-center gap-1 hover:scale-105 active:scale-95 bg-surface-container-low border-outline-variant text-on-surface-variant</value>
+      <webElementGuid>2c87d88f-0cd8-4083-98b5-9b8f6c636cf6</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>restaurantẨm thực</value>
+      <webElementGuid>b42cfba4-ebc6-4c04-b24f-553dd2c852a1</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;flex flex-wrap gap-2 mb-6&quot;]/button[@class=&quot;px-3 py-1.5 rounded-full border text-xs font-semibold transition-all flex items-center gap-1 hover:scale-105 active:scale-95 bg-surface-container-low border-outline-variant text-on-surface-variant&quot;]</value>
+      <webElementGuid>21071193-1be7-4a80-b832-9aa1d8d1cb7a</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>(//button[@type='button'])[21]</value>
+      <webElementGuid>346257b7-0da9-41f1-a4ce-d3298b84eb18</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section[6]/div[2]/button[7]</value>
+      <webElementGuid>6c9d6aac-f570-46f0-9fa6-4beb1ba40f1e</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='map'])[1]/following::button[1]</value>
+      <webElementGuid>b63ba972-9e6f-4312-8d45-49e58021f08f</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='Ẩm thực']/parent::*</value>
+      <webElementGuid>1d11554d-de24-4c5b-8d2d-f561163ab517</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//button[7]</value>
+      <webElementGuid>5de27479-7b28-45c5-8741-ac5f99757003</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[@type = 'button' and (text() = 'restaurantẨm thực' or . = 'restaurantẨm thực')]</value>
+      <webElementGuid>4776c158-db5c-4322-9fe4-ce8e10ea143d</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

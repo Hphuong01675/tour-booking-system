@@ -33,6 +33,19 @@ const Homepage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalTours, setTotalTours] = useState(0);
     const itemsPerPage = 3;
+    const [showAll, setShowAll] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = "success") => {
+        setToast({ message, type });
+    };
+
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
 
     // Reset pagination to page 1 when search filters change
     useEffect(() => {
@@ -55,8 +68,9 @@ const Homepage = () => {
     const fetchTours = async () => {
         setLoading(true);
         try {
+            const limit = showAll ? 1000 : itemsPerPage;
             const response = await axiosInstance.get(
-                `/api/tours?page=${currentPage}&limit=${itemsPerPage}&search=${searchTerm}&priceRange=${priceRange}&date=${searchDate}`
+                `/api/tours?page=${currentPage}&limit=${limit}&search=${searchTerm}&priceRange=${priceRange}&date=${searchDate}`
             );
             setTours(response.data.tours || []);
             setTotalTours(response.data.total || 0);
@@ -70,7 +84,7 @@ const Homepage = () => {
 
     useEffect(() => {
         fetchTours();
-    }, [currentPage, searchTerm, searchDate, priceRange]);
+    }, [currentPage, searchTerm, searchDate, priceRange, showAll]);
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -83,7 +97,7 @@ const Homepage = () => {
 
     const handleAddToWishlist = async (e, tourId) => {
         if (!isAuthenticated) {
-            alert("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.");
+            showToast("Vui lòng đăng nhập để lưu tour vào Kho hàng của bạn.", "info");
             navigate("/login");
             return;
         }
@@ -104,10 +118,10 @@ const Homepage = () => {
             setMascotAnimation(null);
             try {
                 await axiosInstance.post("/api/customer/wishlist", { tourId });
-                alert("Đã thêm tour vào danh sách yêu thích thành công!");
+                showToast("Đã thêm tour vào danh sách yêu thích thành công!", "success");
             } catch (err) {
                 console.error("Lỗi khi thêm wishlist:", err);
-                alert("Không thể lưu tour. Vui lòng thử lại.");
+                showToast("Không thể lưu tour. Vui lòng thử lại.", "error");
             }
         }, 3000);
     };
@@ -116,7 +130,7 @@ const Homepage = () => {
         const scheduleId = selectedSchedules[tour.id] || (tour.schedules && tour.schedules[0]?.id);
 
         if (!scheduleId) {
-            alert("Xin lỗi, tour này hiện tại chưa có lịch trình mở đăng ký.");
+            showToast("Xin lỗi, tour này hiện tại chưa có lịch trình mở đăng ký.", "info");
             return;
         }
 
@@ -132,11 +146,11 @@ const Homepage = () => {
                 }
             } catch (err) {
                 console.error("Lỗi khi lưu thông tin đặt tour tạm thời:", err);
-                alert("Đã xảy ra lỗi. Vui lòng thử lại.");
+                showToast("Đã xảy ra lỗi. Vui lòng thử lại.", "error");
             }
         } else {
             if (user.role !== "customer") {
-                alert("Tài khoản của bạn không phải là Khách hàng. Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.");
+                showToast("Tài khoản của bạn không phải là Khách hàng. Vui lòng đăng nhập tài khoản Khách hàng để đặt tour.", "warning");
                 return;
             }
 
@@ -196,7 +210,7 @@ const Homepage = () => {
             }
         } catch (err) {
             console.error("Lỗi tạo booking:", err);
-            alert(err.response?.data?.error || "Không thể hoàn tất đơn đặt tour.");
+            showToast(err.response?.data?.error || "Không thể hoàn tất đơn đặt tour.", "error");
         }
     };
 
@@ -349,10 +363,23 @@ const Homepage = () => {
                             <p className="text-on-surface-variant font-body-md text-body-md mt-1">Những hành trình được yêu thích nhất bởi du khách</p>
                         </div>
                         <button 
-                            onClick={() => { setSearchTerm(""); setSearchDate(""); setPriceRange("all"); }}
+                            onClick={() => {
+                                if (showAll) {
+                                    setShowAll(false);
+                                } else {
+                                    setSearchTerm("");
+                                    setSearchDate("");
+                                    setPriceRange("all");
+                                    setShowAll(true);
+                                }
+                            }}
                             className="text-primary font-bold text-label-md flex items-center gap-xs hover:underline cursor-pointer"
                         >
-                            Xem tất cả <span className="material-symbols-outlined">chevron_right</span>
+                            {showAll ? (
+                                <>Thu gọn <span className="material-symbols-outlined">expand_less</span></>
+                            ) : (
+                                <>Xem tất cả <span className="material-symbols-outlined">chevron_right</span></>
+                            )}
                         </button>
                     </div>
 
@@ -702,7 +729,7 @@ const Homepage = () => {
                                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                     <span className="material-symbols-outlined text-primary text-[20px]">location_on</span>
                                 </div>
-                                <span className="font-bold text-xs md:text-sm text-slate-700">Địa chỉ: 123 Đường Lê Lợi, Quận 1, TP. HCM</span>
+                                <span className="font-bold text-xs md:text-sm text-slate-700">Địa chỉ: Số 1, đường Võ Văn Ngân, phường Thủ Đức, Thành phố Hồ Chí Minh</span>
                             </div>
                             <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-md">
                                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -713,7 +740,7 @@ const Homepage = () => {
                         </div>
                     </div>
                     <div className="lg:col-span-7 bg-white p-8 rounded-[32px] text-slate-800 shadow-xl border border-slate-100">
-                        <form onSubmit={(e) => { e.preventDefault(); alert("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất."); e.target.reset(); }} className="space-y-4">
+                        <form onSubmit={(e) => { e.preventDefault(); showToast("Cảm ơn yêu cầu tư vấn! Chúng tôi sẽ liên hệ lại sớm nhất.", "success"); e.target.reset(); }} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Họ và tên" type="text" />
                                 <input required className="w-full px-4 py-3.5 border border-slate-200 rounded-xl font-bold text-xs bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Email" type="email" />
@@ -935,7 +962,7 @@ const Homepage = () => {
                                 <button
                                     onClick={() => {
                                         setShowPaymentSimulator(null);
-                                        alert("Giao dịch thanh toán mô phỏng đã bị hủy.");
+                                        showToast("Giao dịch thanh toán mô phỏng đã bị hủy.", "info");
                                     }}
                                     className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
                                 >
@@ -976,7 +1003,7 @@ const Homepage = () => {
                             <button
                                 onClick={() => {
                                     setShowPaymentSimulator(null);
-                                    alert("Giao dịch thanh toán MoMo mô phỏng đã hủy.");
+                                    showToast("Giao dịch thanh toán MoMo mô phỏng đã hủy.", "info");
                                 }}
                                 className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-sm cursor-pointer"
                             >
@@ -1024,6 +1051,33 @@ const Homepage = () => {
                 </div>
             )}
 
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-[10000] animate-in fade-in slide-in-from-bottom-5 duration-300">
+                    <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-md ${
+                        toast.type === 'success' 
+                            ? 'bg-emerald-50/90 border-emerald-200 text-emerald-800' 
+                            : toast.type === 'error' 
+                            ? 'bg-rose-50/90 border-rose-200 text-rose-800' 
+                            : 'bg-blue-50/90 border-blue-200 text-blue-800'
+                    }`}>
+                        <span className="material-symbols-outlined text-[22px]">
+                            {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
+                        </span>
+                        <div className="flex flex-col text-left">
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                                {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Thất bại' : 'Thông báo'}
+                            </span>
+                            <span className="text-[13px] font-semibold mt-0.5">{toast.message}</span>
+                        </div>
+                        <button 
+                            onClick={() => setToast(null)} 
+                            className="ml-2 hover:opacity-75 transition-opacity cursor-pointer flex items-center justify-center"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

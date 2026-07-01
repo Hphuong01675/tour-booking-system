@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 
-import { getAssignedTours, getGuideStats, exportToursReport } from '../../api/guideApi';
+import { getAssignedTours, getGuideStats } from '../../api/guideApi';
 import GuideStatCard from '../../components/Guide/GuideStatCard';
 import GuideFilterGroup from '../../features/guideTours/GuideFilterGroup';
 import GuideTourTable from '../../features/guideTours/GuideTourTable';
@@ -317,7 +317,6 @@ const GuideAssignedToursPage = () => {
   const [isLoadingTours, setIsLoadingTours] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchTours = async () => {
@@ -368,29 +367,6 @@ const GuideAssignedToursPage = () => {
   const handleRowClick = (tour) => navigate(`/guides/tours/${tour.id}`, { state: { tour } });
   const handleDetailClick = (tour) => navigate(`/guides/tours/${tour.id}`, { state: { tour } });
 
-  const handleExportReport = async () => {
-    try {
-      setIsExporting(true);
-      setError(null);
-
-      const blob = await exportToursReport(filters);
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `tour-report-${Date.now()}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Failed to export report:', err);
-      setError('Lỗi khi xuất báo cáo');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   return (
     <main className="flex-grow px-margin-mobile md:px-margin-desktop py-xl max-w-[1440px] mx-auto w-full">
       {error && (
@@ -433,9 +409,8 @@ const GuideAssignedToursPage = () => {
       <GuideFilterGroup
         filters={filters}
         onFilterChange={handleFilterChange}
-        onExportReport={handleExportReport}
         onScheduleClick={() => setShowScheduleModal(true)}
-        isLoading={isLoadingTours || isExporting}
+        isLoading={isLoadingTours}
       />
 
       <GuideTourTable

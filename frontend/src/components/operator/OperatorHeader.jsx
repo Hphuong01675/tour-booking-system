@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../../features/auth/authSlice";
 
 const OperatorHeader = ({ currentUser }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -21,10 +24,8 @@ const OperatorHeader = ({ currentUser }) => {
     }, []);
 
     const handleLogout = () => {
-        // Clear operator-related profile from localStorage
-        localStorage.removeItem("operatorProfile");
-        // Redirect to homepage or login success fallback
-        navigate("/");
+        dispatch(logoutUser());
+        navigate("/login");
     };
 
     const navItems = [

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>label_Motatour</name>
+   <tag></tag>
+   <elementGuidId>afc1627a-9453-4542-b9a4-27f717c71ccb</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div[2]/div/section/div[2]/div[4]/label</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:text=&quot;Mô tả Tour&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>label</value>
+      <webElementGuid>147895f8-707a-4bc2-8718-9780b6f82418</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>block text-sm font-medium text-on-surface mb-1.5</value>
+      <webElementGuid>dbe180e6-545e-44c4-a3e2-c534bc17fb61</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Mô tả Tour</value>
+      <webElementGuid>a7ef6eb9-b11f-4d61-9a9a-417c11681619</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;space-y-5&quot;]/div[4]/label[@class=&quot;block text-sm font-medium text-on-surface mb-1.5&quot;]</value>
+      <webElementGuid>162bdf80-460a-4515-99c4-a5bf0fd384f2</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section/div[2]/div[4]/label</value>
+      <webElementGuid>69da881e-4574-4a13-a245-4f31a00dd8aa</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='*'])[7]/following::label[1]</value>
+      <webElementGuid>ffbf63fc-d990-4e7c-854f-c9ceb30c54e6</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='star'])[1]/preceding::label[1]</value>
+      <webElementGuid>98d769f9-c78f-45e4-9f1c-c2b629cb10dc</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Điểm nhấn hành trình'])[1]/preceding::label[1]</value>
+      <webElementGuid>5a747819-69d5-4399-99e5-98236483cc52</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='Mô tả Tour']/parent::*</value>
+      <webElementGuid>5cffab47-d125-4d0a-acef-fa1591035924</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[4]/label</value>
+      <webElementGuid>c34eb427-3fc5-45c0-8325-25d54a5d2619</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//label[(text() = 'Mô tả Tour' or . = 'Mô tả Tour')]</value>
+      <webElementGuid>78d4009c-7411-4c08-8fe3-a887e37a7795</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

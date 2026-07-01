@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GuideHeader from '../../components/guide/GuideHeader';
 import GuideFooter from '../../components/guide/GuideFooter';
+import { useAppModal } from '../../components/guide/AppModal';
 import { getChecklistTemplates, getPackingItems, createPackingItem, updatePackingItem, deletePackingItem, getGuideProfile } from '../../api/guideApi';
 
 const CATEGORY_MAP = {
@@ -17,6 +18,7 @@ const CATEGORY_MAP = {
 
 const GuidePackingListPage = () => {
   const navigate = useNavigate();
+  const { showModal, AppModal } = useAppModal();
 
   // State
   const [currentUser, setCurrentUser] = useState(null);
@@ -111,7 +113,7 @@ const GuidePackingListPage = () => {
   // Handle save (create or update)
   const handleSave = async () => {
     if (!formData.category || !formData.name.trim()) {
-      alert('Vui lòng nhập nhóm và tên vật dụng.');
+      showModal('Vui lòng nhập nhóm và tên vật dụng.', 'warning');
       return;
     }
 
@@ -121,12 +123,12 @@ const GuidePackingListPage = () => {
         // Update
         const updated = await updatePackingItem(editingId, formData);
         setPackingItems(prev => prev.map(item => item.id === editingId ? updated : item));
-        alert('Cập nhật thành công!');
+        showModal('Cập nhật thành công!', 'success');
       } else {
         // Create
         const created = await createPackingItem(formData);
         setPackingItems(prev => [...prev, created]);
-        alert('Thêm vật dụng thành công!');
+        showModal('Thêm vật dụng thành công!', 'success');
       }
       setShowForm(false);
       setFormData({
@@ -139,7 +141,7 @@ const GuidePackingListPage = () => {
       });
     } catch (err) {
       console.error('Error saving item:', err);
-      alert('Không thể lưu. Vui lòng thử lại.');
+      showModal('Không thể lưu. Vui lòng thử lại.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -152,10 +154,10 @@ const GuidePackingListPage = () => {
     try {
       await deletePackingItem(itemId);
       setPackingItems(prev => prev.filter(item => item.id !== itemId));
-      alert('Xóa thành công!');
+      showModal('Xóa thành công!', 'success');
     } catch (err) {
       console.error('Error deleting item:', err);
-      alert('Không thể xóa. Vui lòng thử lại.');
+      showModal('Không thể xóa. Vui lòng thử lại.', 'error');
     }
   };
 
@@ -186,6 +188,7 @@ const GuidePackingListPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      <AppModal />
       <GuideHeader currentUser={currentUser} />
 
       <main className="flex-grow py-xl px-margin-mobile md:px-margin-desktop max-w-[1440px] mx-auto w-full">

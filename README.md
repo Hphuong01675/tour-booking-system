@@ -1,71 +1,150 @@
-# 🌟 CHIP3CHIP - HỆ THỐNG ĐẶT TOUR DU LỊCH CAO CẤP 🌟
+# 🌟 CHIP3CHIP - HỆ THỐNG ĐẶT TOUR DU LỊCH & QUẢN LÝ TOUR CAO CẤP 🌟
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
-  <img src="https://img.shields.io/badge/Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" /></a>
+  <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
+  <a href="https://sequelize.org/"><img src="https://img.shields.io/badge/Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=white" alt="Sequelize" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="https://www.mysql.com/"><img src="https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" /></a>
 </p>
 
 ---
 
 ## 🧭 GIỚI THIỆU DỰ ÁN
-**Chip3Chip** là nền tảng đặt tour du lịch trực tuyến hiện đại, mang đến trải nghiệm mượt mà, chuyên nghiệp và đầy cảm hứng cho du khách. Với hơn 15 năm kinh nghiệm được tích hợp vào công nghệ, chúng tôi tự hào là đơn vị tiên phong kết nối những hành trình khám phá thế giới an toàn và đẳng cấp.
+
+**Chip3Chip** là một nền tảng Web đặt tour du lịch và quản lý vận hành tour trực tuyến toàn diện, mang đến trải nghiệm mượt mà và chuyên nghiệp cho du khách cùng quy trình quản lý tối ưu cho các nhà điều hành. Hệ thống tích hợp các công nghệ hiện đại nhằm cung cấp một giải pháp tự động hóa từ khâu tìm kiếm, đặt chỗ, thanh toán, quản lý hướng dẫn viên cho đến hỗ trợ trực tuyến thời gian thực.
 
 ---
 
-## ✨ TÍNH NĂNG NỔI BẬT
+## ✨ TÍNH NĂNG NỔI BẬT THEO VAI TRÒ
 
-### 👤 Dành Cho Khách Hàng
-*   **Trang chủ Dynamic**: Banner chuyển động mượt mà, gợi ý tour thông minh, và các tour đặc sắc phân trang mượt mà.
-*   **Tìm kiếm & Lọc nâng cao**: Lọc tour theo điểm đến, mức giá, thời gian và loại hình du lịch.
-*   **Đặt Tour Siêu Tốc**: Quy trình đặt tour và áp dụng mã giảm giá (Voucher) tự động.
-*   **Hỗ trợ 24/7 trực tuyến**: Kênh chat trực tiếp với nhân viên hỗ trợ ngay trên website.
-*   **Đánh giá & Phản hồi**: Hệ thống đánh giá tour trực quan, chân thực từ những khách hàng đã trải nghiệm.
+### 👤 1. Khách Hàng (Customer Page)
+* **Trang chủ Dynamic & Gợi ý thông minh**: Hiển thị danh sách các tour nổi bật, banner động mượt mà, phân trang và tìm kiếm theo thời gian thực.
+* **Tìm kiếm & Lọc Nâng Cao**: Tìm kiếm tour theo điểm đến, phân loại danh mục, lọc theo khoảng giá, thời gian khởi hành và thời lượng tour.
+* **Đặt Tour & Áp dụng Voucher**: Quy trình đặt tour nhanh chóng với việc tự động tính toán giá tiền sau khi áp dụng mã giảm giá.
+* **Trang Cá Nhân & Lịch Sử Giao Dịch**: Theo dõi trạng thái các tour đã đặt, lịch sử thanh toán, và quản lý danh sách yêu thích (Wishlist).
+* **Đánh Giá & Phản Hồi**: Gửi đánh giá tour kèm theo các tag trực quan từ những trải nghiệm thực tế.
+* **Chat Trực Tiếp & Thông Báo**: Kênh chat trực tiếp thời gian thực với Hỗ trợ viên/Nhà vận hành.
 
-### 🛡️ Dành Cho Quản Trị Viên (Admin Dashboard)
-*   **Tổng quan Thống kê**: Biểu đồ trực quan hóa doanh thu, số lượng khách hàng và trạng thái các tour.
-*   **Quản lý Tour toàn diện**: Thêm, sửa, xóa, kích hoạt/tạm dừng hiển thị các tour du lịch.
-*   **Quản lý Khách hàng**: Theo dõi thông tin người dùng và phân quyền hệ thống.
-*   **Quản lý Voucher**: Phát hành và quản lý các mã giảm giá linh hoạt cho các chiến dịch marketing.
+### ⚙️ 2. Nhà Điều Hành (Operator)
+* **Quản lý Tour Toàn Diện**: Tạo mới tour chi tiết (lịch trình từng ngày, danh mục thông tin, hình ảnh tour tải lên Cloudinary).
+* **Điều Phối Hướng Dẫn Viên (Guide Assignment)**: Phân công hướng dẫn viên cho từng tour cụ thể dựa trên lịch trình hoạt động.
+* **Quản Lý Thành Viên Tham Gia**: Theo dõi danh sách hành khách chi tiết cho từng chuyến đi, duyệt yêu cầu hủy tour và xử lý xác thực thông tin khách hàng.
+
+### 🧭 3. Hướng Dẫn Viên (Tour Guide)
+* **Xem Lịch Trình Phân Công**: Cập nhật danh sách các tour mình được giao phụ trách, ngày khởi hành và lộ trình cụ thể.
+* **Quản Lý Checklist**: Sử dụng checklist chuẩn bị trước khi khởi hành và trong suốt chuyến đi để đảm bảo chất lượng dịch vụ.
+* **Tương Tác Với Khách Hàng**: Xem danh sách thành viên trong đoàn để tiện việc liên lạc và hỗ trợ.
+
+### 🛡️ 4. Quản Trị Viên (Admin Dashboard)
+* **Thống Kê Doanh Thu & Hiệu Suất**: Biểu đồ trực quan hóa doanh số, số lượng đặt tour thành công, số lượng người dùng mới.
+* **Quản Lý Tài Khoản**: Phân quyền các vai trò trong hệ thống (Admin, Operator, Guide, Customer).
+* **Hệ Thống Voucher**: Tạo mới và phân phối các chiến dịch khuyến mãi, voucher giảm giá theo điều kiện mua sắm.
 
 ---
 
 ## 💻 CÔNG NGHỆ SỬ DỤNG
 
-| Frontend (Client) | Backend (Server) | Database & Tools |
+| **Frontend (Vite + React)** | **Backend (Express + Node.js)** | **Cơ sở dữ liệu & Dịch vụ** |
 | :--- | :--- | :--- |
-| **ReactJS (Vite)** | **Node.js** | **MySQL** |
-| **Tailwind CSS v4** | **Express.js** | **Sequelize ORM** |
-| **Framer Motion** | **JWT Authentication** | **Babel Loader** |
-| **Lucide Icons** | **Nodemailer** | **Socket.io** |
+| • React 19 & React Router v7 | • Express JS (Babel Node) | • MySQL (Database chính) |
+| • Redux Toolkit (State Management) | • Sequelize ORM (Quản lý Database) | • Cloudinary (Lưu trữ hình ảnh) |
+| • Tailwind CSS v4 & PostCSS | • Socket.io (Chat thời gian thực) | • Nodemailer (Gửi mail OTP/Hóa đơn) |
+| • Axios (HTTP Requests) | • JWT Authentication & BcryptJS | • Redis (Hỗ trợ Cache/OTP rate limit) |
 
 ---
 
-## 🛠️ HƯỚNG DẪN KHỞI CHẠY DỰ ÁN
+## 📂 CẤU TRÚC THƯ MỤC CHÍNH
 
-### 1. Chuẩn bị môi trường
-Yêu cầu hệ thống đã cài đặt:
-*   [Node.js](https://nodejs.org/) (Khuyến nghị bản LTS)
-*   [MySQL Server](https://www.mysql.com/)
-
-### 2. Cài đặt Backend
-```bash
-cd backend
-npm install
-# Tạo file .env dựa trên .env.example và cấu hình Database của bạn
-npm run dev
+```text
+tour-booking-system/
+├── backend/                  # Mã nguồn server Node.js & Express
+│   ├── src/
+│   │   ├── config/           # Cấu hình Database, Cloudinary, Mailer...
+│   │   ├── controllers/      # Bộ điều khiển xử lý logic nghiệp vụ
+│   │   ├── middlewares/      # Middleware xác thực, phân quyền, giới hạn yêu cầu
+│   │   ├── models/           # Định nghĩa các bảng Database bằng Sequelize (28+ tables)
+│   │   ├── routes/           # Các endpoint API của hệ thống
+│   │   └── server.js         # Điểm khởi chạy Backend server
+│   └── .env.example          # Mẫu cấu hình biến môi trường backend
+│
+├── frontend/                 # Giao diện người dùng React & Vite
+│   ├── src/
+│   │   ├── components/       # Các UI Component dùng chung (Navbar, Footer, Modal...)
+│   │   ├── pages/            # Các trang theo vai trò (Customer, Operator, Guide, Admin)
+│   │   ├── redux/            # Quản lý Global State (Auth, Cart, UI...)
+│   │   ├── App.jsx           # Cấu hình Routing chính của app
+│   │   └── main.jsx          # Điểm khởi chạy React app
+│   └── .env.example          # Mẫu cấu hình API URL cho frontend
 ```
 
-### 3. Cài đặt Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Truy cập giao diện tại: `http://localhost:5173`
+---
+
+## 🛠️ HƯỚNG DẪN CÀI ĐẶT & CHẠY DỰ ÁN
+
+### 1. Chuẩn Bị Môi Trường
+Đảm bảo máy tính của bạn đã cài đặt các phần mềm sau:
+* **Node.js** (Khuyến nghị phiên bản 18.x trở lên)
+* **MySQL Server**
+* (Tùy chọn) **Redis Server** (cho tính năng lưu trữ cache OTP)
+
+---
+
+### 2. Cài Đặt Backend
+
+1. Di chuyển vào thư mục backend và cài đặt thư viện:
+   ```bash
+   cd backend
+   npm install
+   ```
+
+2. Tạo file cấu hình môi trường `.env`:
+   * Sao chép file `.env.example` thành `.env`.
+   * Cập nhật thông tin kết nối database MySQL của bạn:
+     ```env
+     PORT=8080
+     DB_HOST=127.0.0.1
+     DB_NAME=tour_booking
+     DB_USERNAME=your_mysql_username
+     DB_PASSWORD=your_mysql_password
+     ```
+   * Cập nhật cấu hình Cloudinary & Gmail SMTP để sử dụng đầy đủ chức năng gửi mail xác nhận và tải ảnh lên.
+
+3. Khởi tạo cơ sở dữ liệu và dữ liệu mẫu:
+   ```bash
+   # Tạo database và chạy các migrations của Sequelize
+   npx sequelize-cli db:migrate
+   
+   # Nạp dữ liệu mẫu (Seeding) nếu có cấu hình seed
+   npx sequelize-cli db:seed:all
+   ```
+
+4. Khởi chạy server ở chế độ phát triển:
+   ```bash
+   npm run dev
+   ```
+   * Server backend sẽ chạy tại: `http://localhost:8080`
+
+---
+
+### 3. Cài Đặt Frontend
+
+1. Di chuyển vào thư mục frontend và cài đặt thư viện:
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+
+2. Cấu hình biến môi trường `.env`:
+   * Sao chép file `.env.example` thành `.env`.
+   * Đảm bảo API URL trỏ đúng về backend port (mặc định: `http://localhost:8080`).
+
+3. Khởi chạy React App:
+   ```bash
+   npm run dev
+   ```
+   * Truy cập giao diện ứng dụng tại: `http://localhost:5173`
 
 ---
 
@@ -73,15 +152,28 @@ Truy cập giao diện tại: `http://localhost:5173`
 
 <table align="center">
   <tr>
-    <td align="center"><b>Phạm Trần Thiên Đăng</b><br><sub>23110203</sub></td>
-    <td align="center"><b>Lê Vũ Hải</b><br><sub>23110209</sub></td>
-    <td align="center"><b>Huỳnh Hoài Phương</b><br><sub>23110289</sub></td>
-    <td align="center"><b>Lê Thị Thảo</b><br><sub>23110321</sub></td>
+    <td align="center">
+      <b>Phạm Trần Thiên Đăng</b><br>
+      <sub>MSSV: 23110203</sub>
+    </td>
+    <td align="center">
+      <b>Lê Vũ Hải</b><br>
+      <sub>MSSV: 23110209</sub>
+    </td>
+    <td align="center">
+      <b>Huỳnh Hoài Phương</b><br>
+      <sub>MSSV: 23110289</sub>
+    </td>
+    <td align="center">
+      <b>Lê Thị Thảo</b><br>
+      <sub>MSSV: 23110321</sub>
+    </td>
   </tr>
 </table>
 
 ---
 
 <p align="center">
-  <i>Được phát triển với 💖 bởi đội ngũ Chip3Chip Team.</i>
+  <i>Được phát triển với 💖 bởi đội ngũ Chip3Chip Team. Chúc bạn có những hành trình tuyệt vời! ✈️</i>
 </p>
+

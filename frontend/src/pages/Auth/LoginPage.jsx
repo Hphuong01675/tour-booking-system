@@ -6,7 +6,7 @@ const LoginPage = () => {
         <div className="bg-surface text-on-surface min-h-screen flex flex-col">
             <header className="w-full bg-white border-b border-surface-container py-4 px-6 md:px-12 flex justify-between items-center shrink-0">
                 <div className="flex items-center">
-                    <Link className="text-primary font-bold text-xl tracking-tight" to="/login">
+                    <Link className="text-primary font-bold text-xl tracking-tight" to="/">
                         Chip3Chip
                     </Link>
                 </div>

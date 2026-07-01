@@ -46,11 +46,6 @@ const getEmailTokens = (value) =>
         .map((email) => email.trim())
         .filter(Boolean);
 
-const getLastEmailToken = (value) => {
-    const parts = value.split(",");
-    return parts[parts.length - 1].trim();
-};
-
 const getNextDateValue = (value) => {
     if (!value) return undefined;
     const date = new Date(`${value}T00:00:00`);
@@ -93,6 +88,8 @@ const AdminVouchersPage = () => {
     const [form, setForm] = useState(initialForm);
     const [saving, setSaving] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
+    const [customerSearch, setCustomerSearch] = useState("");
+    const [isCustomerComboboxOpen, setIsCustomerComboboxOpen] = useState(false);
 
     useEffect(() => {
         dispatch(fetchCurrentUser());
@@ -132,19 +129,13 @@ const AdminVouchersPage = () => {
 
     useEffect(() => {
         const loadSuggestions = async () => {
-            if (form.targetType !== "specific") {
-                setSuggestions([]);
-                return;
-            }
-
-            const token = getLastEmailToken(form.specificEmails);
-            if (token.length < 2) {
+            if (form.targetType !== "specific" || !isCustomerComboboxOpen) {
                 setSuggestions([]);
                 return;
             }
 
             try {
-                const data = await suggestCustomerEmails(token);
+                const data = await suggestCustomerEmails(customerSearch);
                 setSuggestions(data || []);
             } catch {
                 setSuggestions([]);
@@ -153,7 +144,7 @@ const AdminVouchersPage = () => {
 
         const timer = setTimeout(loadSuggestions, 250);
         return () => clearTimeout(timer);
-    }, [form.specificEmails, form.targetType]);
+    }, [customerSearch, form.targetType, isCustomerComboboxOpen]);
 
     const stats = useMemo(() => {
         const activeVoucherCount = Number(summary.activeCount || 0);
@@ -185,16 +176,32 @@ const AdminVouchersPage = () => {
             if (name === "validFrom" && current.validUntil && current.validUntil <= value) {
                 nextForm.validUntil = "";
             }
+            if (name === "targetType" && value === "all") {
+                nextForm.specificEmails = "";
+                setCustomerSearch("");
+                setSuggestions([]);
+                setIsCustomerComboboxOpen(false);
+            }
             return nextForm;
         });
     };
 
+    const selectedEmails = useMemo(() => getEmailTokens(form.specificEmails), [form.specificEmails]);
+    const selectableSuggestions = useMemo(
+        () => suggestions.filter((item) => !selectedEmails.includes(item.email)),
+        [selectedEmails, suggestions],
+    );
+
     const addSuggestedEmail = (email) => {
-        const parts = form.specificEmails.split(",");
-        parts[parts.length - 1] = ` ${email}`;
-        const nextValue = `${parts.join(",").replace(/^,\s*/, "")}, `;
-        updateForm("specificEmails", nextValue);
+        const nextEmails = Array.from(new Set([...selectedEmails, email]));
+        updateForm("specificEmails", nextEmails.join(", "));
+        setCustomerSearch("");
         setSuggestions([]);
+        setIsCustomerComboboxOpen(false);
+    };
+
+    const removeSelectedEmail = (email) => {
+        updateForm("specificEmails", selectedEmails.filter((item) => item !== email).join(", "));
     };
 
     const handleSubmit = async (event) => {
@@ -522,19 +529,52 @@ const AdminVouchersPage = () => {
                                 {form.targetType === "specific" && (
                                     <div className="relative space-y-2">
                                         <label className="font-label-md text-label-md text-on-surface">
-                                            Danh sách Email <span className="text-error">*</span>
+                                            Chọn khách hàng <span className="text-error">*</span>
                                         </label>
+                                        {selectedEmails.length > 0 && (
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedEmails.map((email) => (
+                                                    <span
+                                                        className="inline-flex items-center gap-2 rounded-full bg-primary-fixed px-3 py-1 text-label-md text-primary"
+                                                        key={email}
+                                                    >
+                                                        {email}
+                                                        <button
+                                                            className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-primary/10"
+                                                            onClick={() => removeSelectedEmail(email)}
+                                                            type="button"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">
+                                                                close
+                                                            </span>
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         <input
+                                            autoComplete="off"
                                             className="h-12 w-full rounded-lg border border-outline-variant bg-surface px-4 text-body-md outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                            onChange={(event) => updateForm("specificEmails", event.target.value)}
-                                            placeholder="email1@example.com, email2@example.com"
-                                            required
+                                            onChange={(event) => {
+                                                setCustomerSearch(event.target.value);
+                                                setIsCustomerComboboxOpen(true);
+                                            }}
+                                            onFocus={() => setIsCustomerComboboxOpen(true)}
+                                            placeholder="Tìm theo email khách hàng..."
+                                            role="combobox"
                                             type="text"
+                                            value={customerSearch}
+                                        />
+                                        <input
+                                            name="specificEmails"
+                                            readOnly
+                                            required={form.targetType === "specific"}
+                                            type="hidden"
                                             value={form.specificEmails}
                                         />
-                                        {suggestions.length > 0 && (
+                                        {isCustomerComboboxOpen && selectableSuggestions.length > 0 && (
                                             <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-outline-variant bg-white shadow-lg">
-                                                {suggestions.map((item) => (
+                                                {selectableSuggestions.map((item) => (
                                                     <button
                                                         className="flex w-full flex-col px-4 py-3 text-left text-sm hover:bg-surface-container-low"
                                                         key={item.id}
@@ -549,6 +589,11 @@ const AdminVouchersPage = () => {
                                                         </span>
                                                     </button>
                                                 ))}
+                                            </div>
+                                        )}
+                                        {isCustomerComboboxOpen && customerSearch && selectableSuggestions.length === 0 && (
+                                            <div className="absolute z-20 mt-1 w-full rounded-lg border border-outline-variant bg-white px-4 py-3 text-body-sm text-on-surface-variant shadow-lg">
+                                                Không tìm thấy khách hàng phù hợp.
                                             </div>
                                         )}
                                     </div>

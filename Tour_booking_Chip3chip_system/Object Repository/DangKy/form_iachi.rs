@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>form_iachi</name>
+   <tag></tag>
+   <elementGuidId>ed87e50c-0741-4c24-a4fd-be37ff025ced</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>CSS</key>
+         <value>form.space-y-4</value>
+      </entry>
+      <entry>
+         <key>XPATH</key>
+         <value>//div[@id='root']/div/main/div/div[2]/form</value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:text=&quot;Họ và tênpersonNgày tháng năm sinhcalendar_todaySố điện thoạicallEmailmailĐịa ch&quot;i</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>form</value>
+      <webElementGuid>d5d27a2b-bf9c-4071-b2f0-65e0ce5c9985</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>space-y-4</value>
+      <webElementGuid>01b78c1d-6d60-4451-88c7-db3f2670406c</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>Họ và tênpersonNgày tháng năm sinhcalendar_todaySố điện thoạicallEmailmailĐịa chỉlocation_onMật khẩulockvisibilityXác nhận mật khẩulock_resetvisibilityXác thực OTPBằng cách đăng ký, tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của Chip3Chip.</value>
+      <webElementGuid>39d88b01-eefc-4923-85e1-2a28deca3668</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-[#f8f9fb] text-[#191c1e] min-h-screen flex flex-col font-sans&quot;]/main[@class=&quot;flex-grow flex items-center justify-center pt-24 pb-12 px-4&quot;]/div[@class=&quot;max-w-6xl w-full grid md:grid-cols-2 bg-white rounded-xl overflow-hidden shadow-lg border border-[#c3c6d6]&quot;]/div[@class=&quot;p-6 md:p-8 flex flex-col&quot;]/form[@class=&quot;space-y-4&quot;]</value>
+      <webElementGuid>167e04a7-500b-4fb6-9195-90365f63d873</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div/div[2]/form</value>
+      <webElementGuid>55754732-d33c-419d-b9ab-b5bc0653ccea</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Tạo tài khoản mới'])[1]/following::form[1]</value>
+      <webElementGuid>0d9d3d89-4a37-4314-b274-a65b4eb3adcd</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='Khám phá thế giới theo cách của bạn.'])[1]/following::form[1]</value>
+      <webElementGuid>41897bb2-71d4-46f8-91cf-36de6d7c86c3</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//form</value>
+      <webElementGuid>e5fdb8bf-b78f-4566-ad42-be3d065ce88b</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//form[(text() = 'Họ và tênpersonNgày tháng năm sinhcalendar_todaySố điện thoạicallEmailmailĐịa chỉlocation_onMật khẩulockvisibilityXác nhận mật khẩulock_resetvisibilityXác thực OTPBằng cách đăng ký, tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của Chip3Chip.' or . = 'Họ và tênpersonNgày tháng năm sinhcalendar_todaySố điện thoạicallEmailmailĐịa chỉlocation_onMật khẩulockvisibilityXác nhận mật khẩulock_resetvisibilityXác thực OTPBằng cách đăng ký, tôi đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của Chip3Chip.')]</value>
+      <webElementGuid>63ed3f4e-eca9-4682-a603-0b093b886680</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

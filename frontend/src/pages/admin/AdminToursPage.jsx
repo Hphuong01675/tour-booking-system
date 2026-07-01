@@ -38,8 +38,15 @@ const formatDate = (value) => {
 };
 
 const formatDateRange = (schedule) => {
-    if (!schedule) return "Chưa xác định";
-    return `${formatDate(schedule.departureDate)} - ${formatDate(schedule.returnDate)}`;
+    if (!schedule) return "Chưa có lịch sắp tới";
+
+    const dateRange = `${formatDate(schedule.departureDate)} - ${formatDate(schedule.returnDate)}`;
+
+    if (schedule.scheduleTimingStatus === "past") {
+        return `Đã qua: ${dateRange}`;
+    }
+
+    return dateRange;
 };
 
 const AdminToursPage = () => {

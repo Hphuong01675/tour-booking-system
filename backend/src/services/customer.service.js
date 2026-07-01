@@ -510,16 +510,18 @@ class CustomerService {
 
         const existingReview = await Review.findOne({ where: { bookingId } });
         if (existingReview) {
-            throw new Error("BOOKING_ALREADY_REVIEWED");
+            existingReview.overallRating = overallRating;
+            existingReview.generalComment = generalComment;
+            await existingReview.save();
+        } else {
+            await Review.create({
+                bookingId,
+                overallRating,
+                generalComment,
+                isFeatured: false,
+                createdAt: new Date()
+            });
         }
-
-        await Review.create({
-            bookingId,
-            overallRating,
-            generalComment,
-            isFeatured: false,
-            createdAt: new Date()
-        });
 
         return await Booking.findOne({
             where: { id: bookingId },

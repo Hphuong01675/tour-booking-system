@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WebElementEntity>
+   <description></description>
+   <name>button_ThemHoatDong</name>
+   <tag></tag>
+   <elementGuidId>e540fe03-c4bc-4c26-9399-808508c57d05</elementGuidId>
+   <selectorCollection>
+      <entry>
+         <key>XPATH</key>
+         <value>(//button[@type='button'])[9]</value>
+      </entry>
+      <entry>
+         <key>CSS</key>
+         <value></value>
+      </entry>
+   </selectorCollection>
+   <selectorMethod>XPATH</selectorMethod>
+   <smartLocatorCollection>
+      <entry>
+         <key>SMART_LOCATOR</key>
+         <value>internal:role=button[name=&quot;+ Thêm hoạt động&quot;i] >> nth=0</value>
+      </entry>
+   </smartLocatorCollection>
+   <smartLocatorEnabled>false</smartLocatorEnabled>
+   <useRalativeImagePath>true</useRalativeImagePath>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>tag</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>635ab0f3-08cf-42f3-a716-e2d4b1a4c1c9</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>type</name>
+      <type>Main</type>
+      <value>button</value>
+      <webElementGuid>1730b8c1-f264-4734-bdbd-ba07ca57c4f8</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>class</name>
+      <type>Main</type>
+      <value>text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5</value>
+      <webElementGuid>bc43ad84-4c4a-4240-a86a-9ad56056cbd8</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>true</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>text</name>
+      <type>Main</type>
+      <value>+ Thêm hoạt động</value>
+      <webElementGuid>77674ee6-f5a1-4546-a115-20be6f7ac72f</webElementGuid>
+   </webElementProperties>
+   <webElementProperties>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath</name>
+      <type>Main</type>
+      <value>id(&quot;root&quot;)/div[@class=&quot;bg-background text-on-background min-h-screen flex flex-col&quot;]/main[@class=&quot;flex-grow pt-20 pb-s-xl px-s-margin-mobile md:px-s-margin-desktop max-w-[1440px] mx-auto w-full&quot;]/div[@class=&quot;grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-gutter items-start&quot;]/div[@class=&quot;space-y-lg&quot;]/section[@class=&quot;bg-white rounded-xl border border-outline-variant/30 shadow-sm p-s-xl&quot;]/div[@class=&quot;space-y-6&quot;]/div[@class=&quot;border border-outline-variant/30 rounded-xl overflow-hidden shadow-sm bg-white&quot;]/div[@class=&quot;p-5 space-y-4&quot;]/div[@class=&quot;border-t border-outline-variant/20 pt-4&quot;]/div[@class=&quot;flex items-center justify-between mb-3&quot;]/button[@class=&quot;text-[10px] text-primary font-semibold hover:underline flex items-center gap-0.5&quot;]</value>
+      <webElementGuid>577c36c1-36fb-492e-9ba0-82959c7ebfca</webElementGuid>
+   </webElementProperties>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:attributes</name>
+      <type>Main</type>
+      <value>(//button[@type='button'])[9]</value>
+      <webElementGuid>684796ac-c6eb-4372-b9c7-0e4572124964</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:idRelative</name>
+      <type>Main</type>
+      <value>//div[@id='root']/div/main/div[2]/div/section[4]/div[2]/div/div[2]/div[3]/div/button</value>
+      <webElementGuid>1dfb9a98-51d0-4021-8332-47e8fb19b4b6</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='schedule'])[1]/following::button[1]</value>
+      <webElementGuid>9e819759-bd2e-49b9-b8ca-60047ade0aa9</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='*'])[15]/preceding::button[1]</value>
+      <webElementGuid>e689843e-45dc-4eeb-8b80-7da9e1189cc7</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>(.//*[normalize-space(text()) and normalize-space(.)='delete'])[5]/preceding::button[1]</value>
+      <webElementGuid>3a74057c-b92e-4a40-bcef-9de75d6cab9b</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:neighbor</name>
+      <type>Main</type>
+      <value>//*/text()[normalize-space(.)='+ Thêm hoạt động']/parent::*</value>
+      <webElementGuid>ccc0ebac-2573-4754-abe6-d2480ac7bdc8</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:position</name>
+      <type>Main</type>
+      <value>//div[3]/div/button</value>
+      <webElementGuid>07786604-53f3-49da-978a-26abd27f6e1d</webElementGuid>
+   </webElementXpaths>
+   <webElementXpaths>
+      <isSelected>false</isSelected>
+      <matchCondition>equals</matchCondition>
+      <name>xpath:customAttributes</name>
+      <type>Main</type>
+      <value>//button[@type = 'button' and (text() = '+ Thêm hoạt động' or . = '+ Thêm hoạt động')]</value>
+      <webElementGuid>b0b490e1-a696-4f0a-9b77-e48a296b60c6</webElementGuid>
+   </webElementXpaths>
+</WebElementEntity>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getPackingItems, createPackingItem, getChecklistTemplates, saveChecklistTemplate, sendGroupNotification } from '../../api/guideApi';
+import { useAppModal } from './AppModal';
 
 const CATEGORY_MAP = {
   DOCUMENT: { title: 'Giấy tờ', icon: 'description', colorClass: 'bg-primary-fixed text-primary' },
@@ -14,6 +15,7 @@ const CATEGORY_MAP = {
 };
 
 const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
+  const { showModal, AppModal } = useAppModal();
   const [items, setItems] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [requiredIds, setRequiredIds] = useState(new Set());
@@ -109,9 +111,9 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
       });
 
       setShowSendModal(false);
-      alert('Đã gửi email nhắc nhở chuẩn bị hành trang thành công!');
+      showModal('Đã gửi email nhắc nhở chuẩn bị hành trang thành công!', 'success');
     } catch (error) {
-      alert('Không thể gửi nhắc nhở. Vui lòng thử lại.');
+      showModal('Không thể gửi nhắc nhở. Vui lòng thử lại.', 'error');
       console.error(error);
     } finally {
       setIsSendingReminder(false);
@@ -127,7 +129,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
 
   const confirmAddItem = async () => {
     if (!newItemTitle || !newItemTitle.trim()) {
-      alert('Vui lòng nhập tên vật dụng!');
+      showModal('Vui lòng nhập tên vật dụng!', 'warning');
       return;
     }
 
@@ -142,7 +144,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
       setSelectedIds(prev => new Set(prev).add(newItem.id));
       setShowAddItemModal(false);
     } catch (error) {
-      alert('Không thể tạo vật dụng mới. Vui lòng thử lại.');
+      showModal('Không thể tạo vật dụng mới. Vui lòng thử lại.', 'error');
       console.error(error);
     } finally {
       setIsAddingItem(false);
@@ -186,7 +188,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
   const handleSaveTemplate = async () => {
     if (!newTemplateName.trim()) return;
     if (selectedIds.size === 0) {
-      alert('Vui long chon it nhat 1 vat dung.');
+      showModal('Vui lòng chọn ít nhất 1 vật dụng.', 'warning');
       return;
     }
 
@@ -203,9 +205,9 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
       setShowSaveModal(false);
       setNewTemplateName('');
       setTemplates(prev => [normalizeTemplate(savedTemplate || payload), ...prev]);
-      alert('Da luu mau thanh cong!');
+      showModal('Đã lưu mẫu thành công!', 'success');
     } catch (error) {
-      alert('Khong the luu mau. Vui long thu lai.');
+      showModal('Không thể lưu mẫu. Vui lòng thử lại.', 'error');
     } finally {
       setIsSavingTemplate(false);
     }
@@ -223,6 +225,7 @@ const ChecklistTab = ({ assignmentId, onSendUpdate }) => {
 
   return (
     <div className="space-y-lg">
+      <AppModal />
       {/* Header & Actions */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-xl gap-lg mt-md">
         <div>

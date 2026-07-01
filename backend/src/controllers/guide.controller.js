@@ -1432,8 +1432,8 @@ export const uploadParticipantCccd = async (req, res) => {
     const { participantId, assignmentId } = req.params;
 
     const files = req.files || {};
-    const front = files.front && files.front[0];
-    const back = files.back && files.back[0];
+    const front = files.front?.[0] || files.frontImage?.[0];
+    const back = files.back?.[0] || files.backImage?.[0];
 
     console.log('[CCCD Upload] Files received:', { 
       hasFiles: !!req.files, 

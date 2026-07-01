@@ -12,6 +12,16 @@ const CustomerToursPage = () => {
     const { user, loading } = useSelector((state) => state.auth);
 
     const [bookings, setBookings] = useState([]);
+    const [toast, setToast] = useState(null);
+    const showToast = (message, type = "success") => {
+        setToast({ message, type });
+    };
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
     const [wishlist, setWishlist] = useState([]);
     const [fetchingBookings, setFetchingBookings] = useState(true);
     const [fetchingWishlist, setFetchingWishlist] = useState(true);
@@ -118,11 +128,11 @@ const CustomerToursPage = () => {
                     return p;
                 }));
             } else {
-                alert("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định"));
+                showToast("Không thể tải lên file: " + (response.data.error || "Lỗi không xác định", "error"));
             }
         } catch (err) {
             console.error("Lỗi upload file:", err);
-            alert("Lỗi kết nối khi tải lên file.");
+            showToast("Lỗi kết nối khi tải lên file.", "error");
         }
     };
 
@@ -134,15 +144,15 @@ const CustomerToursPage = () => {
         for (let i = 0; i < detailEditParticipants.length; i++) {
             const p = detailEditParticipants[i];
             if (!p.fullName || !p.fullName.trim()) {
-                alert(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập họ tên cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
             if (!p.dateOfBirth) {
-                alert(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập ngày sinh cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
             if (!p.address || !p.address.trim()) {
-                alert(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`);
+                showToast(`Vui lòng nhập địa chỉ cho hành khách thứ ${i + 1}.`, "info");
                 return;
             }
 
@@ -159,36 +169,36 @@ const CustomerToursPage = () => {
 
             if (tour.difficulty === "hard") {
                 if (type !== "adult") {
-                    alert(`Tour thám hiểm (Hard) chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của ${p.fullName}.`);
+                    showToast(`Tour thám hiểm (Hard, "info") chỉ dành cho người lớn. Vui lòng kiểm tra lại loại hành khách của ${p.fullName}.`);
                     return;
                 }
                 if (age < 18) {
-                    alert(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard) phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
+                    showToast(`Hành khách ${p.fullName} tham gia tour thám hiểm (Hard, "info") phải từ 18 tuổi trở lên (Tính đến nay là ${age} tuổi).`);
                     return;
                 }
                 if (!p.phone || !p.phone.trim()) {
-                    alert(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard).`);
+                    showToast(`Vui lòng nhập số điện thoại cho hành khách ${p.fullName} (bắt buộc đối với Tour Hard, "info").`);
                     return;
                 }
                 if (!p.cccdFrontUrl || !p.cccdBackUrl) {
-                    alert(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard).`);
+                    showToast(`Hành khách ${p.fullName} chưa tải lên đầy đủ ảnh mặt trước và mặt sau CCCD (bắt buộc đối với Tour Hard, "error").`);
                     return;
                 }
             } else {
                 // Tour Normal
                 if (type === "adult") {
                     if (age < 18) {
-                        alert(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi). Vui lòng kiểm tra lại ngày sinh.`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Người lớn nhưng chưa đủ 18 tuổi (Tính đến nay là ${age} tuổi, "error"). Vui lòng kiểm tra lại ngày sinh.`);
                         return;
                     }
                 } else if (type === "child") {
                     if (age >= 18 || age < 2) {
-                        alert(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Trẻ em nhưng độ tuổi hiện tại (${age} tuổi, "info") không phù hợp (phải từ 2 đến dưới 18 tuổi).`);
                         return;
                     }
                 } else if (type === "infant") {
                     if (age >= 2) {
-                        alert(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi) không phù hợp (phải dưới 2 tuổi).`);
+                        showToast(`Hành khách ${p.fullName} được chọn là Em bé nhưng độ tuổi hiện tại (${age} tuổi, "info") không phù hợp (phải dưới 2 tuổi).`);
                         return;
                     }
                 }
@@ -200,16 +210,16 @@ const CustomerToursPage = () => {
                 participants: detailEditParticipants
             });
             if (response.data.success) {
-                alert("Cập nhật thông tin hành khách thành công!");
+                showToast("Cập nhật thông tin hành khách thành công!", "success");
                 setIsDetailEditMode(false);
                 setSelectedDetailBooking(response.data.booking);
                 fetchBookings();
             } else {
-                alert(response.data.error || "Lỗi khi cập nhật.");
+                showToast(response.data.error || "Lỗi khi cập nhật.", "error");
             }
         } catch (err) {
             console.error("Lỗi cập nhật hành khách:", err);
-            alert(err.response?.data?.error || "Lỗi kết nối khi cập nhật thông tin.");
+            showToast(err.response?.data?.error || "Lỗi kết nối khi cập nhật thông tin.", "error");
         }
     };
 
@@ -231,7 +241,7 @@ const CustomerToursPage = () => {
                         const booking = response.data.bookings.find(b => b.id === simulatedPaymentBooking.id);
                         if (booking && booking.status === "paid") {
                             clearInterval(intervalId);
-                            alert("Thanh toán thành công! Vé QR Code đã được cập nhật.");
+                            showToast("Thanh toán thành công! Vé QR Code đã được cập nhật.", "success");
                             setSimulatedPaymentBooking(null);
                             fetchBookings();
                         }
@@ -291,14 +301,14 @@ const CustomerToursPage = () => {
             }
         } catch (err) {
             console.error("Lỗi khi xóa khỏi wishlist:", err);
-            alert("Không thể xóa tour. Vui lòng thử lại.");
+            showToast("Không thể xóa tour. Vui lòng thử lại.", "error");
         }
     };
 
     const handleBookWishlistTour = async (tour) => {
         const scheduleId = tour.schedules && tour.schedules[0]?.id;
         if (!scheduleId) {
-            alert("Hiện tại tour này không có lịch trình nào đang mở đăng ký.");
+            showToast("Hiện tại tour này không có lịch trình nào đang mở đăng ký.", "info");
             return;
         }
 
@@ -308,7 +318,7 @@ const CustomerToursPage = () => {
             });
 
             if (response.data.success) {
-                alert(`Đặt thành công tour: ${tour.title}`);
+                showToast(`Đặt thành công tour: ${tour.title}`, "success");
                 // Refresh data
                 fetchBookings();
                 // Switch to bookings tab
@@ -316,7 +326,7 @@ const CustomerToursPage = () => {
             }
         } catch (err) {
             console.error("Lỗi khi đặt tour:", err);
-            alert(err.message || "Không thể đặt tour. Vui lòng thử lại.");
+            showToast(err.message || "Không thể đặt tour. Vui lòng thử lại.", "error");
         }
     };
 
@@ -328,15 +338,15 @@ const CustomerToursPage = () => {
                 phone: editTravelerPhone
             });
             if (response.data.success) {
-                alert("Cập nhật thông tin hành khách thành công!");
+                showToast("Cập nhật thông tin hành khách thành công!", "success");
                 setSelectedUpdateBooking(null);
                 fetchBookings();
             } else {
-                alert(response.data.error || "Lỗi khi cập nhật thông tin.");
+                showToast(response.data.error || "Lỗi khi cập nhật thông tin.", "error");
             }
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.error || "Lỗi khi cập nhật thông tin.");
+            showToast(err.response?.data?.error || "Lỗi khi cập nhật thông tin.", "error");
         }
     };
 
@@ -348,17 +358,17 @@ const CustomerToursPage = () => {
                 generalComment: reviewComment
             });
             if (response.data.success) {
-                alert(`Đã gửi đánh giá ${reviewStars} sao thành công cho chuyến đi!`);
+                showToast(`Đã gửi đánh giá ${reviewStars} sao thành công cho chuyến đi!`, "success");
                 setSelectedReviewBooking(null);
                 setReviewComment("");
                 setReviewStars(5);
                 fetchBookings();
             } else {
-                alert(response.data.error || "Lỗi khi gửi đánh giá.");
+                showToast(response.data.error || "Lỗi khi gửi đánh giá.", "error");
             }
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.error || "Lỗi khi gửi đánh giá.");
+            showToast(err.response?.data?.error || "Lỗi khi gửi đánh giá.", "error");
         }
     };
 
@@ -369,19 +379,19 @@ const CustomerToursPage = () => {
         try {
             const response = await axiosInstance.put(`/api/customer/bookings/${bookingId}/cancel`);
             if (response.data.success) {
-                alert("Đã xóa đơn đặt tour thành công!");
+                showToast("Đã xóa đơn đặt tour thành công!", "success");
                 fetchBookings();
             }
         } catch (err) {
             console.error("Lỗi khi xóa đơn đặt:", err);
-            alert(err.response?.data?.error || "Không thể xóa đơn hàng. Vui lòng thử lại.");
+            showToast(err.response?.data?.error || "Không thể xóa đơn hàng. Vui lòng thử lại.", "error");
         }
     };
 
     const handleCancelRequestSubmit = async (e) => {
         e.preventDefault();
         if (!cancelReason.trim()) {
-            alert("Vui lòng nhập lý do yêu cầu hủy.");
+            showToast("Vui lòng nhập lý do yêu cầu hủy.", "info");
             return;
         }
         try {
@@ -389,14 +399,14 @@ const CustomerToursPage = () => {
                 reason: cancelReason
             });
             if (response.data.success) {
-                alert("Gửi yêu cầu hủy thành công, vui lòng chờ Operator phê duyệt.");
+                showToast("Gửi yêu cầu hủy thành công, vui lòng chờ Operator phê duyệt.", "success");
                 setSelectedCancelBooking(null);
                 setCancelReason("");
                 fetchBookings();
             }
         } catch (err) {
             console.error("Lỗi khi gửi yêu cầu hủy:", err);
-            alert(err.response?.data?.error || "Không thể gửi yêu cầu hủy. Vui lòng thử lại.");
+            showToast(err.response?.data?.error || "Không thể gửi yêu cầu hủy. Vui lòng thử lại.", "error");
         }
     };
 
@@ -407,12 +417,12 @@ const CustomerToursPage = () => {
         try {
             const response = await axiosInstance.put(`/api/customer/bookings/${bookingId}/withdraw-cancel`);
             if (response.data.success) {
-                alert("Đã thu hồi yêu cầu hủy tour thành công!");
+                showToast("Đã thu hồi yêu cầu hủy tour thành công!", "success");
                 fetchBookings();
             }
         } catch (err) {
             console.error("Lỗi khi thu hồi yêu cầu hủy:", err);
-            alert(err.response?.data?.error || "Không thể thu hồi yêu cầu hủy. Vui lòng thử lại.");
+            showToast(err.response?.data?.error || "Không thể thu hồi yêu cầu hủy. Vui lòng thử lại.", "error");
         }
     };
 
@@ -421,13 +431,13 @@ const CustomerToursPage = () => {
         try {
             const response = await axiosInstance.put(`/api/customer/bookings/${simulatedPaymentBooking.id}/pay`);
             if (response.data.success) {
-                alert("Thanh toán thành công! Vé QR Code đã được cập nhật.");
+                showToast("Thanh toán thành công! Vé QR Code đã được cập nhật.", "success");
                 setSimulatedPaymentBooking(null);
                 fetchBookings();
             }
         } catch (err) {
             console.error("Lỗi thanh toán:", err);
-            alert(err.response?.data?.error || "Không thể thực hiện giao dịch.");
+            showToast(err.response?.data?.error || "Không thể thực hiện giao dịch.", "error");
         }
     };
 
@@ -539,49 +549,77 @@ const CustomerToursPage = () => {
             {/* TopNavBar */}
             <TopNavBar />
 
-            {/* Premium Dashboard Banner with bright Sunset theme */}
-            <section className="bg-gradient-to-r from-orange-500/10 via-rose-500/10 to-purple-500/10 text-neutral-800 py-16 px-6 md:px-12 relative overflow-hidden border-b border-neutral-200">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-500/20 to-rose-500/20 rounded-full blur-3xl pointer-events-none" />
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
-                    <div className="animate-fade-in-up stagger-1">
-                        <span className="text-orange-600 font-black text-xs uppercase tracking-widest bg-gradient-to-r from-orange-500/20 to-rose-500/20 px-3 py-1 rounded-full border border-orange-500/30">
-                            🎒 MY TOURS & KHO HÀNG
-                        </span>
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tight mt-4 text-neutral-900">
-                            {loading ? "Đang tải..." : `Xin chào, ${user?.fullName || "Quý khách"}`}
-                        </h1>
-                        <p className="text-neutral-600 text-sm mt-3 font-semibold flex flex-wrap items-center gap-4">
-                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px] text-orange-500">mail</span> {user?.email}</span>
-                            <span className="hidden sm:inline text-neutral-400">•</span>
-                            <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px] text-rose-500">phone</span> {user?.phone || "Chưa cập nhật SĐT"}</span>
-                        </p>
+            {/* Premium Dashboard Banner or Review Banner */}
+            {isReviewMode ? (
+                <section className="bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10 text-neutral-800 py-16 px-6 md:px-12 relative overflow-hidden border-b border-neutral-200">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
+                        <div className="animate-fade-in-up stagger-1">
+                            <span className="text-purple-700 font-black text-xs uppercase tracking-widest bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-3.5 py-1.5 rounded-full border border-purple-500/30 inline-flex items-center gap-1.5 w-fit">
+                                <span className="material-symbols-outlined text-[14px]">rate_review</span> ĐÁNH GIÁ CHUYẾN ĐI
+                            </span>
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight mt-4 text-neutral-900 flex items-center gap-2">
+                                Cảm Nhận Hành Trình <span className="text-purple-500">⭐</span>
+                            </h1>
+                            <p className="text-neutral-600 text-sm mt-3 font-semibold">
+                                Nơi lưu giữ các trải nghiệm tuyệt vời cùng Chip3Chip. Hãy chia sẻ đánh giá của bạn!
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-4 animate-fade-in-up stagger-2 bg-white/80 p-4 rounded-3xl border border-purple-100 shadow-sm shrink-0">
+                            <span className="material-symbols-outlined text-4xl text-purple-600 animate-pulse">volunteer_activism</span>
+                            <div className="text-left">
+                                <span className="block text-[10px] font-black text-neutral-400 uppercase">Ý kiến đóng góp</span>
+                                <span className="text-xs font-black text-neutral-750">Giúp nâng tầm dịch vụ</span>
+                            </div>
+                        </div>
                     </div>
-                    <Link
-                        to="/"
-                        className="px-8 py-4 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-2 animate-fade-in-up stagger-2"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">explore</span> Đặt thêm Tour du lịch mới
-                    </Link>
-                </div>
-            </section>
+                </section>
+            ) : (
+                <section className="bg-gradient-to-r from-orange-500/10 via-rose-500/10 to-purple-500/10 text-neutral-800 py-16 px-6 md:px-12 relative overflow-hidden border-b border-neutral-200">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-500/20 to-rose-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
+                        <div className="animate-fade-in-up stagger-1">
+                            <span className="text-orange-600 font-black text-xs uppercase tracking-widest bg-gradient-to-r from-orange-500/20 to-rose-500/20 px-3 py-1 rounded-full border border-orange-500/30">
+                                🎒 MY TOURS & KHO HÀNG
+                            </span>
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight mt-4 text-neutral-900">
+                                {loading ? "Đang tải..." : `Xin chào, ${user?.fullName || "Quý khách"}`}
+                            </h1>
+                            <p className="text-neutral-600 text-sm mt-3 font-semibold flex flex-wrap items-center gap-4">
+                                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px] text-orange-500">mail</span> {user?.email}</span>
+                                <span className="hidden sm:inline text-neutral-400">•</span>
+                                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[17px] text-rose-500">phone</span> {user?.phone || "Chưa cập nhật SĐT"}</span>
+                            </p>
+                        </div>
+                        <Link
+                            to="/"
+                            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white font-extrabold text-sm rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center gap-2 animate-fade-in-up stagger-2"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">explore</span> Đặt thêm Tour du lịch mới
+                        </Link>
+                    </div>
+                </section>
+            )}
 
             {/* Main Tabs Selector */}
-            <div className="border-b border-neutral-200 bg-white sticky top-[73px] z-30 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 md:px-12 flex gap-8">
-                    <button
-                        onClick={() => setActiveTab("bookings")}
-                        className={`py-5 font-black text-xs uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "bookings" ? "border-rose-500 text-rose-600" : "border-transparent text-neutral-500 hover:text-neutral-800"}`}
-                    >
-                        <span className="material-symbols-outlined text-[20px]">book_online</span> Lịch trình đã đặt ({bookings.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("wishlist")}
-                        className={`py-5 font-black text-xs uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "wishlist" ? "border-rose-500 text-rose-600" : "border-transparent text-neutral-500 hover:text-neutral-800"}`}
-                    >
-                        <span className="material-symbols-outlined text-[20px]">favorite</span> Kho lưu trữ / Đã lưu ({wishlist.length})
-                    </button>
+            {!isReviewMode && (
+                <div className="border-b border-neutral-200 bg-white sticky top-[73px] z-30 shadow-sm">
+                    <div className="max-w-7xl mx-auto px-6 md:px-12 flex gap-8">
+                        <button
+                            onClick={() => setActiveTab("bookings")}
+                            className={`py-5 font-black text-xs uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "bookings" ? "border-rose-500 text-rose-600" : "border-transparent text-neutral-500 hover:text-neutral-800"}`}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">book_online</span> Lịch trình đã đặt ({bookings.length})
+                        </button>
+                        <button
+                            onClick={() => setActiveTab("wishlist")}
+                            className={`py-5 font-black text-xs uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${activeTab === "wishlist" ? "border-rose-500 text-rose-600" : "border-transparent text-neutral-500 hover:text-neutral-800"}`}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">favorite</span> Kho lưu trữ / Đã lưu ({wishlist.length})
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Main Content */}
             <main className="flex-grow max-w-7xl mx-auto px-6 py-12 md:px-12 w-full">
@@ -624,10 +662,16 @@ const CustomerToursPage = () => {
                                 <p className="text-neutral-500 text-sm mb-6">Hãy đặt chỗ ngay tour du lịch của bạn.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="space-y-8">
                                 {(() => {
                                     const filtered = bookings.filter((b) => {
-                                        if (isReviewMode && b.status !== "paid") return false;
+                                        const hasCheckedIn = b.participants?.some(p => p.checkinAt) || false;
+                                        const isEnded = b.schedule?.returnDate ? new Date(b.schedule.returnDate) < new Date() : false;
+                                        const isFinished = hasCheckedIn && isEnded;
+
+                                        if (isReviewMode) {
+                                            if (b.status !== "paid" || !isFinished) return false;
+                                        }
                                         const title = b.schedule?.tour?.title || "";
                                         const dest = b.schedule?.tour?.destination || "";
                                         const code = b.bookingCode || "";
@@ -648,21 +692,31 @@ const CustomerToursPage = () => {
                                     });
 
                                     if (sorted.length === 0) {
-                                        return (
+                                        return isReviewMode ? (
+                                            <div className="col-span-full text-center py-16 bg-white rounded-[32px] border border-neutral-200/50 flex flex-col items-center justify-center p-8 max-w-lg mx-auto shadow-sm">
+                                                <span className="material-symbols-outlined text-5xl text-purple-350 mb-4 animate-bounce">rate_review</span>
+                                                <p className="text-neutral-800 font-black text-md">Không tìm thấy chuyến đi nào đã hoàn thành</p>
+                                                <p className="text-neutral-500 text-xs mt-1 text-center">Chỉ những chuyến đi đã kết thúc hành trình và đã check-in thành công mới hiển thị ở đây để thực hiện đánh giá.</p>
+                                            </div>
+                                        ) : (
                                             <div className="col-span-full text-center py-10 bg-white rounded-2xl border border-neutral-200/50">
                                                 <p className="text-neutral-500 font-bold">Không tìm thấy đơn hàng trùng khớp.</p>
                                             </div>
                                         );
                                     }
 
-                                    return sorted.map((booking, index) => {
+                                    const renderBookingCard = (booking, index) => {
                                         const tour = booking.schedule?.tour || {};
                                         const schedule = booking.schedule || {};
                                         const leadParticipant = booking.participants?.find((p) => p.isLead) || booking.participants?.[0];
                                         const delayClass = `stagger-${(index % 3) + 1}`;
+                                        
+                                        const hasCheckedIn = booking.participants?.some(p => p.checkinAt) || false;
+                                        const isEnded = schedule.returnDate ? new Date(schedule.returnDate) < new Date() : false;
+                                        const isFinished = hasCheckedIn && isEnded;
 
                                         return (
-                                            <div key={booking.id} className={`bg-white rounded-3xl border border-neutral-200/80 overflow-hidden shadow-sm booking-card flex flex-col md:flex-row group animate-fade-in-up ${delayClass}`}>
+                                            <div key={booking.id} className="bg-white rounded-3xl border border-neutral-200/80 overflow-hidden shadow-sm booking-card flex flex-col md:flex-row group animate-fade-in-up">
                                                 <div className="w-full md:w-48 h-48 md:h-auto shrink-0 relative overflow-hidden">
                                                     <img
                                                         src={tour.thumbnailUrl || "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=400&h=250&fit=crop"}
@@ -718,9 +772,11 @@ const CustomerToursPage = () => {
                                                               </div>
                                                         </div>
 
-                                                     {booking.status === "cancelled" && booking.cancellationReason && (
-                                                         <div className="mt-4 bg-red-50/40 p-3.5 rounded-2xl border border-red-100/50 text-xs text-red-750 font-medium">
-                                                             <span className="font-extrabold text-[10px] uppercase text-red-650 block tracking-wider mb-1">Lý do hủy / Nội dung từ chối:</span>
+                                                     {booking.cancellationReason && (
+                                                         <div className="mt-4 bg-red-50/45 p-3.5 rounded-2xl border border-red-100/50 text-xs text-red-750 font-medium">
+                                                             <span className="font-extrabold text-[10px] uppercase text-red-650 block tracking-wider mb-1">
+                                                                 {booking.status === "rejected" ? "Lý do từ chối hồ sơ:" : "Lý do hủy / Nội dung phản hồi:"}
+                                                             </span>
                                                              {booking.cancellationReason}
                                                          </div>
                                                      )}
@@ -771,33 +827,53 @@ const CustomerToursPage = () => {
                                                                 </button>
                                                             )}
 
-                                                            {(booking.status === "rejected") && (
+                                                            {booking.status === "rejected" && (
                                                                 <button
                                                                     onClick={() => {
-                                                                        setSelectedUpdateBooking(booking);
-                                                                        setEditTravelerName(leadParticipant?.fullName || "");
-                                                                        setEditTravelerPhone(user?.phone || "");
+                                                                        setSelectedDetailBooking(booking);
+                                                                        setIsDetailEditMode(true);
+                                                                        setDetailEditParticipants(booking.participants || []);
                                                                     }}
-                                                                    className="px-3.5 py-2 text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                    className="px-3.5 py-2 text-xs font-black text-rose-650 hover:text-rose-750 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all cursor-pointer flex-1 text-center flex items-center justify-center gap-1"
+                                                                    title="Chỉnh sửa lại thông tin hành khách hoặc upload lại CCCD để gửi duyệt"
                                                                 >
-                                                                    Cập nhật
+                                                                    <span className="material-symbols-outlined text-[15px]">badge</span>
+                                                                    Upload lại thông tin / CCCD
                                                                 </button>
                                                             )}
 
                                                             {booking.status === "paid" && (
                                                                 <>
                                                                     {booking.review ? (
-                                                                        <span className="px-3.5 py-2 text-xs font-bold text-purple-700 bg-purple-50 rounded-xl border border-purple-100 flex-1 text-center select-none flex items-center justify-center gap-1">
-                                                                            <span className="material-symbols-outlined text-[14px]">star</span>
-                                                                            Đã đánh giá ({booking.review.overallRating}★)
-                                                                        </span>
+                                                                         <button
+                                                                             onClick={() => {
+                                                                                 setSelectedReviewBooking(booking);
+                                                                                 setReviewStars(booking.review.overallRating || 5);
+                                                                                 setReviewComment(booking.review.generalComment || "");
+                                                                             }}
+                                                                             className="px-3.5 py-2 text-xs font-bold text-purple-700 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-250 rounded-xl transition-all cursor-pointer flex-1 text-center flex items-center justify-center gap-1"
+                                                                             title="Nhấn để xem hoặc sửa đánh giá"
+                                                                         >
+                                                                             <span className="material-symbols-outlined text-[14px]">edit_note</span>
+                                                                             Xem/Sửa Đánh giá ({booking.review.overallRating}★)
+                                                                         </button>
                                                                     ) : (
-                                                                        <button
-                                                                            onClick={() => setSelectedReviewBooking(booking)}
-                                                                            className="px-3.5 py-2 text-xs font-bold text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
-                                                                        >
-                                                                            Đánh giá
-                                                                        </button>
+                                                                         <button
+                                                                             disabled={!isFinished}
+                                                                             onClick={() => {
+                                                                                 setSelectedReviewBooking(booking);
+                                                                                 setReviewStars(5);
+                                                                                 setReviewComment("");
+                                                                             }}
+                                                                             className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex-1 text-center ${
+                                                                                 isFinished 
+                                                                                     ? "text-purple-650 hover:text-purple-755 bg-purple-50 hover:bg-purple-100 cursor-pointer" 
+                                                                                     : "text-neutral-400 bg-neutral-100 cursor-not-allowed opacity-60"
+                                                                             }`}
+                                                                             title={!isFinished ? "Chỉ được đánh giá sau khi đã check-in và tour hoàn thành (ngày kết thúc đã qua)" : "Đánh giá hành trình"}
+                                                                         >
+                                                                             Đánh giá
+                                                                         </button>
                                                                     )}
                                                                     <button
                                                                         onClick={() => setSelectedInvoice(booking)}
@@ -807,7 +883,7 @@ const CustomerToursPage = () => {
                                                                     </button>
                                                                     <button
                                                                         onClick={() => setSelectedCancelBooking(booking)}
-                                                                        className="px-3.5 py-2 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                        className="px-3.5 py-2 text-xs font-bold text-red-650 hover:text-red-750 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
                                                                     >
                                                                         Yêu cầu hủy
                                                                     </button>
@@ -823,10 +899,10 @@ const CustomerToursPage = () => {
                                                                 </button>
                                                             )}
 
-                                                            {booking.status !== "paid" && booking.status !== "cancelled" && booking.status !== "pending_approval" && (
+                                                            {booking.status !== "paid" && booking.status !== "cancelled" && booking.status !== "pending_approval" && booking.status !== "rejected" && (
                                                                 <button
                                                                     onClick={() => handleDeleteBooking(booking.id)}
-                                                                    className="px-3.5 py-2 text-xs font-bold text-red-650 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
+                                                                    className="px-3.5 py-2 text-xs font-bold text-red-650 hover:text-red-750 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer flex-1 text-center"
                                                                 >
                                                                     Xóa đơn
                                                                 </button>
@@ -836,11 +912,80 @@ const CustomerToursPage = () => {
                                                 </div>
                                             </div>
                                         );
-                                    });
-                                })()}
-                            </div>
-                        )}
-                    </div>
+                                    };
+
+                                    if (isReviewMode) {
+                                        return (
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                {sorted.map((b, idx) => renderBookingCard(b, idx))}
+                                            </div>
+                                        );
+                                    }
+
+                                    const groups = [
+                                        {
+                                            id: "unpaid",
+                                            title: "1. Đơn hàng chưa thanh toán",
+                                            items: sorted.filter(b => b.status === "pending_payment"),
+                                            icon: "payment",
+                                            colorClass: "text-amber-700 border-amber-200 bg-amber-50/50",
+                                            headerBg: "from-amber-500/10 to-orange-500/5",
+                                        },
+                                        {
+                                            id: "paid",
+                                            title: "2. Đơn hàng đã thanh toán",
+                                            items: sorted.filter(b => b.status === "paid" || b.status === "refunded"),
+                                            icon: "check_circle",
+                                            colorClass: "text-emerald-700 border-emerald-200 bg-emerald-50/50",
+                                            headerBg: "from-emerald-500/10 to-teal-500/5",
+                                        },
+                                        {
+                                            id: "pending_approval",
+                                            title: "3. Đơn hàng đang chờ duyệt hồ sơ",
+                                            items: sorted.filter(b => b.status === "pending_approval"),
+                                            icon: "hourglass_empty",
+                                            colorClass: "text-blue-700 border-blue-200 bg-blue-50/50",
+                                            headerBg: "from-blue-500/10 to-indigo-500/5",
+                                        },
+                                        {
+                                            id: "rejected",
+                                            title: "4. Đơn hàng bị từ chối / Đã hủy",
+                                            items: sorted.filter(b => b.status === "rejected" || b.status === "cancelled"),
+                                            icon: "cancel",
+                                            colorClass: "text-rose-700 border-rose-200 bg-rose-50/50",
+                                            headerBg: "from-rose-500/10 to-red-500/5",
+                                        }
+                                    ];
+
+                                    return (
+                                        <div className="space-y-12">
+                                            {groups.map(g => {
+                                                if (g.items.length === 0) return null;
+                                                return (
+                                                    <div key={g.id} className="space-y-5">
+                                                        <div className={`flex items-center justify-between p-4.5 rounded-[22px] bg-gradient-to-r ${g.headerBg} border border-neutral-200/60 shadow-sm`}>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-neutral-200/80 ${g.colorClass.split(" ")[0]} shadow-sm`}>
+                                                                    <span className="material-symbols-outlined text-[18px]">{g.icon}</span>
+                                                                </div>
+                                                                <h2 className="text-sm font-black text-neutral-850 uppercase tracking-tight">{g.title}</h2>
+                                                            </div>
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-black border ${g.colorClass}`}>
+                                                                {g.items.length} đơn đặt
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                            {g.items.map((booking, index) => renderBookingCard(booking, index))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                 })()}
+                             </div>
+                         )}
+                     </div>
                 ) : (
                     // Tab 2: Wishlist (Kho hàng)
                     <div>
@@ -1096,6 +1241,108 @@ const CustomerToursPage = () => {
                              </button>
                          </div>
 
+                          {/* Stepper Progress Bar (COD-like process tracker) */}
+                          {(() => {
+                              const getBookingActiveStep = (booking) => {
+                                  const status = booking.status;
+                                  const schedule = booking.schedule || {};
+                                  const departureDate = new Date(schedule.departureDate || 0);
+                                  const returnDate = new Date(schedule.returnDate || 0);
+                                  const now = new Date();
+                                  
+                                  if (status === "cancelled") {
+                                      return { current: 1, isCancelled: true, text: "Đã hủy" };
+                                  }
+                                  if (status === "rejected") {
+                                      return { current: 2, isRejected: true, text: "Bị từ chối duyệt hồ sơ" };
+                                  }
+                                  if (status === "pending_payment") {
+                                      return { current: 1, text: "Chờ thanh toán" };
+                                  }
+                                  if (status === "pending_approval") {
+                                      return { current: 2, text: "Chờ duyệt hồ sơ" };
+                                  }
+                                  
+                                  const hasCheckedIn = booking.participants?.some(p => p.checkinAt) || false;
+                                  const isEnded = returnDate < now;
+                                  
+                                  if (hasCheckedIn && isEnded) {
+                                      return { current: 5, text: "Hoàn thành chuyến đi" };
+                                  }
+                                  if (now >= departureDate) {
+                                      return { current: 4, text: "Đang khởi hành" };
+                                  }
+                                  return { current: 3, text: "Đã xác nhận & Sẵn sàng khởi hành" };
+                              };
+
+                              const stepInfo = getBookingActiveStep(selectedDetailBooking);
+                              const steps = [
+                                  { num: 1, label: "Đặt chỗ", icon: "assignment" },
+                                  { num: 2, label: "Thanh toán", icon: "payments" },
+                                  { num: 3, label: "Xác thực", icon: "verified" },
+                                  { num: 4, label: "Khởi hành", icon: "explore" },
+                                  { num: 5, label: "Hoàn thành", icon: "task_alt" }
+                              ];
+
+                              return (
+                                  <div className="mb-6 bg-neutral-50 p-4.5 rounded-[22px] border border-neutral-200/50 space-y-4">
+                                      <div className="flex items-center justify-between text-[11px] font-bold text-neutral-600">
+                                          <span className="uppercase tracking-wider">Trình tự đơn hàng:</span>
+                                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${
+                                              stepInfo.isCancelled ? "bg-red-50 text-red-700 border-red-100" :
+                                              stepInfo.isRejected ? "bg-rose-50 text-rose-700 border-rose-100" :
+                                              "bg-rose-50 text-rose-600 border-rose-100"
+                                          }`}>
+                                              {stepInfo.text}
+                                          </span>
+                                      </div>
+                                      
+                                      <div className="relative flex items-center justify-between px-2">
+                                          <div className="absolute left-6 right-6 top-4 h-0.5 bg-neutral-200 -z-10 rounded-full" />
+                                          <div 
+                                              className={`absolute left-6 top-4 h-0.5 -z-10 rounded-full transition-all duration-500 ${
+                                                  stepInfo.isCancelled || stepInfo.isRejected ? "bg-red-500" : "bg-rose-500"
+                                              }`}
+                                              style={{ width: `${((Math.min(stepInfo.current, 5) - 1) / 4) * 100}%` }}
+                                          />
+                                          
+                                          {steps.map((s) => {
+                                              const isCompleted = s.num < stepInfo.current;
+                                              const isActive = s.num === stepInfo.current;
+                                              const isFailed = (stepInfo.isCancelled && s.num === 2) || (stepInfo.isRejected && s.num === 3);
+                                              
+                                              let nodeColor = "bg-white text-neutral-400 border-neutral-200 shadow-sm";
+                                              if (isCompleted) {
+                                                  nodeColor = "bg-rose-500 text-white border-rose-500";
+                                              } else if (isActive) {
+                                                  nodeColor = "bg-white text-rose-600 border-rose-500 ring-4 ring-rose-100/50";
+                                              }
+                                              
+                                              if (isFailed) {
+                                                  nodeColor = "bg-red-500 text-white border-red-500";
+                                              }
+
+                                              return (
+                                                  <div key={s.num} className="flex flex-col items-center gap-1.5 flex-1 relative">
+                                                      <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 ${nodeColor}`}>
+                                                          <span className="material-symbols-outlined text-[16px]">
+                                                              {isFailed ? "close" : (isCompleted && s.num < 5 ? "check" : s.icon)}
+                                                          </span>
+                                                      </div>
+                                                      <span className={`text-[9px] font-black tracking-tight ${
+                                                          isActive ? "text-rose-600" : "text-neutral-500"
+                                                      }`}>
+                                                          {s.label}
+                                                      </span>
+                                                  </div>
+                                              );
+                                          })}
+                                      </div>
+                                  </div>
+                              );
+                          })()}
+
+
                          {/* Tabs */}
                          <div className="flex border-b border-neutral-200 mb-6 shrink-0">
                              <button
@@ -1111,6 +1358,21 @@ const CustomerToursPage = () => {
                                  Thanh toán
                              </button>
                          </div>
+
+
+                          {selectedDetailBooking.status === "rejected" && (
+                              <div className="mb-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-xs text-rose-750 font-semibold space-y-1 animate-in fade-in duration-200">
+                                  <div className="flex items-center gap-1.5 text-rose-650 font-black uppercase text-[10px]">
+                                      <span className="material-symbols-outlined text-[16px]">warning</span> YÊU CẦU DUYỆT BỊ TỪ CHỐI
+                                  </div>
+                                  <p className="text-[11px] text-rose-850">
+                                      Lý do từ chối: <strong className="text-neutral-900">{selectedDetailBooking.cancellationReason || "Tài liệu hoặc thông tin không hợp lệ."}</strong>
+                                  </p>
+                                  <p className="text-[10px] text-rose-600 font-bold leading-normal">
+                                      Vui lòng nhấn nút <strong className="text-rose-750 font-black">"Chỉnh sửa hồ sơ"</strong> bên dưới để cập nhật lại thông tin hành khách hoặc tải lên ảnh CCCD rõ nét hơn, sau đó nhấn lưu để gửi lại yêu cầu duyệt.
+                                  </p>
+                              </div>
+                          )}
 
                          {detailModalTab === "member" ? (
                              <div className="space-y-4">
@@ -1590,7 +1852,7 @@ const CustomerToursPage = () => {
                                             <button
                                                 onClick={() => {
                                                     if (cardNumber !== "9704198526191432119") {
-                                                        alert("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)");
+                                                        showToast("Vui lòng nhập đúng số thẻ ATM test NCB (9704198526191432119)", "info");
                                                         return;
                                                     }
                                                     setSandboxStep("otp");
@@ -1627,7 +1889,7 @@ const CustomerToursPage = () => {
                                             <button
                                                 onClick={() => {
                                                     if (otpCode !== "123456") {
-                                                        alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                        showToast("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.", "info");
                                                         return;
                                                     }
                                                     handlePayPendingBooking();
@@ -1743,7 +2005,7 @@ const CustomerToursPage = () => {
                                             <button
                                                 onClick={() => {
                                                     if (momoOtp !== "123456") {
-                                                        alert("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.");
+                                                        showToast("Mã OTP không chính xác. Vui lòng nhập OTP test 123456.", "info");
                                                         return;
                                                     }
                                                     handlePayPendingBooking();
@@ -1793,6 +2055,33 @@ const CustomerToursPage = () => {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-[9999] flex items-center gap-3.5 px-4.5 py-4 rounded-[20px] bg-white border border-neutral-100 shadow-2xl animate-in slide-in-from-bottom-5 duration-300 min-w-[320px] max-w-[420px]">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-inner ${
+                        toast.type === 'success' 
+                            ? 'bg-emerald-50 text-emerald-600' 
+                            : toast.type === 'error' 
+                                ? 'bg-rose-50 text-rose-600' 
+                                : 'bg-blue-50 text-blue-600'
+                    }`}>
+                        <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: '"FILL" 1' }}>
+                            {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'error' : 'info'}
+                        </span>
+                    </div>
+                    <div className="flex-grow flex flex-col text-left">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider leading-none">
+                            {toast.type === 'success' ? 'Thành công' : toast.type === 'error' ? 'Thất bại' : 'Thông báo'}
+                        </span>
+                        <span className="text-[13px] font-semibold mt-1 text-neutral-750 leading-snug">{toast.message}</span>
+                    </div>
+                    <button 
+                        onClick={() => setToast(null)} 
+                        className="text-neutral-400 hover:text-neutral-600 shrink-0 cursor-pointer"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                    </button>
                 </div>
             )}
         </div>

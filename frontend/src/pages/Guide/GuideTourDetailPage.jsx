@@ -9,6 +9,7 @@ import {
 } from '../../api/guideApi';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import ChecklistTab from '../../components/guide/ChecklistTab';
+import { useAppModal } from '../../components/guide/AppModal';
 import * as chatApi from '../../api/chatApi';
 
 const formatChatPreview = (content) => {
@@ -239,6 +240,7 @@ const QRScanner = ({ assignmentId, onClose, onCheckinSuccess }) => {
 const GuideTourDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showModal, AppModal } = useAppModal();
 
     // State
     const [assignment, setAssignment] = useState(null);
@@ -316,14 +318,14 @@ const GuideTourDetailPage = () => {
                     });
                     return newAssignment;
                 });
-                alert('Tải ảnh CCCD thành công!');
+                showModal('Tải ảnh CCCD thành công!', 'success');
                 setShowCccdModal(false);
                 setSelectedFront(null);
                 setSelectedBack(null);
             }
         } catch (err) {
             console.error(err);
-            alert('Tải ảnh thất bại. Vui lòng thử lại.');
+            showModal('Tải ảnh thất bại. Vui lòng thử lại.', 'error');
         } finally {
             setUploadingParticipantId(null);
         }
@@ -338,13 +340,13 @@ const GuideTourDetailPage = () => {
 
     const handleSendPrivateEmail = async () => {
         if (!privateEmailSubject.trim() || !privateEmailContent.trim()) {
-            alert('Vui lòng nhập đầy đủ tiêu đề và nội dung!');
+            showModal('Vui lòng nhập đầy đủ tiêu đề và nội dung!', 'warning');
             return;
         }
 
         // Only allow sending private emails to group leader
         if (!privateEmailTarget?.isLead) {
-            alert('Chỉ được phép gửi email cá nhân cho Trưởng nhóm.');
+            showModal('Chỉ được phép gửi email cá nhân cho Trưởng nhóm.', 'warning');
             return;
         }
 
@@ -356,10 +358,10 @@ const GuideTourDetailPage = () => {
                 content: privateEmailContent.trim(),
                 bookingId: privateEmailTarget.bookingId
             });
-            alert('Đã gửi email thành công!');
+            showModal('Đã gửi email thành công!', 'success');
             setShowPrivateEmailModal(false);
         } catch (err) {
-            alert(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi email. Vui lòng thử lại.');
+            showModal(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi email. Vui lòng thử lại.', 'error');
         } finally {
             setIsSendingPrivateEmail(false);
         }
@@ -367,12 +369,12 @@ const GuideTourDetailPage = () => {
 
     const openCustomerChatHistory = async (participant) => {
         if (!participant?.isLead) {
-            alert('Chỉ có thể nhắn tin trực tiếp với trưởng nhóm.');
+            showModal('Chỉ có thể nhắn tin trực tiếp với trưởng nhóm.', 'warning');
             return;
         }
 
         if (!participant?.customerId) {
-            alert('Không tìm thấy tài khoản khách hàng để nhắn tin.');
+            showModal('Không tìm thấy tài khoản khách hàng để nhắn tin.', 'error');
             return;
         }
 
@@ -386,7 +388,7 @@ const GuideTourDetailPage = () => {
             setChatHistories(Array.isArray(histories) ? histories : []);
         } catch (err) {
             console.error('Failed to load customer chat history:', err);
-            alert(err.response?.data?.error || 'Không thể tải lịch sử tin nhắn.');
+            showModal(err.response?.data?.error || 'Không thể tải lịch sử tin nhắn.', 'error');
         } finally {
             setIsLoadingChatHistory(false);
         }
@@ -398,12 +400,12 @@ const GuideTourDetailPage = () => {
         try {
             setIsReopeningChat(true);
             await chatApi.reopenCustomerConversation(chatHistoryTarget.customerId, conversationId);
-            alert('Đã đưa cuộc trò chuyện vào hàng chờ tiếp nhận.');
+            showModal('Đã đưa cuộc trò chuyện vào hàng chờ tiếp nhận.', 'success');
             setShowChatHistoryModal(false);
             navigate('/guides/consultations');
         } catch (err) {
             console.error('Failed to reopen customer conversation:', err);
-            alert(err.response?.data?.error || 'Không thể mở lại cuộc trò chuyện.');
+            showModal(err.response?.data?.error || 'Không thể mở lại cuộc trò chuyện.', 'error');
         } finally {
             setIsReopeningChat(false);
         }
@@ -579,12 +581,13 @@ const GuideTourDetailPage = () => {
             link.parentNode.removeChild(link);
         } catch (err) {
             console.error('Failed to export report:', err);
-            alert("Không thể xuất file. Thử lại sau hoặc kiểm tra kết nối.");
+            showModal('Không thể xuất file. Thử lại sau.', 'error');
         }
     };
 
     return (
         <>
+            <AppModal />
 
             {/* CCCD Upload Modal */}
             {showCccdModal && cccdTargetParticipant && (
@@ -1558,7 +1561,7 @@ const GuideTourDetailPage = () => {
                                             };
                                             // Call backend to send group notification
                                             const response = await sendGroupNotification(id, payload);
-                                            alert(`Đã gửi thông báo thành công tới ${response.sentCount || 'các'} email thành viên đoàn.`);
+                                            showModal(`Đã gửi thông báo thành công tới ${response.sentCount || 'các'} email thành viên đoàn.`, 'success');
                                             setNotificationMsg({});
                                             setNotificationErrors({});
                                             setShowNotificationModal(false);
@@ -1568,7 +1571,7 @@ const GuideTourDetailPage = () => {
                                                 setNotificationErrors(err.response.data.errors);
                                                 return;
                                             }
-                                            alert(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi thông báo. Vui lòng thử lại sau.');
+                                            showModal(err.response?.data?.message || err.response?.data?.error || 'Không thể gửi thông báo. Vui lòng thử lại sau.', 'error');
                                         } finally {
                                             setIsSending(false);
                                         }

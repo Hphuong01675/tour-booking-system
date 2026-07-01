@@ -25,7 +25,12 @@ const uploadGuideAvatar = (req, res, next) => {
 };
 
 const uploadCCCD = (req, res, next) => {
-  uploadCloud.fields([{ name: 'front', maxCount: 1 }, { name: 'back', maxCount: 1 }])(req, res, (err) => {
+  uploadCloud.fields([
+    { name: 'front', maxCount: 1 },
+    { name: 'back', maxCount: 1 },
+    { name: 'frontImage', maxCount: 1 },
+    { name: 'backImage', maxCount: 1 },
+  ])(req, res, (err) => {
     if (err) {
       console.error('[uploadCCCD Middleware] Error:', {
         message: err.message,
@@ -55,7 +60,9 @@ const uploadCCCD = (req, res, next) => {
     }
     console.log('[uploadCCCD Middleware] Files parsed successfully. Fields:', Object.keys(req.files || {}), 'File details:', {
       front: req.files?.front?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size })),
-      back: req.files?.back?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size }))
+      back: req.files?.back?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size })),
+      frontImage: req.files?.frontImage?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size })),
+      backImage: req.files?.backImage?.map(f => ({ fieldname: f.fieldname, mimetype: f.mimetype, size: f.size }))
     });
     next();
   });
