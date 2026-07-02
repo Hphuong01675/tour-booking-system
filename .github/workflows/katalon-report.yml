@@ -1,0 +1,36 @@
+name: Katalon Test Automation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  katalon-test:
+    runs-on: ubuntu-latest
+    container:
+      image: katalonstudio/katalon:10.4.3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Katalon Tests
+        env:
+          KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
+        run: |
+          katalonc -noSplash -runMode=console \
+            -projectPath="${{ github.workspace }}/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj" \
+            -testSuitePath="Test Suites/Dangky" \
+            -executionProfile=default \
+            -apiKey="$KATALON_API_KEY" \
+            -browserType=Chrome \
+            --config -webui.autoUpdateDrivers=true
+
+      - name: Upload Katalon Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katalon-reports
+          path: Tour_booking_Chip3chip_system/Reports/**
+          if-no-files-found: ignore
