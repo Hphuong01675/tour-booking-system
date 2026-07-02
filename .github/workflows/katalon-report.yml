@@ -15,12 +15,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify Katalon project
+        run: |
+          ls -la
+          ls -la Tour_booking_Chip3chip_system
+
       - name: Run Katalon Tests
         env:
           KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
         run: |
           katalonc -noSplash -runMode=console \
-            -projectPath="${{ github.workspace }}/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj" \
+            -projectPath="Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj" \
             -testSuitePath="Test Suites/Dangky" \
             -executionProfile=default \
             -apiKey="$KATALON_API_KEY" \
