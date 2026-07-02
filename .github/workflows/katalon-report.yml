@@ -59,12 +59,12 @@ jobs:
         run: |
           node --version
           npm --version
-          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          BACKEND_LOG="$PWD/backend/backend.log"
           : > "$BACKEND_LOG"
           perl -0pi -e 's/const rateLimiter = async \(req, res, next\) => \{.*?\n\};/const rateLimiter = async (req, res, next) => next();/s' backend/src/middlewares/rateLimiter.js
           cd backend
           npm ci
-          PORT=5000 npm run dev > "../$BACKEND_LOG" 2>&1 &
+          PORT=5000 npm run dev > "$BACKEND_LOG" 2>&1 &
           for i in $(seq 1 90); do
             if curl -s http://localhost:5000 > /dev/null; then
               echo "Backend is ready"
@@ -74,12 +74,12 @@ jobs:
             sleep 1
           done
           echo "Backend did not start in time"
-          cat "../$BACKEND_LOG"
+          cat "$BACKEND_LOG"
           exit 1
 
       - name: Verify backend registration OTP log
         run: |
-          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          BACKEND_LOG="$PWD/backend/backend.log"
           SMOKE_EMAIL="ci-smoke-$(date +%s)@example.com"
           curl -sS -X POST http://localhost:5000/api/auth/register \
             -H "Content-Type: application/json" \
@@ -139,7 +139,7 @@ jobs:
 
       - name: Point Katalon OTP log path to CI file
         run: |
-          export BACKEND_LOG="$PWD/D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log"
+          export BACKEND_LOG="$PWD/backend/backend.log"
           python3 -c 'import os, pathlib; q=chr(39); old="String logPath = "+q+r"D:\\HKII_25-26\\CCNM\\DUAN\\1\\tour-booking-system\\backend\\backend.log"+q; new="String logPath = "+q+os.environ["BACKEND_LOG"]+q; [p.write_text(p.read_text().replace(old, new)) for p in pathlib.Path("Tour_booking_Chip3chip_system/Scripts").rglob("*.groovy")]'
           grep -R "String logPath" Tour_booking_Chip3chip_system/Scripts/DangKy_TC001 || true
 
@@ -171,7 +171,7 @@ jobs:
       - name: Show backend OTP log
         if: always()
         run: |
-          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          BACKEND_LOG="$PWD/backend/backend.log"
           if [ -f "$BACKEND_LOG" ]; then
             grep -n "AUTH SERVICE\|MAIL SERVICE\|OTP\|429\|register\|error\|Error\|test[0-9].*@example.com" "$BACKEND_LOG" || true
           else
