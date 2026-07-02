@@ -9,18 +9,28 @@ jobs:
   katalon-test:
     runs-on: ubuntu-latest
     container:
-      image: katalonstudio/katalon:10.4.3
+      image: katalonstudio/katalon:11.2.1
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify Katalon project
+        run: |
+          ls -la
+          ls -la Tour_booking_Chip3chip_system
+          test -f "$PWD/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj"
+          test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
+          grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
+
       - name: Run Katalon Tests
         env:
           KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
         run: |
+          PROJECT_FILE="$PWD/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj"
+          echo "Using Katalon project: $PROJECT_FILE"
           katalonc -noSplash -runMode=console \
-            -projectPath="${{ github.workspace }}/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj" \
+            -projectPath="$PROJECT_FILE" \
             -testSuitePath="Test Suites/Dangky" \
             -executionProfile=default \
             -apiKey="$KATALON_API_KEY" \
