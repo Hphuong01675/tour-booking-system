@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="all-implemented">
+    <test name="all-implemented-tests">
+        <classes>
+            <class name="org.example.selenium.tests.LoginTest"/>
+            <class name="org.example.selenium.tests.GuestTourTest"/>
+            <class name="org.example.selenium.tests.GuestSearchTest"/>
+            <class name="org.example.selenium.tests.AdminTourTest"/>
+            <class name="org.example.selenium.tests.AdminUserTest"/>
+            <class name="org.example.selenium.tests.AdminVoucherTest"/>
+            <class name="org.example.selenium.tests.OperatorTourCreateTest"/>
+            <class name="org.example.selenium.tests.GuideProfileTest"/>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="role-extra">
+    <test name="operator-and-guide-extra-tests">
+        <classes>
+            <class name="org.example.selenium.tests.OperatorTourCreateTest"/>
+            <class name="org.example.selenium.tests.GuideProfileTest"/>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="login-negative">
+    <test name="login-negative-tests">
+        <classes>
+            <class name="org.example.selenium.tests.LoginTest">
+                <methods>
+                    <include name="test_AUTH_002_login_fails_with_invalid_credentials"/>
+                    <include name="test_AUTH_003_login_requires_email_and_password"/>
+                    <include name="test_AUTH_004_login_requires_password_when_email_is_filled"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,14 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="negative">
+    <test name="negative">
+        <groups>
+            <run>
+                <include name="negative"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="org.example.selenium.tests.OperatorTourCreateTest"/>
+            <class name="org.example.selenium.tests.GuideProfileTest"/>
+        </classes>
+    </test>
+</suite>
