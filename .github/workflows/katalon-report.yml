@@ -34,6 +34,7 @@ jobs:
           npm --version
           cd frontend
           npm ci
+          npm run build
           npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:5173/register > /dev/null; then
@@ -45,6 +46,24 @@ jobs:
           echo "Frontend did not start in time"
           cat /tmp/frontend.log
           exit 1
+
+      - name: Disable Katalon AI self-healing in CI
+        run: |
+          SELFHEAL_FILE="Tour_booking_Chip3chip_system/settings/internal/selfheal.webui.properties"
+          EXEC_FILE="Tour_booking_Chip3chip_system/settings/internal/com.kms.katalon.execution.properties"
+
+          if [ -f "$SELFHEAL_FILE" ]; then
+            sed -i 's@^ai.enabled=.*@ai.enabled=false@' "$SELFHEAL_FILE"
+            sed -i 's@^ai.inputSources=.*@ai.inputSources=[]@' "$SELFHEAL_FILE"
+            sed -i 's@^execution.default.webUi.selfHealingEnabled=.*@execution.default.webUi.selfHealingEnabled=false@' "$SELFHEAL_FILE"
+            sed -i 's@^execution.default.webUi.methodsPriorityOrderNew=.*@execution.default.webUi.methodsPriorityOrderNew=XPATH,true;SMART_LOCATOR,false;BASIC,true;CSS,true;IMAGE,false@' "$SELFHEAL_FILE"
+          fi
+
+          if [ -f "$EXEC_FILE" ]; then
+            grep -q '^execution.default.webUi.selfHealingEnabled=' "$EXEC_FILE" \
+              && sed -i 's@^execution.default.webUi.selfHealingEnabled=.*@execution.default.webUi.selfHealingEnabled=false@' "$EXEC_FILE" \
+              || echo 'execution.default.webUi.selfHealingEnabled=false' >> "$EXEC_FILE"
+          fi
 
       - name: Run Katalon Tests
         env:
