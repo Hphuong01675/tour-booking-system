@@ -92,7 +92,6 @@ jobs:
             if grep -q "$SMOKE_EMAIL" "$BACKEND_LOG"; then
               echo "Backend OTP log smoke test passed"
               grep -n "$SMOKE_EMAIL" "$BACKEND_LOG"
-              : > "$BACKEND_LOG"
               exit 0
             fi
             sleep 1
@@ -138,6 +137,12 @@ jobs:
               || echo 'execution.default.webUi.selfHealingEnabled=false' >> "$EXEC_FILE"
           fi
 
+      - name: Point Katalon OTP log path to CI file
+        run: |
+          export BACKEND_LOG="$PWD/D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log"
+          python3 -c 'import os, pathlib; q=chr(39); old="String logPath = "+q+r"D:\\HKII_25-26\\CCNM\\DUAN\\1\\tour-booking-system\\backend\\backend.log"+q; new="String logPath = "+q+os.environ["BACKEND_LOG"]+q; [p.write_text(p.read_text().replace(old, new)) for p in pathlib.Path("Tour_booking_Chip3chip_system/Scripts").rglob("*.groovy")]'
+          grep -R "String logPath" Tour_booking_Chip3chip_system/Scripts/DangKy_TC001 || true
+
       - name: Run Katalon Tests
         env:
           KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
@@ -163,22 +168,22 @@ jobs:
             -report.videoRecorderOption="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false,\"allowedRecordIfFailed\":false,\"allowedRecordIfPassed\":false}" \
             -report.videoRecorderSettings="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false}"
 
+      - name: Show backend OTP log
+        if: always()
+        run: |
+          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          if [ -f "$BACKEND_LOG" ]; then
+            grep -n "AUTH SERVICE\|MAIL SERVICE\|OTP\|429\|register\|error\|Error\|test[0-9].*@example.com" "$BACKEND_LOG" || true
+          else
+            echo "Backend log file not found: $BACKEND_LOG"
+          fi
+
       - name: Fix Katalon report permissions
         if: always()
         run: |
           if [ -d "Tour_booking_Chip3chip_system/Reports" ]; then
             sudo chown -R "$USER:$USER" Tour_booking_Chip3chip_system/Reports
             chmod -R u+rwX,go+rX Tour_booking_Chip3chip_system/Reports
-          fi
-
-      - name: Show backend OTP log on failure
-        if: failure()
-        run: |
-          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
-          if [ -f "$BACKEND_LOG" ]; then
-            grep -n "MAIL SERVICE\|429\|register\|error\|Error" "$BACKEND_LOG" || true
-          else
-            echo "Backend log file not found: $BACKEND_LOG"
           fi
 
       - name: Upload Katalon Reports
