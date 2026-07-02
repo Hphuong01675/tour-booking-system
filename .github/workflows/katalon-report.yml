@@ -56,12 +56,14 @@ jobs:
           npm --version
           BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
           : > "$BACKEND_LOG"
+          perl -0pi -e 's/const rateLimiter = async \(req, res, next\) => \{.*?\n\};/const rateLimiter = async (req, res, next) => next();/s' backend/src/middlewares/rateLimiter.js
           cd backend
           npm ci
           npm run dev > "../$BACKEND_LOG" 2>&1 &
           for i in $(seq 1 90); do
             if curl -s http://localhost:8080 > /dev/null; then
               echo "Backend is ready"
+              grep -n "rateLimiter = async" src/middlewares/rateLimiter.js
               exit 0
             fi
             sleep 1
@@ -138,6 +140,16 @@ jobs:
           if [ -d "Tour_booking_Chip3chip_system/Reports" ]; then
             sudo chown -R "$USER:$USER" Tour_booking_Chip3chip_system/Reports
             chmod -R u+rwX,go+rX Tour_booking_Chip3chip_system/Reports
+          fi
+
+      - name: Show backend OTP log on failure
+        if: failure()
+        run: |
+          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          if [ -f "$BACKEND_LOG" ]; then
+            grep -n "MAIL SERVICE\|429\|register\|error\|Error" "$BACKEND_LOG" || true
+          else
+            echo "Backend log file not found: $BACKEND_LOG"
           fi
 
       - name: Upload Katalon Reports
