@@ -8,12 +8,17 @@ on:
 jobs:
   katalon-test:
     runs-on: ubuntu-latest
-    container:
-      image: katalonstudio/katalon:11.2.1
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Verify Katalon project
         run: |
@@ -47,7 +52,12 @@ jobs:
         run: |
           PROJECT_FILE="$PWD/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj"
           echo "Using Katalon project: $PROJECT_FILE"
-          katalonc -noSplash -runMode=console \
+          docker run --rm --network host \
+            -v "$PWD:$PWD" \
+            -w "$PWD" \
+            -e KATALON_API_KEY="$KATALON_API_KEY" \
+            katalonstudio/katalon:11.2.1 \
+            katalonc -noSplash -runMode=console \
             -projectPath="$PROJECT_FILE" \
             -testSuitePath="Test Suites/Dangky" \
             -executionProfile=default \
