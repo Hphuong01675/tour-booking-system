@@ -41,6 +41,11 @@ jobs:
           test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
           grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
 
+      - name: Prepare CI registration test data
+        run: |
+          sed -i 's/Password123/Password123!/g' "Tour_booking_Chip3chip_system/Data Files/Data_DangKy.csv"
+          python3 -c "import zipfile, pathlib, tempfile, shutil; p=pathlib.Path('Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx'); tmp=pathlib.Path(tempfile.mkstemp(suffix='.xlsx')[1]); zin=zipfile.ZipFile(p,'r'); zout=zipfile.ZipFile(tmp,'w',zipfile.ZIP_DEFLATED); [zout.writestr(i, zin.read(i.filename).replace(b'Password123', b'Password123!')) for i in zin.infolist()]; zin.close(); zout.close(); shutil.move(tmp, p)"
+
       - name: Fix Linux case-sensitive frontend imports
         run: |
           find frontend/src -type f \( -name "*.js" -o -name "*.jsx" \) -print0 \
@@ -78,7 +83,7 @@ jobs:
           SMOKE_EMAIL="ci-smoke-$(date +%s)@example.com"
           curl -sS -X POST http://localhost:5000/api/auth/register \
             -H "Content-Type: application/json" \
-            -d "{\"fullName\":\"CI Smoke\",\"dateOfBirth\":\"2000-01-01\",\"phone\":\"099$(date +%s | tail -c 8)\",\"email\":\"$SMOKE_EMAIL\",\"address\":\"CI\",\"password\":\"Password123\",\"confirmPassword\":\"Password123\"}" \
+            -d "{\"fullName\":\"CI Smoke\",\"dateOfBirth\":\"2000-01-01\",\"phone\":\"099$(date +%s | tail -c 8)\",\"email\":\"$SMOKE_EMAIL\",\"address\":\"CI\",\"password\":\"Password123!\",\"confirmPassword\":\"Password123!\"}" \
             -o /tmp/register-response.json \
             -w "HTTP_STATUS=%{http_code}\n"
           cat /tmp/register-response.json
