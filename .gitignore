@@ -62,3 +62,5 @@ Thumbs.db
 Tour_booking_Chip3chip_system/*
 !Tour_booking_Chip3chip_system/
 !Tour_booking_Chip3chip_system/.project
+!Tour_booking_Chip3chip_system/Data Files/
+!Tour_booking_Chip3chip_system/Data Files/Data_DangKy.csv

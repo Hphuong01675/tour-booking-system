@@ -1,0 +1,4 @@
+FullName,DOB,Phone,Email,Address,Password,ConfirmPassword
+Nguyen Van A,2000-01-01,0901112233,test1@example.com,"Quan 1, TP HCM",Password123,Password123
+Tran Thi B,1998-05-15,0902223344,test2@example.com,"Quan 3, TP HCM",Password123,Password123
+Le Van C,2004-10-10,0903334455,test3@example.com,"Quan 5, TP HCM",Password123,Password123
