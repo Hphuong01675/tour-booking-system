@@ -8,6 +8,19 @@ on:
 jobs:
   katalon-test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_DATABASE: tour_booking_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -36,6 +49,26 @@ jobs:
               -e 's@components/auth@components/Auth@g' \
               -e 's@pages/guide@pages/Guide@g' \
               -e 's@pages/auth@pages/Auth@g'
+
+      - name: Start backend app
+        run: |
+          node --version
+          npm --version
+          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          : > "$BACKEND_LOG"
+          cd backend
+          npm ci
+          npm run dev > "../$BACKEND_LOG" 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -s http://localhost:8080 > /dev/null; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not start in time"
+          cat "../$BACKEND_LOG"
+          exit 1
 
       - name: Start frontend app
         run: |
