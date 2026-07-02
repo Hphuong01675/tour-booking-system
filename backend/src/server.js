@@ -294,19 +294,29 @@ app.patch("/api/guides/profile", async (req, res) => {
 // ==================== MOMO SCAN SIMULATOR ROUTES ====================
 
 app.get("/api/server-ip", (req, res) => {
-    // Thử đọc URL từ log của SSH localhost.run (task-347.log)
+    // Thử đọc URL từ log của SSH localhost.run (task-347.log) hoặc tunnel.log cục bộ
     let tunnelUrl = null;
-    try {
-        const logPath = "C:\\Users\\HAI\\.gemini\\antigravity-ide\\brain\\0be8321a-8d7c-4168-a844-f55f30df9d20\\.system_generated\\tasks\\task-347.log";
-        if (fs.existsSync(logPath)) {
-            const content = fs.readFileSync(logPath, "utf8");
-            const matches = content.match(/https:\/\/[a-z0-9]+\.lhr\.life/g);
-            if (matches && matches.length > 0) {
-                tunnelUrl = matches[matches.length - 1];
+    const candidatePaths = [
+        path.join(process.cwd(), "tunnel.log"),
+        path.join(process.cwd(), "../tunnel.log"),
+        path.join(__dirname, "../tunnel.log"),
+        path.join(__dirname, "../../tunnel.log"),
+        "C:\\Users\\HAI\\.gemini\\antigravity-ide\\brain\\0be8321a-8d7c-4168-a844-f55f30df9d20\\.system_generated\\tasks\\task-347.log"
+    ];
+
+    for (const logPath of candidatePaths) {
+        try {
+            if (fs.existsSync(logPath)) {
+                const content = fs.readFileSync(logPath, "utf8");
+                const matches = content.match(/https:\/\/[a-z0-9\.-]+\.lhr\.(?:life|device)/g) || content.match(/https:\/\/[a-z0-9\.-]+\.loca\.lt/g) || content.match(/https:\/\/[a-z0-9\.-]+\.ngrok-free\.app/g);
+                if (matches && matches.length > 0) {
+                    tunnelUrl = matches[matches.length - 1];
+                    break;
+                }
             }
+        } catch (e) {
+            console.error(`Lỗi đọc log SSH tunnel tại ${logPath}:`, e);
         }
-    } catch (e) {
-        console.error("Lỗi đọc log SSH tunnel:", e);
     }
 
     if (tunnelUrl) {
@@ -315,14 +325,14 @@ app.get("/api/server-ip", (req, res) => {
 
     const interfaces = os.networkInterfaces();
     let ipAddress = "localhost";
-    
+
     let candidates = [];
     for (const devName in interfaces) {
         const lowerName = devName.toLowerCase();
         if (lowerName.includes("vmware") || lowerName.includes("virtual") || lowerName.includes("vbox") || lowerName.includes("host-only") || lowerName.includes("loopback")) {
             continue;
         }
-        
+
         const iface = interfaces[devName];
         for (let i = 0; i < iface.length; i++) {
             const alias = iface[i];
@@ -334,12 +344,12 @@ app.get("/api/server-ip", (req, res) => {
             }
         }
     }
-    
+
     const wifiCandidate = candidates.find(c => {
         const name = c.name.toLowerCase();
         return name.includes("wi-fi") || name.includes("wifi") || name.includes("wlan") || name.includes("wireless");
     });
-    
+
     if (wifiCandidate) {
         ipAddress = wifiCandidate.address;
     } else if (candidates.length > 0) {
