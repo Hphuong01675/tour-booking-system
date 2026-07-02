@@ -59,4 +59,6 @@ Thumbs.db
 *.xlsx
 *.pptx
 
-Tour_booking_Chip3chip_system/
+Tour_booking_Chip3chip_system/*
+!Tour_booking_Chip3chip_system/
+!Tour_booking_Chip3chip_system/.project

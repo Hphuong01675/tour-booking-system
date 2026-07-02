@@ -62,48 +62,48 @@
       <description></description>
       <id>aedc1382-3edd-494f-a4ef-11c92fdfe06c</id>
       <masked>false</masked>
-      <name>var_FullName</name>
+      <name>FullName</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>dccbd44e-0958-47d5-a00f-3cb5d71092ad</id>
       <masked>false</masked>
-      <name>var_DOB</name>
+      <name>DOB</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>c05fa9cf-27f4-4aea-b390-ffcfab1c9950</id>
       <masked>false</masked>
-      <name>var_Phone</name>
+      <name>Phone</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>988030e3-dbbc-4daf-98c2-189ea241ac09</id>
       <masked>false</masked>
-      <name>var_Email</name>
+      <name>Email</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>a2ef890b-313a-44c7-9167-929603b378e4</id>
       <masked>false</masked>
-      <name>var_Address</name>
+      <name>Address</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>9e44cc9b-dcd7-4ada-8c68-66e16c6658f1</id>
       <masked>false</masked>
-      <name>var_Password</name>
+      <name>Password</name>
    </variable>
    <variable>
       <defaultValue>''</defaultValue>
       <description></description>
       <id>310935d5-ff12-40ca-8e50-c02b35bae478</id>
       <masked>false</masked>
-      <name>var_ComfirmPassword</name>
+      <name>ComfirmPassword</name>
    </variable>
 </TestCaseEntity>

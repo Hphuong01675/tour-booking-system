@@ -7,7 +7,7 @@
    <containsHeaders>true</containsHeaders>
    <csvSeperator></csvSeperator>
    <dataFileGUID>376c565a-93fa-4e16-9ab8-d0026f1e07ba</dataFileGUID>
-   <dataSourceUrl>D:\Data_DangKy.xlsx</dataSourceUrl>
+   <dataSourceUrl>D:\katalon-tour-testdata\Data_DangKy.xlsx</dataSourceUrl>
    <driver>ExcelFile</driver>
    <isInternalPath>false</isInternalPath>
    <query></query>
