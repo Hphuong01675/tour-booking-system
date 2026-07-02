@@ -65,3 +65,8 @@ Tour_booking_Chip3chip_system/*
 !Tour_booking_Chip3chip_system/Data Files/
 !Tour_booking_Chip3chip_system/Data Files/Data_DangKy.csv
 !Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx
+!Tour_booking_Chip3chip_system/Test Cases/
+!Tour_booking_Chip3chip_system/Test Cases/DangKy_TC*.tc
+!Tour_booking_Chip3chip_system/Scripts/
+!Tour_booking_Chip3chip_system/Scripts/DangKy_TC*/
+!Tour_booking_Chip3chip_system/Scripts/DangKy_TC*/Script1782493893795.groovy

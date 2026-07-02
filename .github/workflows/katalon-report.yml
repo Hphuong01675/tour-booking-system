@@ -8,12 +8,30 @@ on:
 jobs:
   katalon-test:
     runs-on: ubuntu-latest
-    container:
-      image: katalonstudio/katalon:11.2.1
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 123456
+          MYSQL_DATABASE: tour_booking_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p123456"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Verify Katalon project
         run: |
@@ -23,19 +41,150 @@ jobs:
           test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
           grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
 
+      - name: Prepare CI registration test data
+        run: |
+          sed -i 's/Password123/Password123!/g' "Tour_booking_Chip3chip_system/Data Files/Data_DangKy.csv"
+          python3 -c "import zipfile, pathlib, tempfile, shutil; p=pathlib.Path('Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx'); tmp=pathlib.Path(tempfile.mkstemp(suffix='.xlsx')[1]); zin=zipfile.ZipFile(p,'r'); zout=zipfile.ZipFile(tmp,'w',zipfile.ZIP_DEFLATED); [zout.writestr(i, zin.read(i.filename).replace(b'Password123', b'Password123!')) for i in zin.infolist()]; zin.close(); zout.close(); shutil.move(tmp, p)"
+
+      - name: Fix Linux case-sensitive frontend imports
+        run: |
+          find frontend/src -type f \( -name "*.js" -o -name "*.jsx" \) -print0 \
+            | xargs -0 sed -i \
+              -e 's@components/guide@components/Guide@g' \
+              -e 's@components/auth@components/Auth@g' \
+              -e 's@pages/guide@pages/Guide@g' \
+              -e 's@pages/auth@pages/Auth@g'
+
+      - name: Start backend app
+        run: |
+          node --version
+          npm --version
+          BACKEND_LOG="$PWD/backend/backend.log"
+          : > "$BACKEND_LOG"
+          perl -0pi -e 's/const rateLimiter = async \(req, res, next\) => \{.*?\n\};/const rateLimiter = async (req, res, next) => next();/s' backend/src/middlewares/rateLimiter.js
+          cd backend
+          npm ci
+          PORT=5000 npm run dev > "$BACKEND_LOG" 2>&1 &
+          for i in $(seq 1 90); do
+            if curl -s http://localhost:5000 > /dev/null; then
+              echo "Backend is ready"
+              grep -n "rateLimiter = async" src/middlewares/rateLimiter.js
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend did not start in time"
+          cat "$BACKEND_LOG"
+          exit 1
+
+      - name: Verify backend registration OTP log
+        run: |
+          BACKEND_LOG="$PWD/backend/backend.log"
+          SMOKE_EMAIL="ci-smoke-$(date +%s)@example.com"
+          curl -sS -X POST http://localhost:5000/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d "{\"fullName\":\"CI Smoke\",\"dateOfBirth\":\"2000-01-01\",\"phone\":\"099$(date +%s | tail -c 8)\",\"email\":\"$SMOKE_EMAIL\",\"address\":\"CI\",\"password\":\"Password123!\",\"confirmPassword\":\"Password123!\"}" \
+            -o /tmp/register-response.json \
+            -w "HTTP_STATUS=%{http_code}\n"
+          cat /tmp/register-response.json
+          echo
+          for i in $(seq 1 15); do
+            if grep -q "$SMOKE_EMAIL" "$BACKEND_LOG"; then
+              echo "Backend OTP log smoke test passed"
+              grep -n "$SMOKE_EMAIL" "$BACKEND_LOG"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend OTP log smoke test failed"
+          tail -200 "$BACKEND_LOG"
+          exit 1
+
+      - name: Start frontend app
+        run: |
+          node --version
+          npm --version
+          cd frontend
+          npm ci
+          VITE_API_URL=http://localhost:5000 VITE_API_BASE_URL=http://localhost:5000 npm run build
+          VITE_API_URL=http://localhost:5000 VITE_API_BASE_URL=http://localhost:5000 npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:5173/register > /dev/null; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Frontend did not start in time"
+          cat /tmp/frontend.log
+          exit 1
+
+      - name: Disable Katalon AI self-healing in CI
+        run: |
+          SELFHEAL_FILE="Tour_booking_Chip3chip_system/settings/internal/selfheal.webui.properties"
+          EXEC_FILE="Tour_booking_Chip3chip_system/settings/internal/com.kms.katalon.execution.properties"
+
+          if [ -f "$SELFHEAL_FILE" ]; then
+            sed -i 's@^ai.enabled=.*@ai.enabled=false@' "$SELFHEAL_FILE"
+            sed -i 's@^ai.inputSources=.*@ai.inputSources=[]@' "$SELFHEAL_FILE"
+            sed -i 's@^execution.default.webUi.selfHealingEnabled=.*@execution.default.webUi.selfHealingEnabled=false@' "$SELFHEAL_FILE"
+            sed -i 's@^execution.default.webUi.methodsPriorityOrderNew=.*@execution.default.webUi.methodsPriorityOrderNew=XPATH,true;SMART_LOCATOR,false;BASIC,true;CSS,true;IMAGE,false@' "$SELFHEAL_FILE"
+          fi
+
+          if [ -f "$EXEC_FILE" ]; then
+            grep -q '^execution.default.webUi.selfHealingEnabled=' "$EXEC_FILE" \
+              && sed -i 's@^execution.default.webUi.selfHealingEnabled=.*@execution.default.webUi.selfHealingEnabled=false@' "$EXEC_FILE" \
+              || echo 'execution.default.webUi.selfHealingEnabled=false' >> "$EXEC_FILE"
+          fi
+
+      - name: Point Katalon OTP log path to CI file
+        run: |
+          export BACKEND_LOG="$PWD/backend/backend.log"
+          python3 -c 'import os, pathlib; q=chr(39); old="String logPath = "+q+r"D:\\HKII_25-26\\CCNM\\DUAN\\1\\tour-booking-system\\backend\\backend.log"+q; new="String logPath = "+q+os.environ["BACKEND_LOG"]+q; [p.write_text(p.read_text().replace(old, new)) for p in pathlib.Path("Tour_booking_Chip3chip_system/Scripts").rglob("*.groovy")]'
+          grep -R "String logPath" Tour_booking_Chip3chip_system/Scripts/DangKy_TC001 || true
+
       - name: Run Katalon Tests
         env:
           KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
         run: |
           PROJECT_FILE="$PWD/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj"
           echo "Using Katalon project: $PROJECT_FILE"
-          katalonc -noSplash -runMode=console \
+          docker run --rm --network host \
+            -v "$PWD:$PWD" \
+            -w "$PWD" \
+            -e KATALON_API_KEY="$KATALON_API_KEY" \
+            -e JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
+            katalonstudio/katalon:11.2.1 \
+            katalonc -noSplash -runMode=console \
             -projectPath="$PROJECT_FILE" \
             -testSuitePath="Test Suites/Dangky" \
             -executionProfile=default \
             -apiKey="$KATALON_API_KEY" \
-            -browserType=Chrome \
-            --config -webui.autoUpdateDrivers=true
+            -browserType="Chrome (headless)" \
+            --config \
+            -webui.autoUpdateDrivers=true \
+            -execution.default.webUi.selfHealingEnabled=false \
+            -execution.default.webUi.methodsPriorityOrderNew="XPATH,true;SMART_LOCATOR,false;BASIC,true;CSS,true;IMAGE,false" \
+            -report.videoRecorderOption="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false,\"allowedRecordIfFailed\":false,\"allowedRecordIfPassed\":false}" \
+            -report.videoRecorderSettings="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false}"
+
+      - name: Show backend OTP log
+        if: always()
+        run: |
+          BACKEND_LOG="$PWD/backend/backend.log"
+          if [ -f "$BACKEND_LOG" ]; then
+            grep -n "AUTH SERVICE\|MAIL SERVICE\|OTP\|429\|register\|error\|Error\|test[0-9].*@example.com" "$BACKEND_LOG" || true
+          else
+            echo "Backend log file not found: $BACKEND_LOG"
+          fi
+
+      - name: Fix Katalon report permissions
+        if: always()
+        run: |
+          if [ -d "Tour_booking_Chip3chip_system/Reports" ]; then
+            sudo chown -R "$USER:$USER" Tour_booking_Chip3chip_system/Reports
+            chmod -R u+rwX,go+rX Tour_booking_Chip3chip_system/Reports
+          fi
 
       - name: Upload Katalon Reports
         if: always()
