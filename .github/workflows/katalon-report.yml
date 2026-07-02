@@ -72,6 +72,30 @@ jobs:
           cat "../$BACKEND_LOG"
           exit 1
 
+      - name: Verify backend registration OTP log
+        run: |
+          BACKEND_LOG='D:\HKII_25-26\CCNM\DUAN\1\tour-booking-system\backend\backend.log'
+          SMOKE_EMAIL="ci-smoke-$(date +%s)@example.com"
+          curl -sS -X POST http://localhost:5000/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d "{\"fullName\":\"CI Smoke\",\"dateOfBirth\":\"2000-01-01\",\"phone\":\"099$(date +%s | tail -c 8)\",\"email\":\"$SMOKE_EMAIL\",\"address\":\"CI\",\"password\":\"Password123\",\"confirmPassword\":\"Password123\"}" \
+            -o /tmp/register-response.json \
+            -w "HTTP_STATUS=%{http_code}\n"
+          cat /tmp/register-response.json
+          echo
+          for i in $(seq 1 15); do
+            if grep -q "$SMOKE_EMAIL" "$BACKEND_LOG"; then
+              echo "Backend OTP log smoke test passed"
+              grep -n "$SMOKE_EMAIL" "$BACKEND_LOG"
+              : > "$BACKEND_LOG"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend OTP log smoke test failed"
+          tail -200 "$BACKEND_LOG"
+          exit 1
+
       - name: Start frontend app
         run: |
           node --version
