@@ -3,14 +3,14 @@ const bcrypt = require('bcryptjs');
 
 async function run() {
     try {
-        const hash = await bcrypt.hash('123456', 10);
-        console.log('Bcrypt hash of 123456:', hash);
+        const hash = await bcrypt.hash('Levuhai2@5', 10);
+        console.log('Bcrypt hash of Levuhai2@5:', hash);
         
         const [updatedRows] = await db.User.update(
             { passwordHash: hash },
             { where: {} }
         );
-        console.log(`Successfully updated ${updatedRows} users' passwords to 123456!`);
+        console.log(`Successfully updated ${updatedRows} users' passwords to Levuhai2@5!`);
         
         // Check and output details of all users
         const users = await db.User.findAll();
