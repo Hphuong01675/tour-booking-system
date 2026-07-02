@@ -20,6 +20,8 @@ jobs:
           ls -la
           ls -la Tour_booking_Chip3chip_system
           test -f "$PWD/Tour_booking_Chip3chip_system/Tour_booking_Chip3chip_system.prj"
+          test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
+          grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
 
       - name: Run Katalon Tests
         env:

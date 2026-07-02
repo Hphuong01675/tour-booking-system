@@ -7,11 +7,11 @@
    <containsHeaders>true</containsHeaders>
    <csvSeperator>,</csvSeperator>
    <dataFileGUID>376c565a-93fa-4e16-9ab8-d0026f1e07ba</dataFileGUID>
-   <dataSourceUrl>Data Files/Data_DangKy.csv</dataSourceUrl>
-   <driver>CSVFile</driver>
+   <dataSourceUrl>Data Files/Data_DangKy.xlsx</dataSourceUrl>
+   <driver>ExcelFile</driver>
    <isInternalPath>true</isInternalPath>
    <query></query>
    <secureUserAccount>false</secureUserAccount>
-   <sheetName></sheetName>
+   <sheetName>Data_DangKy</sheetName>
    <usingGlobalDBSetting>false</usingGlobalDBSetting>
 </DataFileEntity>
