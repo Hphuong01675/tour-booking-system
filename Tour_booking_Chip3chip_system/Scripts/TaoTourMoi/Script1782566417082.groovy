@@ -13,24 +13,6 @@ import org.openqa.selenium.WebElement
 import java.util.Arrays
 import groovy.transform.Field
 
-/*
- * Object Repository first version.
- *
- * This script uses your captured objects under:
- * Object Repository/TaoTourMoi
- *
- * Dynamic TestObject is kept only for repeated controls:
- * - schedule row 2+
- * - itinerary day 2+
- * - location row 2+
- * - activity row 2+
- *
- * Katalon Manual tab can still show blank Object cells for Groovy loops/helpers.
- * That is normal. The actual Script code below calls findTestObject(...) for
- * the captured objects wherever a stable single object can be used.
- *
- * Auto login: phoai4355@gmail.com / Hoaiphuong01675@
- */
 
 @Field final String REPO             = 'Object Repository/TaoTourMoi/'
 @Field final String DEFAULT_BASE_URL = 'http://localhost:5173'

@@ -9,7 +9,7 @@ jobs:
   katalon-test:
     runs-on: ubuntu-latest
     container:
-      image: katalonstudio/katalon:10.4.3
+      image: katalonstudio/katalon:11.2.1
 
     steps:
       - name: Checkout code
