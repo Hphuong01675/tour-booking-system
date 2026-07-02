@@ -35,7 +35,10 @@ jobs:
             -executionProfile=default \
             -apiKey="$KATALON_API_KEY" \
             -browserType=Chrome \
-            --config -webui.autoUpdateDrivers=true
+            --config \
+            -webui.autoUpdateDrivers=true \
+            -report.videoRecorderOption="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false,\"allowedRecordIfFailed\":false,\"allowedRecordIfPassed\":false}" \
+            -report.videoRecorderSettings="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false}"
 
       - name: Upload Katalon Reports
         if: always()
