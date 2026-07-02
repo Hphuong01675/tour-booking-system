@@ -56,6 +56,7 @@ jobs:
             -v "$PWD:$PWD" \
             -w "$PWD" \
             -e KATALON_API_KEY="$KATALON_API_KEY" \
+            -e JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
             katalonstudio/katalon:11.2.1 \
             katalonc -noSplash -runMode=console \
             -projectPath="$PROJECT_FILE" \
@@ -65,8 +66,18 @@ jobs:
             -browserType="Chrome (headless)" \
             --config \
             -webui.autoUpdateDrivers=true \
+            -execution.default.webUi.selfHealingEnabled=false \
+            -execution.default.webUi.methodsPriorityOrderNew="XPATH,true;SMART_LOCATOR,false;BASIC,true;CSS,true;IMAGE,false" \
             -report.videoRecorderOption="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false,\"allowedRecordIfFailed\":false,\"allowedRecordIfPassed\":false}" \
             -report.videoRecorderSettings="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false}"
+
+      - name: Fix Katalon report permissions
+        if: always()
+        run: |
+          if [ -d "Tour_booking_Chip3chip_system/Reports" ]; then
+            sudo chown -R "$USER:$USER" Tour_booking_Chip3chip_system/Reports
+            chmod -R u+rwX,go+rX Tour_booking_Chip3chip_system/Reports
+          fi
 
       - name: Upload Katalon Reports
         if: always()
