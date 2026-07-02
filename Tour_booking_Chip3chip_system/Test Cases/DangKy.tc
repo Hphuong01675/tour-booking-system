@@ -104,6 +104,6 @@
       <description></description>
       <id>310935d5-ff12-40ca-8e50-c02b35bae478</id>
       <masked>false</masked>
-      <name>ComfirmPassword</name>
+      <name>ConfirmPassword</name>
    </variable>
 </TestCaseEntity>
