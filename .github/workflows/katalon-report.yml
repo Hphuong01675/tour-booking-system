@@ -28,6 +28,15 @@ jobs:
           test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
           grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
 
+      - name: Fix Linux case-sensitive frontend imports
+        run: |
+          find frontend/src -type f \( -name "*.js" -o -name "*.jsx" \) -print0 \
+            | xargs -0 sed -i \
+              -e 's@components/guide@components/Guide@g' \
+              -e 's@components/auth@components/Auth@g' \
+              -e 's@pages/guide@pages/Guide@g' \
+              -e 's@pages/auth@pages/Auth@g'
+
       - name: Start frontend app
         run: |
           node --version
