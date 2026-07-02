@@ -59,9 +59,9 @@ jobs:
           perl -0pi -e 's/const rateLimiter = async \(req, res, next\) => \{.*?\n\};/const rateLimiter = async (req, res, next) => next();/s' backend/src/middlewares/rateLimiter.js
           cd backend
           npm ci
-          npm run dev > "../$BACKEND_LOG" 2>&1 &
+          PORT=5000 npm run dev > "../$BACKEND_LOG" 2>&1 &
           for i in $(seq 1 90); do
-            if curl -s http://localhost:8080 > /dev/null; then
+            if curl -s http://localhost:5000 > /dev/null; then
               echo "Backend is ready"
               grep -n "rateLimiter = async" src/middlewares/rateLimiter.js
               exit 0
@@ -78,8 +78,8 @@ jobs:
           npm --version
           cd frontend
           npm ci
-          npm run build
-          npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
+          VITE_API_URL=http://localhost:5000 VITE_API_BASE_URL=http://localhost:5000 npm run build
+          VITE_API_URL=http://localhost:5000 VITE_API_BASE_URL=http://localhost:5000 npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:5173/register > /dev/null; then
               echo "Frontend is ready"
