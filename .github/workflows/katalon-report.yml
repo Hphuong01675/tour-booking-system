@@ -34,7 +34,7 @@ jobs:
             -testSuitePath="Test Suites/Dangky" \
             -executionProfile=default \
             -apiKey="$KATALON_API_KEY" \
-            -browserType=Chrome \
+            -browserType="Chrome (headless)" \
             --config \
             -webui.autoUpdateDrivers=true \
             -report.videoRecorderOption="{\"enable\":false,\"useBrowserRecorder\":false,\"recordAllTestCases\":false,\"allowedRecordIfFailed\":false,\"allowedRecordIfPassed\":false}" \
