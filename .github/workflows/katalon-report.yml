@@ -23,6 +23,24 @@ jobs:
           test -f "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_DangKy.xlsx"
           grep -n "Data_DangKy.xlsx\\|ExcelFile\\|Data_DangKy" "$PWD/Tour_booking_Chip3chip_system/Data Files/Data_Dangky.dat"
 
+      - name: Start frontend app
+        run: |
+          node --version
+          npm --version
+          cd frontend
+          npm ci
+          npm run dev -- --host 0.0.0.0 > /tmp/frontend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:5173/register > /dev/null; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Frontend did not start in time"
+          cat /tmp/frontend.log
+          exit 1
+
       - name: Run Katalon Tests
         env:
           KATALON_API_KEY: ${{ secrets.KATALON_API_KEY }}
