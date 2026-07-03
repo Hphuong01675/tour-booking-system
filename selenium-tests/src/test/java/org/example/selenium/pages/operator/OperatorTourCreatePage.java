@@ -98,6 +98,13 @@ public class OperatorTourCreatePage extends BasePage {
         }
     }
 
+    public void setDateInputJS(By locator, String dateStr) {
+        WebElement element = waitForVisible(locator);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].value = arguments[1];", element, dateStr);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", element);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", element);
+    }
+
     public void enterScheduleDates(int index, String depDate, String retDate) {
         By depLoc = By.id("schedule-dep-" + index);
         By retLoc = By.id("schedule-ret-" + index);
@@ -105,13 +112,13 @@ public class OperatorTourCreatePage extends BasePage {
         if (depDate.isEmpty()) {
             clearInput(depLoc);
         } else {
-            type(depLoc, depDate);
+            setDateInputJS(depLoc, depDate);
         }
         
         if (retDate.isEmpty()) {
             clearInput(retLoc);
         } else {
-            type(retLoc, retDate);
+            setDateInputJS(retLoc, retDate);
         }
     }
 
