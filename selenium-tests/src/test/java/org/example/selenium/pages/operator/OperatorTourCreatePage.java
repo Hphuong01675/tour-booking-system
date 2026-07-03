@@ -24,6 +24,23 @@ public class OperatorTourCreatePage extends BasePage {
         return isVisible(By.xpath("//*[contains(normalize-space(),'" + labelText + "') and contains(normalize-space(),'*')]"));
     }
 
+    public void setInputValueJS(WebElement element, String value) {
+        String script = "var element = arguments[0];\n" +
+                "var value = arguments[1];\n" +
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value') ? Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set : null;\n" +
+                "if (!setter && Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')) {\n" +
+                "  setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;\n" +
+                "}\n" +
+                "if (setter) {\n" +
+                "  setter.call(element, value);\n" +
+                "} else {\n" +
+                "  element.value = value;\n" +
+                "}\n" +
+                "element.dispatchEvent(new Event('input', { bubbles: true }));\n" +
+                "element.dispatchEvent(new Event('change', { bubbles: true }));";
+        ((JavascriptExecutor) driver).executeScript(script, element, value);
+    }
+
     public void clearInput(By locator) {
         WebElement element = waitForVisible(locator);
         try {
@@ -31,9 +48,7 @@ public class OperatorTourCreatePage extends BasePage {
         } catch (Exception e) {
             // ignore
         }
-        ((JavascriptExecutor) driver).executeScript("arguments[0].value = '';", element);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", element);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", element);
+        setInputValueJS(element, "");
     }
 
     public void enterTitle(String title) {
@@ -100,9 +115,7 @@ public class OperatorTourCreatePage extends BasePage {
 
     public void setDateInputJS(By locator, String dateStr) {
         WebElement element = waitForVisible(locator);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].value = arguments[1];", element, dateStr);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", element);
-        ((JavascriptExecutor) driver).executeScript("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", element);
+        setInputValueJS(element, dateStr);
     }
 
     public void enterScheduleDates(int index, String depDate, String retDate) {
@@ -165,19 +178,24 @@ public class OperatorTourCreatePage extends BasePage {
         uploadInput.sendKeys(filePath);
     }
 
+    public void clickJS(By locator) {
+        WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
     public void clickSubmitForApproval() {
-        click(By.xpath("//button[contains(normalize-space(), 'Gửi duyệt')]"));
+        clickJS(By.xpath("//button[contains(normalize-space(), 'Gửi duyệt')]"));
     }
 
     public void clickSaveDraft() {
         // We have two "Lưu bản nháp" buttons, click the first one (top bar)
-        click(By.xpath("(//button[contains(normalize-space(), 'Lưu bản nháp')])[1]"));
+        clickJS(By.xpath("(//button[contains(normalize-space(), 'Lưu bản nháp')])[1]"));
     }
 
     public boolean isErrorToastVisible() {
         try {
             return new org.openqa.selenium.support.ui.WebDriverWait(driver, Duration.ofSeconds(3))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(text(), 'Đã xảy ra lỗi')]")))
+                    .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(text(), 'Phát hiện lỗi')]")))
                     .isDisplayed();
         } catch (Exception e) {
             return false;
@@ -185,11 +203,11 @@ public class OperatorTourCreatePage extends BasePage {
     }
 
     public String getErrorMessage() {
-        return textOf(By.xpath("//*[contains(text(), 'Đã xảy ra lỗi')]/..//p"));
+        return textOf(By.xpath("//*[contains(text(), 'Phát hiện lỗi')]/following-sibling::p"));
     }
 
     public void closeErrorToast() {
-        click(By.xpath("//*[contains(text(), 'Đã xảy ra lỗi')]/..//button[contains(text(), 'Đóng')]"));
+        clickJS(By.xpath("//*[contains(text(), 'Phát hiện lỗi')]/../../button"));
     }
 }
 
